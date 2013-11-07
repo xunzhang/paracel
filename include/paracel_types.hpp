@@ -7,9 +7,7 @@
  * Downloading
  *   git clone http://code.dapps.douban.com/wuhong/paracel.git
  *
- * Authors
- *   Hong Wu <xunzhangthu@gmail.com>
- *   Changsheng Jiang <jiangzuoyan@gmail.com>
+ * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
 #ifndef FILE__149f02d6_0fec_56ac_97f4_a30cea847471__HPP
