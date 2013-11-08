@@ -69,7 +69,7 @@ inline size_t hash_combine(size_t seed, const T& v) {
 template <class L>
 struct hash< std::vector<L> > {
   size_t operator()(const std::vector<L> & vec) const {
-    std::string buff;
+    std::string buff("vector");
     for(auto & item : vec) {
       std::ostringstream cvt;
       cvt << item;
