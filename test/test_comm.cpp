@@ -1,6 +1,12 @@
+/**
+ * unit test for comm.hpp(sz = 2)
+ *
+ */
+#include <iostream>
 #include <vector>
-
+#include <mpi.h>
 #include "comm.hpp"
+#include "paracel_types.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -135,6 +141,33 @@ int main(int argc, char *argv[])
         std::cout << " test " << item << " ";
       std::cout << std::endl;
     }
+  }
+
+  { // builtin allreduce
+    int aaa;
+    if(rk == 0) { aaa = 1; }
+    if(rk == 1) { aaa = 2; }
+    auto f = [](){ int b = 1; };
+    comm.allreduce(aaa, f);
+    std::cout << " rk " << rk << " result " << aaa << std::endl;
+  }
+  
+  { // container allreduce
+    std::vector<int> aaa(3);
+    if(rk == 0) {
+      aaa[0] = 1;
+      aaa[1] = 2;
+      aaa[2] = 3;
+    }
+    if(rk == 1) {
+      aaa[0] = 3;
+      aaa[1] = 2;
+      aaa[2] = 1;
+    }
+    auto f = [](){ int b = 1; };
+    comm.allreduce(aaa, f);
+    for(auto & item : aaa)
+      std::cout << " rk " << rk << " result aaa " << item << std::endl;
   }
 
   return 0;

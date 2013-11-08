@@ -149,18 +149,20 @@ public:
   paracel::Enable_if<paracel::is_comm_container<T>::value && paracel::is_comm_container<typename T::value_type>::value>
   alltoallring(const T & sbuf, T & rbuf, F & func);
 
+  // api for paracel is_comm_builtin type allreduce
   template <class T, class F>
   paracel::Enable_if<paracel::is_comm_builtin<T>::value>
   allreduce(T & data, F & func);
 
+  // api for paracel is_comm_container type allreduce
   template <class T, class F>
   paracel::Enable_if<paracel::is_comm_container<T>::value>
   allreduce(T & data, F & func);
 
+  // impl for paracel is_comm_container type allreduce
   template <class T, class F>
   paracel::Enable_if<paracel::is_comm_builtin<typename T::value_type>::value>
   allreduce(T & data, int sz, F & func);
-
 
 private:
   MPI_Comm m_comm;

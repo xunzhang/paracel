@@ -18,7 +18,6 @@
  * full version is implemented at Douban by Changsheng Jiang
  *
  */
-#include <iostream>
 #include "comm.hpp"
 #include "paracel_types.hpp"
 
@@ -211,7 +210,6 @@ Comm::alltoall(const T & sbuf, T & rbuf) {
 template <class T>
 paracel::Enable_if<paracel::is_comm_container<T>::value && paracel::is_comm_container<typename T::value_type>::value>
 Comm::alltoall(const T & sbuf, T & rbuf) {
-  MPI_Datatype dtype = paracel::container_inner_datatype<T>();
   rbuf.resize(sbuf.size());
   rbuf[m_rk] = sbuf[m_rk];
   for(int i = 1; i < m_sz; ++i) {
@@ -226,7 +224,6 @@ Comm::alltoall(const T & sbuf, T & rbuf) {
 template <class T, class F>
 paracel::Enable_if<paracel::is_comm_container<T>::value && paracel::is_comm_container<typename T::value_type>::value>
 Comm::alltoallring(const T & sbuf, T & rbuf, F & func) {
-  MPI_Datatype dtype = paracel::container_inner_datatype<T>();
   rbuf.resize(sbuf.size());
   func(sbuf[m_rk]);
   for(int i = 1; i < m_sz; ++i) {
