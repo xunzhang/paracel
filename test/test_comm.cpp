@@ -5,8 +5,9 @@
 #include <iostream>
 #include <vector>
 #include <mpi.h>
+
 #include "comm.hpp"
-#include "paracel_types.hpp"
+//#include "paracel_types.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -14,6 +15,8 @@ int main(int argc, char *argv[])
   paracel::Comm comm(MPI_COMM_WORLD); 
   int rk = comm.get_rank();
   int sz = comm.get_size();
+  auto f = [](){ int b = 1; };
+  comm.get_rank();
 
   { // builtin send + recv
     if(rk == 0) {
@@ -25,7 +28,7 @@ int main(int argc, char *argv[])
       std::cout << b << std::endl;
     }
   }
-
+  
   { // isend + recv
     if(rk == 0) {
       int a = 7; 
@@ -147,8 +150,7 @@ int main(int argc, char *argv[])
     int aaa;
     if(rk == 0) { aaa = 1; }
     if(rk == 1) { aaa = 2; }
-    auto f = [](){ int b = 1; };
-    comm.allreduce(aaa, f);
+    comm.allreduce(aaa);
     std::cout << " rk " << rk << " result " << aaa << std::endl;
   }
   
@@ -164,8 +166,7 @@ int main(int argc, char *argv[])
       aaa[1] = 2;
       aaa[2] = 1;
     }
-    auto f = [](){ int b = 1; };
-    comm.allreduce(aaa, f);
+    comm.allreduce(aaa);
     for(auto & item : aaa)
       std::cout << " rk " << rk << " result aaa " << item << std::endl;
   }

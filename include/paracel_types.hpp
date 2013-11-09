@@ -128,7 +128,7 @@ using hash_return_type = size_t;
 template <class T>
 using list_type = std::vector<T>;
 
-// hash function not support std::vector<bool> like which is supported in std::hash
+// hash function in paracel not support std::vector<bool> which is supported in std::hash
 // but support std::vector<int>...
 /*
 template <class T>
