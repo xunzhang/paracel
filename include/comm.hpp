@@ -11,8 +11,8 @@
  * Hong Wu <xunzhangthu@gmail.com>
  *
  */
-#ifndef FILE__92d02472_9aee_fd8f_021c_3b914917cd9f__HPP 
-#define FILE__92d02472_9aee_fd8f_021c_3b914917cd9f__HPP
+#ifndef FILE_92d02472_9aee_fd8f_021c_3b914917cd9f_HPP 
+#define FILE_92d02472_9aee_fd8f_021c_3b914917cd9f_HPP
 
 #include <mpi.h>
 

@@ -10,8 +10,8 @@
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
-#ifndef FILE__0c75247e_03c0_5a81_3776_1d686062eb51__HPP
-#define FILE__0c75247e_03c0_5a81_3776_1d686062eb51__HPP
+#ifndef FILE_0c75247e_03c0_5a81_3776_1d686062eb51_HPP
+#define FILE_0c75247e_03c0_5a81_3776_1d686062eb51_HPP
 
 //#include <map>
 #include <unordered_map>
