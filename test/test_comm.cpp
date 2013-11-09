@@ -7,7 +7,6 @@
 #include <mpi.h>
 
 #include "comm.hpp"
-//#include "paracel_types.hpp"
 
 int main(int argc, char *argv[])
 {

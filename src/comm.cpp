@@ -19,7 +19,6 @@
  *
  */
 #include "comm.hpp"
-//#include "paracel_types.hpp"
 
 namespace paracel {
 
