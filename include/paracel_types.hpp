@@ -2,6 +2,8 @@
  * Copyright (c) 2013, Douban Inc. 
  *   All rights reserved. 
  *
+ * Distributed under the BSD License. Check out the LICENSE file for full text. 
+ *
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
@@ -20,7 +22,7 @@
 #include <string>
 #include <functional>
 #include <mpi.h>
-#include "hash.hpp"
+#include "utils/hash.hpp"
 
 namespace paracel {
 

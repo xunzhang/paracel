@@ -6,7 +6,7 @@
 #include <vector>
 #include <mpi.h>
 
-#include "comm.hpp"
+#include "utils/comm.hpp"
 
 int main(int argc, char *argv[])
 {

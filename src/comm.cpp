@@ -18,7 +18,7 @@
  * full version is implemented at Douban by Changsheng Jiang
  *
  */
-#include "comm.hpp"
+#include "utils/comm.hpp"
 
 namespace paracel {
 
