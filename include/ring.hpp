@@ -12,7 +12,6 @@
  */
 #ifndef FILE_ec8e1787_f407_c643_5d12_b8c93bdb52bb_HPP 
 #define FILE_ec8e1787_f407_c643_5d12_b8c93bdb52bb_HPP 
-#include <iostream>
 #include <sstream>
 #include <algorithm> // std::sort, std::find
 #include <functional>
