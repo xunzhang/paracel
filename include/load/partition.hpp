@@ -19,7 +19,8 @@
 
 #include <fstream>
 #include <iostream>
-#include <functional> // std::bind
+
+#include <boost/bind.hpp>
 #include <boost/coroutine/coroutine.hpp>
 
 #include "paracel_types.hpp"
@@ -68,7 +69,7 @@ file_partition(const paracel::str_type & fname, int np) {
     } else {
       e = (i + 1) * bk_sz;
     }
-    paracel::coroutine<paracel::str_type> file_load_lines(std::bind(paracel::file_load_lines_impl, std::placeholders::_1, fname, s, e));
+    paracel::coroutine<paracel::str_type> file_load_lines(boost::bind(paracel::file_load_lines_impl, _1, fname, s, e));
     func_loaders.push_back(std::move(file_load_lines));
   }
   return func_loaders; 
@@ -150,7 +151,7 @@ files_partition(paracel::list_type<paracel::str_type> & name_list,
     } else {
       e = (i + 1) * bk_sz;
     }
-    paracel::coroutine<paracel::str_type> files_load_lines(std::bind(paracel::files_load_lines_impl, std::placeholders::_1, name_list, displs, s, e));
+    paracel::coroutine<paracel::str_type> files_load_lines(boost::bind(paracel::files_load_lines_impl, _1, name_list, displs, s, e));
     func_loaders.push_back(std::move(files_load_lines));
   }
   return func_loaders;
