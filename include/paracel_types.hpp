@@ -21,7 +21,11 @@
 #include <type_traits>
 #include <string>
 #include <functional>
+#include <deque>
 #include <mpi.h>
+
+#include <boost/coroutine/coroutine.hpp>
+
 #include "utils/hash.hpp"
 
 namespace paracel {
@@ -130,6 +134,9 @@ using hash_return_type = size_t;
 template <class T>
 using list_type = std::vector<T>;
 
+template <class T>
+using deque_type = std::deque<T>;
+
 // hash function in paracel not support std::vector<bool> which is supported in std::hash
 // but support std::vector<int>...
 /*
@@ -155,6 +162,9 @@ using Enable_if_inner = typename std::enable_if<Cond::value_type, T>::type;
 template <bool Cond, class T = void>
 using Disable_if_inner = typename std::enable_if<!Cond::value_type, T>::type;
 */
+
+template <class T>
+using coroutine = boost::coroutines::coroutine<T()>;
 
 } // namespace paracel
 
