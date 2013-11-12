@@ -44,7 +44,6 @@ public:
       // load tasks [0, BLK_SZ - 1]
       for(int i = 0; i < BLK_SZ; ++i) {
         // loading lines
-	loads[i];
 	while(loads[i]) {
 	  auto line = loads[i].get();
 	  result.push_back(line);
