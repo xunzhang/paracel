@@ -24,7 +24,7 @@
 #include <boost/coroutine/coroutine.hpp>
 
 #include "paracel_types.hpp"
-#define BLK_SZ 8
+//#define BLK_SZ 8
 
 namespace paracel {
 

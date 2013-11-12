@@ -30,6 +30,8 @@
 
 namespace paracel {
 
+#define BLK_SZ 8
+
 template <class T>
 struct is_atomic : std::false_type {};
 
