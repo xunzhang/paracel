@@ -20,7 +20,7 @@
 namespace paracel {
 
 paracel::list_type<paracel::str_type> 
-scheduler::pload(pload_para_type & loads) {
+scheduler::schedule_load(schedule_load_para_type & loads) {
   paracel::list_type<paracel::str_type> result;
   int rk = m_comm.get_rank();
   int sz = m_comm.get_size();

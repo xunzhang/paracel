@@ -24,7 +24,7 @@ namespace paracel {
 
 std::mutex mutex;
 
-typedef paracel::deque_type< paracel::coroutine<paracel::str_type> > pload_para_type;
+typedef paracel::deque_type< paracel::coroutine<paracel::str_type> > schedule_load_para_type;
 
 class scheduler {
 
@@ -33,7 +33,7 @@ public:
 
   scheduler(paracel::Comm comm, int master) : leader(master), m_comm(comm) {}
   
-  paracel::list_type<paracel::str_type> pload(pload_para_type & loads);
+  paracel::list_type<paracel::str_type> schedule_load(schedule_load_para_type & loads);
 
 private:
   int randint(int l, int u) {
