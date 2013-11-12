@@ -53,6 +53,8 @@ public:
   inline MPI_Comm get_comm() const { return m_comm; }
 
   inline void sync() { MPI_Barrier(m_comm); }
+
+  int get_source(MPI_Status & stat) { return stat.MPI_SOURCE; }
  
   // api for paracel is_comm_builtin type send
   template <class T>
@@ -110,29 +112,31 @@ public:
   // design tips:
   // if return recv data, no template var in parameter
   template <class T>
-  paracel::Enable_if<paracel::is_comm_builtin<T>::value>
+  paracel::Enable_if<paracel::is_comm_builtin<T>::value, MPI_Status>
   recv(T & data, int src, int tag) {
     MPI_Status stat;
     MPI_Datatype dtype = paracel::datatype<T>();
     MPI_Recv(&data, 1, dtype, src, tag, m_comm, &stat);
+    return stat;
   }
   
   // api for paracel is_comm_container type recv
   // notice: data size here must be defined before function call
   template <class T>
-  paracel::Enable_if<paracel::is_comm_container<T>::value>
+  paracel::Enable_if<paracel::is_comm_container<T>::value, MPI_Status>
   recv(T & data, int src, int tag) {
     int sz = (int)data.size();
-    recv(data, sz, src, tag);
+    return recv(data, sz, src, tag);
   }
 
   // impl for paracel is_comm_container type recv
   template <class T>
-  paracel::Enable_if<paracel::is_comm_builtin<typename T::value_type>::value>
+  paracel::Enable_if<paracel::is_comm_builtin<typename T::value_type>::value, MPI_Status>
   recv(T & data, int sz, int src, int tag) {
     MPI_Status stat;
     MPI_Datatype dtype = paracel::container_inner_datatype<T>();
     MPI_Recv((void *)&data[0], sz, dtype, src, tag, m_comm, &stat);
+    return stat;
   }
   
   void wait(MPI_Request & req) {

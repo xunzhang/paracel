@@ -30,7 +30,10 @@
 
 namespace paracel {
 
-#define BLK_SZ 8
+const int BLK_SZ = 8;
+
+const int any_source = MPI_ANY_SOURCE;
+const int any_tag = MPI_ANY_TAG;
 
 template <class T>
 struct is_atomic : std::false_type {};
