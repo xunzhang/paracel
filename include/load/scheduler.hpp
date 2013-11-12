@@ -22,7 +22,7 @@
 
 namespace paracel {
 
-std::mutex mtx;
+std::mutex mutex;
 
 typedef paracel::deque_type< paracel::coroutine<paracel::str_type> > pload_para_type;
 

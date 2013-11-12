@@ -59,7 +59,7 @@ scheduler::pload(pload_para_type & loads) {
   } else {
     while(cnt_control < bnd) {
       cnt_control += 1;
-      mtx.lock();
+      mutex.lock();
       int tmp;
       auto status = m_comm.recv(tmp, any_source, any_tag);
       if(!flag) cnt += 1;
@@ -72,7 +72,7 @@ scheduler::pload(pload_para_type & loads) {
       } else {
 	m_comm.send(flag, src, 2013);
       }
-      mtx.unlock();
+      mutex.unlock();
     } // end of while
   } // end of if-else
   return result;
