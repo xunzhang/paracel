@@ -90,9 +90,7 @@ struct hash< std::pair<L, R> > {
   }
 };
 
-size_t hash_bytes(const void * ptr, size_t len, size_t seed) {
-  return city_hash_bytes(ptr, len, seed);
-}
+size_t hash_bytes(const void * ptr, size_t len, size_t seed);
 
 #if __WORDSIZE == 64
 #define FNV1_INIT ((uint64_t)0xcbf29ce484222325ULL)

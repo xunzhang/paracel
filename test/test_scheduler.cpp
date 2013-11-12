@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
   paracel::scheduler scheduler_obj(comm);
   paracel::list_type<paracel::str_type> name_lst{"a.txt", "b.txt"};
   auto loads = paracel::files_partition(name_lst, 4);
-  auto linelst = scheduler_obj.pload(loads);
+  auto linelst = scheduler_obj.schedule_load(loads);
   if(rk == 1) {
     for(auto & line : linelst) {
       std::cout << "line: " << line << std::endl;
