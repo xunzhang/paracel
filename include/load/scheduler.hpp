@@ -16,11 +16,13 @@
 #define FILE_8199e926_217a_8205_0832_1df88970b15d_HPP
 
 #include <cstdlib>
-
+#include <mutex>
 #include "paracel_types.hpp"
 #include "utils/comm.hpp"
 
 namespace paracel {
+
+std::mutex mtx;
 
 typedef paracel::deque_type< paracel::coroutine<paracel::str_type> > pload_para_type;
 

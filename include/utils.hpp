@@ -15,7 +15,7 @@
 #ifndef FILE_e91abf0f_fadd_f098_91ba_d9ed64bbee7f_HPP
 #define FILE_e91abf0f_fadd_f098_91ba_d9ed64bbee7f_HPP
 
-#include "paracel/utils/comm.hpp"
-#include "paracel/utils/hash.hpp"
+#include "utils/comm.hpp"
+#include "utils/hash.hpp"
 
 #endif

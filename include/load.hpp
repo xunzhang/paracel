@@ -15,7 +15,7 @@
 #ifndef FILE_868f483a_b9f8_bc32_3822_118bcb55cd35_HPP
 #define FILE_868f483a_b9f8_bc32_3822_118bcb55cd35_HPP
 
-#include "paracel/load/partition.hpp"
-#include "paracel/load/scheduler.hpp"
+#include "load/partition.hpp"
+#include "load/scheduler.hpp"
 
 #endif 
