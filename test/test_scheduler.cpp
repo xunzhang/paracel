@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   int sz = comm.get_size();
   
   paracel::scheduler scheduler_obj(comm);
-  paracel::list_type<paracel::str_type> name_lst{"d.txt"};
+  paracel::list_type<paracel::str_type> name_lst{"../d2.txt"};
   auto loads = paracel::files_partition(name_lst, 2);
   auto linelst = scheduler_obj.schedule_load(loads);
   if(rk == 1) {
