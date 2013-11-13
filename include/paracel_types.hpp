@@ -155,8 +155,7 @@ using hash_type = douban::hash<T>;
 template <class K, class V>
 using dict_type = std::unordered_map<K, V>;
 
-template <class A = std::string, class B = std::string>
-using triple_type = std::tuple<A, B, double>;
+using triple_type = std::tuple<std::string, std::string, double>;
 
 template <bool Cond, class T = void>
 using Enable_if = typename std::enable_if<Cond, T>::type;

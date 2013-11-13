@@ -28,7 +28,7 @@ namespace paracel {
  *   std::bind(parser_a, std::placeholders::_1)
  *
  */
-auto parser_a = 
+auto parser_a_int = 
   [](const paracel::str_type & line, char sep = ' ') {
     auto l = paracel::str_split(line, sep);
     paracel::list_type<int> r;
@@ -40,22 +40,28 @@ auto parser_a =
 
 /**
  * example1: a b c d 
- *   std::bind(parser_b, std::placeholders::_1) 
+ *           ...
+ *   f = std::bind(parser_a, std::placeholders::_1) 
+ *   f(l) -> ['a', 'b', 'c', 'd']
  *   a.txt
  *
  * example2: a b
  *           a c
  *           a d
- *   std::bind(parser_b, std::placeholders::_1)
+ *           ...
+ *   f = std::bind(parser_a, std::placeholders::_1)
+ *   f(l) -> ['a', 'b']
  *   b.txt
  *
  * example3: a b
  *           a c d
- *   std::bind(parser_b, std::placeholders::_1)
+ *           ...
+ *   f = std::bind(parser_a, std::placeholders::_1)
+ *   f(l) -> ['a', 'b']
  *   c.txt
  *
  */
-auto parser_b = 
+auto parser_a = 
   [](const paracel::str_type & line, char sep = ' ') {
     return paracel::str_split(line, sep);
   };
@@ -63,23 +69,27 @@ auto parser_b =
 /**
  * example1: a b|c|d
  *           b a|d
- *   std::bind(parser_c, std::placeholders::_1, ' ', '|') 
+ *           ...
+ *   f = std::bind(parser_b, std::placeholders::_1, ' ', '|') 
+ *   f(l) -> ['a', 'b', 'c', 'd']
  *   a2.txt
  *
  * example2: a b:0.1|c:0.2|d:0.4
- *   std::bind(parser_c, std::placeholders::_1, '\t', '|')
+ *   f = std::bind(parser_b, std::placeholders::_1, '\t', '|')
+ *   f(l) -> ['a', 'b:0.1', 'c:0.2', 'd:0.4']
  *   f.txt
  *
  * example3: a\tb:0.1
  *           a\tc:0.2 d:0.4
- *   std::bind(parser_c, std::placeholders::_1, '\t')
+ *   f = std::bind(parser_b, std::placeholders::_1, '\t')
+ *   f(l) -> ['a', 'b:0.1']
  *   h.txt
  *
  */
-auto parser_c = 
+auto parser_b = 
   [](const paracel::str_type & line, 
      char sep1 = ' ', 
-     char sep1 = ' ') {
+     char sep2 = ' ') {
     auto tmp = paracel::str_split(line, sep1);
     auto r = paracel::str_split(tmp[1], sep2);
     r.insert(r.begin(), tmp[0]);

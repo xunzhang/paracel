@@ -3,9 +3,6 @@
 #include "paracel_types.hpp"
 #include "load.hpp"
 #include "utils.hpp"
-//#include "load/scheduler.hpp"
-//#include "utils/comm.hpp"
-//#include "load/partition.hpp"
 
 int main(int argc, char *argv[]) {
   paracel::main_env comm_main_env(argc, argv);
@@ -14,14 +11,24 @@ int main(int argc, char *argv[]) {
   int sz = comm.get_size();
   
   paracel::scheduler scheduler_obj(comm);
-  paracel::list_type<paracel::str_type> name_lst{"a.txt", "b.txt"};
-  auto loads = paracel::files_partition(name_lst, 4);
+  paracel::list_type<paracel::str_type> name_lst{"d.txt"};
+  auto loads = paracel::files_partition(name_lst, 2);
   auto linelst = scheduler_obj.schedule_load(loads);
   if(rk == 1) {
     for(auto & line : linelst) {
       std::cout << "line: " << line << std::endl;
     }
   }
-  
+
+  auto f_parser = std::bind(paracel::parser_a, std::placeholders::_1);
+  auto result = scheduler_obj.lines_organize(linelst, f_parser, "fsmap");
+  if(rk == 1) {
+    for(auto & lst : result) {
+      for(auto & triple : lst) {
+        std::cout << "rank: " << rk << std::get<0>(triple) << " " << std::get<1>(triple) << " " << std::get<2>(triple) << std::endl;
+      }
+      std::cout << "xxxxxxxxxxxxxxxxxxxxxx" << std::endl;
+    }
+  }
   return 0;
 }
