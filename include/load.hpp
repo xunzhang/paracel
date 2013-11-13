@@ -17,5 +17,6 @@
 
 #include "load/partition.hpp"
 #include "load/scheduler.hpp"
+#include "load/parser.hpp"
 
 #endif 
