@@ -4,6 +4,8 @@
  */
 #include <iostream>
 #include <vector>
+#include <tuple>
+#include <string>
 #include <mpi.h>
 
 #include "utils/comm.hpp"
@@ -45,8 +47,7 @@ int main(int argc, char *argv[])
       std::vector<int> aa {77, 88};
       comm.send(aa, 1, 2013);
     } else if(rk == 1) {
-      std::vector<int> bb(2);
-      //bb.resize(2);
+      std::vector<int> bb;
       comm.recv(bb, 0, 2013);
       for(auto & item : bb)
         std::cout << item << std::endl;
@@ -59,14 +60,73 @@ int main(int argc, char *argv[])
       MPI_Request req;
       req = comm.isend(aa, 1, 2013);
     } else if(rk == 1) {
-      std::vector<int> bb(2);
-      //bb.resize(2);
+      std::vector<int> bb;
       comm.recv(bb, 0, 2013);
       for(auto & item : bb)
         std::cout << item << std::endl;
     }
   }
 
+  { // paracel triple send + recv
+    if(rk == 0) {
+      std::tuple<std::string, std::string, double> aa;
+      std::get<0>(aa) = "abc";
+      std::get<1>(aa) = "def";
+      std::get<2>(aa) = 3.14;
+      MPI_Request req;
+      req = comm.isend(aa, 1, 2013);
+    } else if(rk == 1) {
+      std::tuple<std::string, std::string, double> bb;
+      comm.recv(bb, 0, 2013);
+      std::cout << "deniug" << std::get<0>(bb) << "--" << std::get<1>(bb) << "--" << std::get<2>(bb) << std::endl;
+    }
+  }
+
+  { // paracel list of triple send + recv
+    if(rk == 0) {
+      std::vector<std::tuple<std::string, std::string, double> > aa;
+      std::tuple<std::string, std::string, double> tmp1;
+      std::get<0>(tmp1) = "abc";
+      std::get<1>(tmp1) = "def";
+      std::get<2>(tmp1) = 4.15;
+      aa.push_back(tmp1);
+      std::tuple<std::string, std::string, double> tmp2;
+      std::get<0>(tmp2) = "cba";
+      std::get<1>(tmp2) = "fed";
+      std::get<2>(tmp2) = 5.16;
+      aa.push_back(tmp2);
+      MPI_Request req;
+      req = comm.isend(aa, 1, 2013);
+    } else if(rk == 1) {
+      std::vector<std::tuple<std::string, std::string, double> > bb;
+      comm.recv(bb, 0, 2013);
+      for(auto & item : bb) {
+        std::cout << "test" << std::get<0>(item) << "--" << std::get<1>(item) << "--" << std::get<2>(item) << std::endl;
+      }
+    }
+  }
+
+  { // another paracel list of triple send + recv
+    if(rk == 0) {
+      std::vector<std::tuple<std::string, std::string, double> > aa;
+      std::tuple<std::string, std::string, double> tmp1;
+      std::get<0>(tmp1) = "abc";
+      std::get<1>(tmp1) = "def";
+      std::get<2>(tmp1) = 4.15;
+      aa.push_back(tmp1);
+      std::tuple<std::string, std::string, double> tmp2;
+      aa.push_back(tmp2);
+      MPI_Request req;
+      req = comm.isend(aa, 1, 2013);
+    } else if(rk == 1) {
+      std::vector<std::tuple<std::string, std::string, double> > bb;
+      comm.recv(bb, 0, 2013);
+      for(auto & item : bb) {
+       std::cout << "check " << std::get<0>(item) << "--" << std::get<1>(item) << "--" << std::get<2>(item) << std::endl;
+      }
+    }
+  }
+  
   { // builtin sendrecv
     int a = 8;
     int b;
@@ -75,6 +135,7 @@ int main(int argc, char *argv[])
     left = rk - 1;
     if(left < 0) left = sz - 1;
     comm.sendrecv(a, b, left, 2013, right, 2013);
+    std::cout << "b" << b << std::endl;
   }
 
   { // container sendrecv
@@ -87,6 +148,119 @@ int main(int argc, char *argv[])
     comm.sendrecv(aaa, bbb, left, 2013, right, 2013);
     for(auto & item : bbb)
       std::cout << item << std::endl;
+  }
+
+  { // paracel triple sendrecv
+    std::tuple<std::string, std::string, double> aa;
+    std::tuple<std::string, std::string, double> bb;
+    std::get<0>(aa) = "abc";
+    std::get<1>(aa) = "def";
+    std::get<2>(aa) = 3.14;
+    int left, right;
+    right = (rk + 1) % sz;
+    left = rk - 1;
+    if(left < 0) left = sz - 1;
+    comm.sendrecv(aa, bb, left, 2013, right, 2013);
+    std::cout << "triple sendrecv" << std::get<0>(bb) << "--" << std::get<1>(bb) << "--" << std::get<2>(bb) << std::endl;
+  }
+
+  { // paracel list of triple sendrecv
+    std::vector<std::tuple<std::string, std::string, double> > bb;
+    std::vector<std::tuple<std::string, std::string, double> > aa;
+    std::tuple<std::string, std::string, double> tmp1;
+    std::get<0>(tmp1) = "abc";
+    std::get<1>(tmp1) = "def";
+    std::get<2>(tmp1) = 4.15;
+    aa.push_back(tmp1);
+    std::tuple<std::string, std::string, double> tmp2;
+    std::get<0>(tmp2) = "cba";
+    std::get<1>(tmp2) = "fed";
+    std::get<2>(tmp2) = 5.16;
+    aa.push_back(tmp2);
+    int left, right;
+    right = (rk + 1) % sz;
+    left = rk - 1;
+    if(left < 0) left = sz - 1;
+    comm.sendrecv(aa, bb, left, 2013, right, 2013);
+    for(auto & item : bb) {
+     std::cout << "test sendrecv" << std::get<0>(item) << "--" << std::get<1>(item) << "--" << std::get<2>(item) << std::endl;
+    }
+  }
+  
+  { // another paracel list of triple sendrecv
+    std::vector<std::tuple<std::string, std::string, double> > bb;
+    std::vector<std::tuple<std::string, std::string, double> > aa;
+    std::tuple<std::string, std::string, double> tmp1;
+    std::get<0>(tmp1) = "abc";
+    std::get<1>(tmp1) = "def";
+    std::get<2>(tmp1) = 4.15;
+    std::tuple<std::string, std::string, double> tmp2;
+    aa.push_back(tmp2);
+    aa.push_back(tmp1);
+    int left, right;
+    right = (rk + 1) % sz;
+    left = rk - 1;
+    if(left < 0) left = sz - 1;
+    comm.sendrecv(aa, bb, left, 2013, right, 2013);
+    for(auto & item : bb) {
+     std::cout << "another test sendrecv" << std::get<0>(item) << "--" << std::get<1>(item) << "--" << std::get<2>(item) << std::endl;
+    }
+  }
+
+  { // debug for list of triple sendrecv
+    std::vector<std::vector<std::tuple<std::string, std::string, double> > > aa(2);
+    std::vector<std::tuple<std::string, std::string, double> > bb;
+    int t, f;
+    if(rk == 0) {
+      std::vector<std::tuple<std::string, std::string, double> > aaa;
+      std::tuple<std::string, std::string, double> tmp1;
+      std::get<0>(tmp1) = "a";
+      std::get<1>(tmp1) = "b";
+      std::get<2>(tmp1) = 1.;
+      aaa.push_back(tmp1);
+      std::get<0>(tmp1) = "a";
+      std::get<1>(tmp1) = "c";
+      std::get<2>(tmp1) = 1.;
+      aaa.push_back(tmp1);
+      std::get<0>(tmp1) = "a";
+      std::get<1>(tmp1) = "d";
+      std::get<2>(tmp1) = 1.;
+      aaa.push_back(tmp1);
+      std::get<0>(tmp1) = "b";
+      std::get<1>(tmp1) = "a";
+      std::get<2>(tmp1) = 1.;
+      aaa.push_back(tmp1);
+      aa[1] = aaa;
+      t = 1;
+      f = 1;
+    } else if(rk == 1) {
+      std::vector<std::tuple<std::string, std::string, double> > aaa;
+      std::tuple<std::string, std::string, double> tmp1;
+      std::get<0>(tmp1) = "e";
+      std::get<1>(tmp1) = "a";
+      std::get<2>(tmp1) = 1.;
+      aaa.push_back(tmp1);
+      std::get<0>(tmp1) = "e";
+      std::get<1>(tmp1) = "d";
+      std::get<2>(tmp1) = 1.;
+      aaa.push_back(tmp1);
+      aa[0] = aaa;
+
+      std::vector<std::tuple<std::string, std::string, double> > aaaa;
+      std::tuple<std::string, std::string, double> tmp2;
+      std::get<0>(tmp2) = "b";
+      std::get<1>(tmp2) = "d";
+      std::get<2>(tmp2) = 1.;
+      aaaa.push_back(tmp2);
+      std::get<0>(tmp2) = "d";
+      std::get<1>(tmp2) = "c";
+      std::get<2>(tmp2) = 1.;
+      aaaa.push_back(tmp2);
+      aa[1] = aaaa;
+      f = 0;
+      t = 0;
+    }
+    comm.sendrecv(aa[t], bb, t, 2013, f, 2013);
   }
 
   { // builtin bcast

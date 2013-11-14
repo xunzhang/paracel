@@ -27,8 +27,9 @@ namespace paracel {
 
 std::mutex mutex;
 
-typedef paracel::deque_type< paracel::coroutine<paracel::str_type> > schedule_load_para_type;
-typedef paracel::list_type< paracel::list_type<paracel::triple_type> > lo_ret_type;
+typedef paracel::deque_type<paracel::coroutine<paracel::str_type> > schedule_load_para_type;
+typedef paracel::list_type<paracel::triple_type> lt_type;
+typedef paracel::list_type<paracel::list_type<paracel::triple_type> > llt_type;
 
 auto tmp_parser = [](const paracel::str_type & a) { return a; };
 
@@ -50,14 +51,14 @@ public:
   }
 
   template <class F = std::function< paracel::list_type<paracel::str_type>(paracel::str_type) > >
-  lo_ret_type lines_organize(paracel::list_type<paracel::str_type> & lines,
+  llt_type lines_organize(paracel::list_type<paracel::str_type> & lines,
       F && parser_func = tmp_parser, 
       const paracel::str_type & pattern = "fmap", 
       bool mix = false) {
     
     int npx, npy;
     int np = m_comm.get_size();
-    paracel::list_type< paracel::list_type< paracel::triple_type > > line_slot_lst(np);
+    llt_type line_slot_lst(np);
     npfactx(np, npx, npy);
     if(pattern == "fsmap") npfact2d(np, npx, npy);
     if(pattern == "smap") npfacty(np, npx, npy);
@@ -97,6 +98,18 @@ public:
     return line_slot_lst;
   }
 
+  lt_type exchange(llt_type & line_slot_lst) {
+    llt_type recv_lsl;
+    lt_type stf;
+    m_comm.alltoall(line_slot_lst, recv_lsl);
+    for(auto & lst : recv_lsl) {
+      for(auto & tpl : lst) {
+	stf.push_back(tpl);
+      }
+    }
+    return stf;
+  }
+  
 private:
   int randint(int l, int u) {
     srand((unsigned)time(NULL));

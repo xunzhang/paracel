@@ -116,6 +116,7 @@ PARACEL_REGISTER_COMM_BUILTIN(unsigned, MPI_UNSIGNED);
 PARACEL_REGISTER_COMM_BUILTIN(unsigned long, MPI_UNSIGNED_LONG);
 
 // tricky definition
+PARACEL_REGISTER_COMM_CONTAINER(std::string, MPI_CHAR);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<int>, MPI_INT);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<long>, MPI_LONG);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<char>, MPI_CHAR);
@@ -155,6 +156,10 @@ using hash_type = douban::hash<T>;
 template <class K, class V>
 using dict_type = std::unordered_map<K, V>;
 
+/*
+template <class F = std::string, class S = std::string>
+using triple_type = std::tuple<F, S, double>;
+*/
 using triple_type = std::tuple<std::string, std::string, double>;
 
 template <bool Cond, class T = void>
