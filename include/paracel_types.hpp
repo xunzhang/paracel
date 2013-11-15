@@ -23,6 +23,7 @@
 #include <functional>
 #include <deque>
 #include <tuple>
+#include <set>
 #include <mpi.h>
 
 #include <boost/coroutine/coroutine.hpp>
@@ -161,6 +162,9 @@ template <class F = std::string, class S = std::string>
 using triple_type = std::tuple<F, S, double>;
 */
 using triple_type = std::tuple<std::string, std::string, double>;
+
+template <class T = std::string>
+using set_type = std::set<T>;
 
 template <bool Cond, class T = void>
 using Enable_if = typename std::enable_if<Cond, T>::type;

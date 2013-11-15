@@ -6,6 +6,7 @@
 #include <vector>
 #include <tuple>
 #include <string>
+#include <set>
 #include <mpi.h>
 
 #include "utils/comm.hpp"
@@ -342,6 +343,30 @@ int main(int argc, char *argv[])
     comm.allreduce(aaa);
     for(auto & item : aaa)
       std::cout << " rk " << rk << " result aaa " << item << std::endl;
+  }
+
+  { // bcastring
+    std::vector<int> a;
+    if(rk == 0) {
+      a.push_back(6);
+      a.push_back(42);
+    }
+    if(rk == 1) {
+      a.push_back(28);
+      a.push_back(42);
+      a.push_back(42);
+      a.push_back(28);
+      a.push_back(6);
+    }
+    std::set<int> result;
+    auto func = [&](std::vector<int> tmp){
+      for(auto & stf : tmp)
+        result.insert(stf);
+    };
+    comm.bcastring(a, func);
+    for(auto & item : result) {
+      std::cout << rk << " : "<< item << std::endl;
+    }
   }
 
   return 0;

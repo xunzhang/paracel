@@ -19,6 +19,13 @@
 
 namespace paracel {
 
+void scheduler::dim_init() {
+  int np = m_comm.get_size();
+  npfactx(np, npx, npy);
+  if(pattern == "fsmap") npfact2d(np, npx, npy);
+  if(pattern == "smap") npfacty(np, npx, npy);
+}
+
 paracel::list_type<paracel::str_type> 
 scheduler::schedule_load(schedule_load_para_type & loads) {
   paracel::list_type<paracel::str_type> result;

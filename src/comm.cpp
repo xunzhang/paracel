@@ -62,4 +62,12 @@ void Comm::init(MPI_Comm comm) {
   MPI_Comm_size(m_comm, &m_sz);
 }
 
+Comm Comm::split(int color) {
+  MPI_Comm new_comm;
+  int key = m_rk;
+  MPI_Comm_split(m_comm, color, key, &new_comm);
+  Comm comm(new_comm);
+  return comm;
+}
+
 } // namespace paracel

@@ -12,8 +12,8 @@
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
-#ifndef FILE_569ed89d_8181_d364_099f_bb1c44d3df66_HPP 
-#define FILE_569ed89d_8181_d364_099f_bb1c44d3df66_HPP
+#ifndef FILE_56636034_fc34_4f9e_4343_4111ca3b127d_HPP
+#define FILE_56636034_fc34_4f9e_4343_4111ca3b127d_HPP
 
 #include "paracel_types.hpp"
 

@@ -18,6 +18,6 @@
 #include "utils/comm.hpp"
 #include "utils/hash.hpp"
 #include "utils/decomp.hpp"
-#include "utils/ext_str_utils.hpp"
+#include "utils/ext_utility.hpp"
 
 #endif

@@ -16,7 +16,7 @@
 #define FILE_607caade_25c4_da56_7a7b_c0cd1aa35b74_HPP
 
 #include "paracel_types.hpp"
-#include "utils/ext_str_utils.hpp"
+#include "utils/ext_utility.hpp"
 
 namespace paracel {
 

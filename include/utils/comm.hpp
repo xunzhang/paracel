@@ -67,6 +67,8 @@ public:
   inline void sync() { MPI_Barrier(m_comm); }
 
   int get_source(MPI_Status & stat) { return stat.MPI_SOURCE; }
+
+  Comm split(int color);
  
   // api for paracel is_comm_builtin type send
   template <class T>
@@ -122,6 +124,7 @@ public:
     return req;
   }
 
+
   // api/impl for paracel default triple type isend
   MPI_Request isend(const paracel::triple_type & triple, int dest, int tag) {
     auto f = std::get<0>(triple);
@@ -166,6 +169,17 @@ public:
     return req;
   }
 
+  // api/impl for paracel list of string type isend
+  MPI_Request isend(const paracel::list_type<paracel::str_type> & strlst, int dest, int tag) {
+    int sz = strlst.size(); // send container size
+    send(sz, dest, tag);
+    MPI_Request req;
+    for(int i = 0; i < strlst.size(); ++i) {
+      req = isend(strlst[i], dest, tag);
+    }
+    return req;
+  }
+  
   // api for paracel is_comm_builtin type recv
   // design tips: if return recv data, no template var in parameter
   template <class T>
@@ -234,6 +248,18 @@ public:
     return stat;
   }
 
+  // api/impl for list of string type recv
+  MPI_Status recv(paracel::list_type<paracel::str_type> & strlst, int src, int tag) {
+    int sz;
+    recv(sz, src, tag);
+    if(sz) strlst.resize(sz);
+    MPI_Status stat;
+    for(int i = 0; i < strlst.size(); ++i) {
+      stat = recv(strlst[i], src, tag);
+    }
+    return stat;
+  }
+
   void wait(MPI_Request & req) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
   }
@@ -279,7 +305,7 @@ public:
       int f = (m_rk + i) % m_sz;
       int t = (m_rk + m_sz - i) % m_sz;
       T rbuf;
-      sendrecv(data, rbuf, t, 2013, f, 2013, m_comm);
+      sendrecv(data, rbuf, t, 2013, f, 2013);
       func(rbuf);
     }
   }
@@ -367,7 +393,7 @@ public:
     MPI_Allreduce((void *)&data[0], (void *)&tmp[0], sz, dtype, MPI_SUM, m_comm);
     for(int i = 0; i < data.size(); ++i) {
       data[i] = tmp[i];
-    }		    
+    } 
   }
 
 private:
