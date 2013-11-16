@@ -260,7 +260,7 @@ public:
   void sendrecv(const T & sdata, T & rdata, int sto, int stag, int rfrom, int rtag) {
     MPI_Request req = isend(sdata, sto, stag);
     recv(rdata, rfrom, rtag);
-    wait(req);
+    //wait(req);
   }
 
   // impl of is_comm_builtin bcast

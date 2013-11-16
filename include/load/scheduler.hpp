@@ -166,6 +166,7 @@ public:
       stf.push_back(tmp);
     }
 
+    if (pattern == "fmap") {
     // cal dm
     // little tricky: default stl map sort is equal to stl set
     auto deg = paracel::sort_and_cnt(rows);
@@ -198,7 +199,7 @@ public:
       }
     };
     m_comm.bcastring(reduce_map, union_func3);
-  
+    } // end of if 
   } // index_mapping
   
 private:

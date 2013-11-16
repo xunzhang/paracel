@@ -385,5 +385,9 @@ int main(int argc, char *argv[])
     }
   }
 
+  { // alltoall
+  
+  }
+
   return 0;
 }
