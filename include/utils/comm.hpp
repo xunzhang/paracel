@@ -135,6 +135,20 @@ public:
     return req;
   }
 
+  // impl of dict_type<size_t, int> isend
+  MPI_Request isend(const paracel::dict_type<size_t, int> & dct, int dest, int tag) {
+    MPI_Request req;
+    int sz = dct.size();
+    send(sz, dest, tag);
+    for(auto & kv : dct) {
+      size_t key = kv.first;
+      int val = kv.second;
+      isend(key, dest, tag);
+      req = isend(val, dest, tag);
+    }
+    return req;
+  }
+
   // impl of list of triple isend
   MPI_Request isend(const paracel::list_type<paracel::triple_type> & triple_lst, int dest, int tag) {
     int sz = triple_lst.size(); // send container size
@@ -146,7 +160,7 @@ public:
     return req;
   }
 
-  // impl of paracel list of string isend
+  // impl of list of string isend
   // TODO: abstract 
   MPI_Request isend(const paracel::list_type<paracel::str_type> & strlst, int dest, int tag) {
     int sz = strlst.size(); // send container size
@@ -158,7 +172,7 @@ public:
     return req;
   }
   
-  // impl of paracel is_comm_builtin recv
+  // impl of is_comm_builtin recv
   // design tips: 
   //   if return recv data, no template var in parameter
   template <class T>
@@ -170,7 +184,7 @@ public:
     return stat;
   }
   
-  // impl of paracel is_comm_container recv
+  // impl of is_comm_container recv
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value, MPI_Status>
   recv(T & data, int src, int tag) {
@@ -190,7 +204,7 @@ public:
     return stat;
   }
 
-  // impl of paracel triple recv
+  // impl of triple recv
   MPI_Status recv(paracel::triple_type & triple, int src, int tag) {
     recv(std::get<0>(triple), src, tag);
     recv(std::get<1>(triple), src, tag);
@@ -198,13 +212,27 @@ public:
     return stat;
   }
   
-  // impl of list of paracel triple recv
+  // impl for dict_type<size_t, int> recv
+  MPI_Status recv(paracel::dict_type<size_t, int> & dct, int src, int tag) {
+    int sz;
+    size_t tmp_key; int tmp_val;
+    MPI_Status stat;
+    recv(sz, src, tag);
+    for(int i = 0; i < sz; ++i) {
+      recv(tmp_key, src, tag);
+      stat = recv(tmp_val, src, tag);
+      dct[tmp_key] = tmp_val;
+    }
+    return stat;
+  }
+
+  // impl of list of triple recv
   MPI_Status recv(paracel::list_type<paracel::triple_type> & triple_lst, int src, int tag) {
     int sz;
     recv(sz, src, tag);
     if(sz) triple_lst.resize(sz);
     MPI_Status stat;
-    for(int i = 0; i < triple_lst.size(); ++i) {
+    for(int i = 0; i < sz; ++i) {
       stat = recv(triple_lst[i], src, tag);
     }
     return stat;
@@ -217,7 +245,7 @@ public:
     recv(sz, src, tag);
     if(sz) strlst.resize(sz);
     MPI_Status stat;
-    for(int i = 0; i < strlst.size(); ++i) {
+    for(int i = 0; i < sz; ++i) {
       stat = recv(strlst[i], src, tag);
     }
     return stat;
@@ -298,6 +326,7 @@ public:
   }
   
   // impl of triple alltoall
+  // TODO: abstract
   void alltoall(const paracel::list_type<paracel::list_type<paracel::triple_type> > & sbuf, 
                 paracel::list_type<paracel::list_type<paracel::triple_type> > & rbuf) {
     if(sbuf.size()) rbuf.resize(sbuf.size());

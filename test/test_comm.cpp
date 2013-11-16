@@ -7,6 +7,7 @@
 #include <tuple>
 #include <string>
 #include <set>
+#include <unordered_map>
 #include <mpi.h>
 
 #include "utils/comm.hpp"
@@ -366,6 +367,21 @@ int main(int argc, char *argv[])
     comm.bcastring(a, func);
     for(auto & item : result) {
       std::cout << rk << " : "<< item << std::endl;
+    }
+  }
+
+  { // dict_type<size_t, int> isend
+    if(rk == 0) {
+      std::unordered_map<size_t, int> aa;
+      aa[0] = 1;
+      aa[1] = 2;
+      MPI_Request req;
+      req = comm.isend(aa, 1, 2013);
+    } else if(rk == 1) {
+      std::unordered_map<size_t, int> bb;
+      comm.recv(bb, 0, 2013);
+      for(auto & item : bb)
+        std::cout << item.first << " * " << item.second << std::endl;
     }
   }
 

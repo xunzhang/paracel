@@ -112,7 +112,8 @@ public:
     }
     return stf;
   }
-  
+ 
+  // dm and col_dm only support fmap
   void index_mapping(const lt_type & slotslst, 
       paracel::list_type<std::tuple<size_t, size_t, double> > & stf, 
       paracel::dict_type<size_t, paracel::str_type> & rm,
@@ -131,7 +132,7 @@ public:
       rows.push_back(std::get<0>(tpl));
       cols.push_back(std::get<1>(tpl));
     }
-
+    
     paracel::set_type<paracel::str_type> new_rows, new_cols;
     auto union_func1 = [&] (paracel::list_type<paracel::str_type> tmp) {
       for(auto & item : tmp) { new_rows.insert(item); }
@@ -166,14 +167,39 @@ public:
     }
 
     // cal dm
+    // little tricky: default stl map sort is equal to stl set
     auto deg = paracel::sort_and_cnt(rows);
     indx = 0;
     for(auto & item : deg) {
       dm[indx] = item;
       indx += 1;
     }
+    
     // cal col_dm
-  }
+    paracel::dict_type<size_t, int> reduce_map;
+    for(auto & tpl : stf) {
+      auto key = std::get<1>(tpl);
+      if(reduce_map.find(key) == reduce_map.end()) {
+        reduce_map[key] = 1;
+      } else {
+        reduce_map[key] += 1;
+      }
+    }
+    
+    auto union_func3 = [&] (paracel::dict_type<size_t, int> tmp) {
+      for(auto & kv : tmp) {
+        auto key = kv.first;
+	auto val = kv.second;
+	if(col_dm.find(key) == col_dm.end()) {
+	  col_dm[key] = val;
+	} else {
+	  col_dm[key] += val;
+	}
+      }
+    };
+    m_comm.bcastring(reduce_map, union_func3);
+  
+  } // index_mapping
   
 private:
   int randint(int l, int u) {
@@ -185,7 +211,7 @@ private:
 
 private:
   paracel::Comm m_comm;
-  paracel::str_type pattern = "fsmap"; 
+  paracel::str_type pattern = "fmap"; 
   bool mix = false;
   int leader = 0;
   int npx;
