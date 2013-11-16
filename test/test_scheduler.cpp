@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
   }
 
   auto f_parser = std::bind(paracel::parser_a, std::placeholders::_1);
-  auto result = scheduler_obj.lines_organize(linelst, f_parser, "fsmap");
+  auto result = scheduler_obj.lines_organize(linelst, f_parser);
   if(rk == 0) {
     std::cout << "aaaaaaaaaaaaaaaaaaaaaa" << std::endl;
     for(auto & lst : result) {

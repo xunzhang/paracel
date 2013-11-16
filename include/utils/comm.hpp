@@ -15,8 +15,8 @@
  */
 
 /**
- * a simple version, just for paracel usage
- * full version is implemented at Douban by Changsheng Jiang
+ * a simple/ugly version, just for paracel usage
+ * full/abstract version is implemented at Douban by Changsheng Jiang
  *
  */
      
@@ -70,7 +70,7 @@ public:
 
   Comm split(int color);
  
-  // api for paracel is_comm_builtin type send
+  // impl of is_comm_builtin send
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<T>::value>
   send(const T & data, int dest, int tag) {
@@ -78,7 +78,7 @@ public:
     MPI_Send((void *)&data, 1, dtype, dest, tag, m_comm);
   }
   
-  // api for paracel is_comm_container type send
+  // impl of is_comm_container send
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value>
   send(const T & data, int dest, int tag) {
@@ -87,7 +87,7 @@ public:
     send(data, sz, dest, tag);
   }
   
-  // impl for is_comm_container type send
+  // impl cont.
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<typename T::value_type>::value>
   send(const T & data, int sz, int dest, int tag) {
@@ -95,7 +95,7 @@ public:
     MPI_Send((void *)&data[0], sz, dtype, dest, tag, m_comm);
   }
   
-  // api for paracel is_comm_builtin type isend
+  // impl of is_comm_builtin isend
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<T>::value, MPI_Request>
   isend(const T & data, int dest, int tag) {
@@ -105,7 +105,7 @@ public:
     return req;
   }
 
-  // api for paracel is_comm_container type isend
+  // impl of is_comm_container isend
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value, MPI_Request>
   isend(const T & data, int dest, int tag) {
@@ -114,7 +114,7 @@ public:
     return isend(data, sz, dest, tag);
   }
   
-  // impl for is_comm_container type isend
+  // impl cont.
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<typename T::value_type>::value, MPI_Request>
   isend(const T & data, int sz, int dest, int tag) {
@@ -124,8 +124,7 @@ public:
     return req;
   }
 
-
-  // api/impl for paracel default triple type isend
+  // impl of triple isend
   MPI_Request isend(const paracel::triple_type & triple, int dest, int tag) {
     auto f = std::get<0>(triple);
     auto s = std::get<1>(triple);
@@ -136,18 +135,7 @@ public:
     return req;
   }
 
-  // api/impl for std::tuple<size_t, size_t, double> type isend
-  MPI_Request isend(const std::tuple<size_t, size_t, double> & triple, int dest, int tag) {
-    auto f = std::get<0>(triple);
-    auto s = std::get<1>(triple);
-    auto v = std::get<2>(triple);
-    isend(f, dest, tag);
-    isend(s, dest, tag);
-    MPI_Request req = isend(v, dest, tag);
-    return req;
-  }
-
-  // api/impl for paracel list of default triple type isend
+  // impl of list of triple isend
   MPI_Request isend(const paracel::list_type<paracel::triple_type> & triple_lst, int dest, int tag) {
     int sz = triple_lst.size(); // send container size
     send(sz, dest, tag);
@@ -158,18 +146,8 @@ public:
     return req;
   }
 
-  // api/impl for paracel list of triple<size_t, size_t, double> type isend
-  MPI_Request isend(const paracel::list_type<std::tuple<size_t, size_t, double> > & triple_lst, int dest, int tag) {
-    int sz = triple_lst.size(); // send container size
-    send(sz, dest, tag);
-    MPI_Request req;
-    for(int i = 0; i < triple_lst.size(); ++i) {
-      req = isend(triple_lst[i], dest, tag);
-    }
-    return req;
-  }
-
-  // api/impl for paracel list of string type isend
+  // impl of paracel list of string isend
+  // TODO: abstract 
   MPI_Request isend(const paracel::list_type<paracel::str_type> & strlst, int dest, int tag) {
     int sz = strlst.size(); // send container size
     send(sz, dest, tag);
@@ -180,8 +158,9 @@ public:
     return req;
   }
   
-  // api for paracel is_comm_builtin type recv
-  // design tips: if return recv data, no template var in parameter
+  // impl of paracel is_comm_builtin recv
+  // design tips: 
+  //   if return recv data, no template var in parameter
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<T>::value, MPI_Status>
   recv(T & data, int src, int tag) {
@@ -191,17 +170,17 @@ public:
     return stat;
   }
   
-  // api for paracel is_comm_container type recv
+  // impl of paracel is_comm_container recv
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value, MPI_Status>
   recv(T & data, int src, int tag) {
     int sz;
-    recv(sz, src, tag);
+    recv(sz, src, tag); // get msg size
     if(sz) data.resize(sz);
     return recv(data, sz, src, tag);
   }
 
-  // impl for paracel is_comm_container type recv
+  // impl cont. 
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<typename T::value_type>::value, MPI_Status>
   recv(T & data, int sz, int src, int tag) {
@@ -211,7 +190,7 @@ public:
     return stat;
   }
 
-  // api/impl for paracel default triple type recv
+  // impl of paracel triple recv
   MPI_Status recv(paracel::triple_type & triple, int src, int tag) {
     recv(std::get<0>(triple), src, tag);
     recv(std::get<1>(triple), src, tag);
@@ -219,15 +198,7 @@ public:
     return stat;
   }
   
-  // api/impl for std::tuple<size_t, size_t, double> type recv
-  MPI_Status recv(std::tuple<size_t, size_t, double> & triple, int src, int tag) {
-    recv(std::get<0>(triple), src, tag);
-    recv(std::get<1>(triple), src, tag);
-    MPI_Status stat = recv(std::get<2>(triple), src, tag);
-    return stat;
-  }
-  
-  // api/impl for list of paracel default triple type recv
+  // impl of list of paracel triple recv
   MPI_Status recv(paracel::list_type<paracel::triple_type> & triple_lst, int src, int tag) {
     int sz;
     recv(sz, src, tag);
@@ -239,16 +210,8 @@ public:
     return stat;
   }
   
-  // api/impl for list of std::tuple<size_t, size_t, double> type recv
-  MPI_Status recv(paracel::list_type<std::tuple<size_t, size_t, double > > & triple_lst, int src, int tag) {
-    MPI_Status stat;
-    for(int i = 0; i = triple_lst.size(); ++i) {
-      stat = recv(triple_lst[i], src, tag);
-    }
-    return stat;
-  }
-
-  // api/impl for list of string type recv
+  // impl of list of string recv
+  // TODO: abstract 
   MPI_Status recv(paracel::list_type<paracel::str_type> & strlst, int src, int tag) {
     int sz;
     recv(sz, src, tag);
@@ -264,7 +227,7 @@ public:
     MPI_Wait(&req, MPI_STATUS_IGNORE);
   }
 
-  // api for sendrecv
+  // impl of sendrecv
   template <class T>
   void sendrecv(const T & sdata, T & rdata, int sto, int stag, int rfrom, int rtag) {
     MPI_Request req = isend(sdata, sto, stag);
@@ -272,7 +235,7 @@ public:
     wait(req);
   }
 
-  // api for paracel is_comm_builtin type bcast
+  // impl of is_comm_builtin bcast
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<T>::value>
   bcast(T & data, int master) {
@@ -280,7 +243,7 @@ public:
     MPI_Bcast((void *)&data, 1, dtype, master, m_comm);
   }
 
-  // api for paracel is_comm_container type bcast
+  // impl of is_comm_container bcast
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value>
   bcast(T & data, int master) {
@@ -288,7 +251,7 @@ public:
     bcast(data, sz, master);
   }
 
-  // impl for paracel is_comm_container type cast
+  // impl cont.
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<typename T::value_type>::value>
   bcast(T & data, int sz, int master) {
@@ -296,7 +259,7 @@ public:
     MPI_Bcast((void *)&data[0], sz, dtype, master, m_comm);
   }
 
-  // api for paracel bcastring
+  // impl of bcastring
   template <class T, class F>
   void bcastring(const T & data, F & func) {
     func(data);
@@ -310,7 +273,7 @@ public:
     }
   }
 
-  // api for paracel is_comm_builtin type alltoall
+  // impl if is_comm_builtin alltoall
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value && paracel::is_comm_builtin<typename T::value_type>::value>
   alltoall(const T & sbuf, T & rbuf) {
@@ -318,7 +281,7 @@ public:
     MPI_Alltoall((void *)&sbuf[0], 1, dtype, (void *)&rbuf[0], 1, dtype, m_comm);
   }
 
-  // api for paracel is_comm_container type alltoall
+  // impl of is_comm_container alltoall
   // impl with sendrecv because MPI_Alltoallv is really awful
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value && paracel::is_comm_container<typename T::value_type>::value>
@@ -334,7 +297,7 @@ public:
     }
   }
   
-  // api/impl for paracel default triple type alltoall
+  // impl of triple alltoall
   void alltoall(const paracel::list_type<paracel::list_type<paracel::triple_type> > & sbuf, 
                 paracel::list_type<paracel::list_type<paracel::triple_type> > & rbuf) {
     if(sbuf.size()) rbuf.resize(sbuf.size());
@@ -348,10 +311,9 @@ public:
     }
   }
 
-  // api for paracel alltoallring
+  // impl of alltoallring
   template <class T, class F>
-  paracel::Enable_if<paracel::is_comm_container<T>::value && paracel::is_comm_container<typename T::value_type>::value>
-  alltoallring(const T & sbuf, T & rbuf, F & func) {
+  void alltoallring(const T & sbuf, T & rbuf, F & func) {
     rbuf.resize(sbuf.size());
     func(sbuf[m_rk]);
     for(int i = 1; i < m_sz; ++i) {
@@ -363,8 +325,8 @@ public:
     }
   }
 
-  // api for paracel is_comm_builtin type allreduce
-  // TODO: abstract MPI_SUM with func
+  // impl of is_comm_builtin allreduce
+  // TODO: abstract MPI_SUM 
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<T>::value>
   allreduce(T & data) {
@@ -374,8 +336,8 @@ public:
     data = tmp;
   }
 
-  // api for paracel is_comm_container type allreduce
-  // TODO: abstract MPI_SUM with func
+  // impl of is_comm_container allreduce
+  // TODO: abstract MPI_SUM 
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value>
   allreduce(T & data) {
@@ -383,7 +345,7 @@ public:
     allreduce(data, sz);
   }
 
-  // impl for paracel is_comm_container type allreduce
+  // impl cont. 
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<typename T::value_type>::value>
   allreduce(T & data, int sz) {
