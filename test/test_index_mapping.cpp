@@ -1,3 +1,4 @@
+// mpic++ -std=c++11 -I../include test_index_mapping.cpp /usr/lib/libboost_context.so ../src/comm.so ../src/scheduler.so
 #include <iostream>
 #include <tuple>
 #include "paracel_types.hpp"
@@ -30,11 +31,17 @@ int main(int argc, char *argv[]) {
   }
   paracel::dict_type<size_t, paracel::str_type> rm, cm;
   paracel::list_type<std::tuple<size_t, size_t, double> > stf;
-  scheduler_obj.index_mapping(slotslst, stf, rm, cm);
+  paracel::dict_type<size_t, int> dm;
+  paracel::dict_type<size_t, int> col_dm;
+  scheduler_obj.index_mapping(slotslst, stf, rm, cm, dm, col_dm);
   
-  if(rk == 2) {
+  if(rk == 3) {
     for(auto & item : stf)
       std::cout << std::get<0>(item) << " | " << std::get<1>(item) << " | "<< std::get<2>(item) << std::endl;
+    for(auto & item : dm)
+      std::cout << item.first << " - " << item.second << std::endl;
   }
+
+
   return 0;
 }

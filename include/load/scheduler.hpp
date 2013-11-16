@@ -116,20 +116,22 @@ public:
   void index_mapping(const lt_type & slotslst, 
       paracel::list_type<std::tuple<size_t, size_t, double> > & stf, 
       paracel::dict_type<size_t, paracel::str_type> & rm,
-      paracel::dict_type<size_t, paracel::str_type> & cm) {
-      //paracel::dict_type<size_t, int> & dm,
-      //paracel::dict_type<size_t, int> & col_dm) {
+      paracel::dict_type<size_t, paracel::str_type> & cm,
+      paracel::dict_type<size_t, int> & dm,
+      paracel::dict_type<size_t, int> & col_dm) {
     
     int rk = m_comm.get_rank();
     int rowcolor = rk / npy;
     int colcolor = rk % npy;
     auto col_comm = m_comm.split(colcolor);
     auto row_comm = m_comm.split(rowcolor);
+
     paracel::list_type<paracel::str_type> rows, cols;
     for(auto & tpl : slotslst) {
       rows.push_back(std::get<0>(tpl));
       cols.push_back(std::get<1>(tpl));
     }
+
     paracel::set_type<paracel::str_type> new_rows, new_cols;
     auto union_func1 = [&] (paracel::list_type<paracel::str_type> tmp) {
       for(auto & item : tmp) { new_rows.insert(item); }
@@ -162,8 +164,15 @@ public:
       std::get<2>(tmp) = std::get<2>(tpl);
       stf.push_back(tmp);
     }
-    // TODO: degree
-    //paracel::dict_type<size_t, paracel::str_type> degree_map;
+
+    // cal dm
+    auto deg = paracel::sort_and_cnt(rows);
+    indx = 0;
+    for(auto & item : deg) {
+      dm[indx] = item;
+      indx += 1;
+    }
+    // cal col_dm
   }
   
 private:
@@ -176,7 +185,7 @@ private:
 
 private:
   paracel::Comm m_comm;
-  paracel::str_type pattern = "fmap"; 
+  paracel::str_type pattern = "fsmap"; 
   bool mix = false;
   int leader = 0;
   int npx;

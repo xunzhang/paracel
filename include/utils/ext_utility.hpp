@@ -15,6 +15,7 @@
 #ifndef FILE_56636034_fc34_4f9e_4343_4111ca3b127d_HPP
 #define FILE_56636034_fc34_4f9e_4343_4111ca3b127d_HPP
 
+#include <map>
 #include "paracel_types.hpp"
 
 namespace paracel {
@@ -45,6 +46,23 @@ slst_type str_split(const paracel::str_type & str, const paracel::str_type & sep
     st = en + 1;
   }
   return result;
+}
+
+// ['a', 'c', 'b', 'a', 'a', 'b'] -> [3, 2, 1]
+paracel::list_type<int> sort_and_cnt(const paracel::list_type<paracel::str_type> & in) {
+  paracel::list_type<int> r;
+  std::map<paracel::str_type, int> m;
+  for(auto & str : in) {
+    if(m.find(str) == m.end()) {
+      m[str] = 1;
+    } else {
+      m[str] += 1;
+    }
+  }
+  for(auto & mp : m) {
+    r.push_back(mp.second);
+  }
+  return r;
 }
 
 } // namespace paracel
