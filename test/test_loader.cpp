@@ -1,4 +1,5 @@
 #include <functional>
+#include <eigen/Eigen/Sparse>
 #include "paracel_types.hpp"
 #include "utils/comm.hpp"
 #include "load/loader.hpp"
@@ -17,8 +18,8 @@ int main(int argc, char *argv[])
   
   paracel::dict_type<size_t, paracel::str_type> rm, cm;
   paracel::dict_type<size_t, int> dm, col_dm;
-
-  ld.create_matrix(linelst, rm, cm, dm, col_dm);
+  Eigen::SparseMatrix<double, Eigen::RowMajor> blk_mtx;
+  ld.create_matrix(linelst, blk_mtx, rm, cm, dm, col_dm);
   
   for(auto & item : rm) {
     std::cout << rk << " "<< item.first << " ~ " << item.second << std::endl;
@@ -26,5 +27,8 @@ int main(int argc, char *argv[])
   for(auto & item : cm) {
     std::cout << rk << " " << item.first << " ^ " << item.second << std::endl;
   } 
+  if(rk == 0) {
+    std::cout << rk << blk_mtx << std::endl;
+  }
   return 0;
 }
