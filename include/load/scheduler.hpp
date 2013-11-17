@@ -61,7 +61,7 @@ public:
   }
 
   template <class F = std::function< paracel::list_type<paracel::str_type>(paracel::str_type) > >
-  llt_type lines_organize(paracel::list_type<paracel::str_type> & lines,
+  llt_type lines_organize(const paracel::list_type<paracel::str_type> & lines,
       F && parser_func = tmp_parser) {
 
     llt_type line_slot_lst(m_comm.get_size());

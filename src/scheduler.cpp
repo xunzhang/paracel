@@ -32,13 +32,18 @@ scheduler::schedule_load(schedule_load_para_type & loads) {
   int rk = m_comm.get_rank();
   int sz = m_comm.get_size();
   int flag = 0;
-  int cnt_control = BLK_SZ;
+  int blk_sz = BLK_SZ;
+  if(pattern == "fvec" || pattern == "linesplit") {
+    blk_sz = 1;
+  }
+  int cnt_control = blk_sz;
   int cnt = cnt_control - 1;
   int ntasks = sz * cnt_control;
   int bnd = ntasks + sz - 2;
+ 
   if(rk == leader) {
     // load tasks [0, BLK_SZ - 1]
-    for(int i = 0; i < BLK_SZ; ++i) {
+    for(int i = 0; i < blk_sz; ++i) {
       // loading lines
       while(loads[i]) {
 	auto line = loads[i].get();
