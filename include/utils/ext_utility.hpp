@@ -50,8 +50,12 @@ slst_type str_split(const paracel::str_type & str, const paracel::str_type & sep
   return result;
 }
 
-bool endswith(const paracel::str_type & str, const std::string & c) {
-  return str.rfind(c) == (str.length() - c.length());
+bool startswith(const paracel::str_type & str, const paracel::str_type & key) {
+  return str.find(key) == 0;
+}
+
+bool endswith(const paracel::str_type & str, const std::string & key) {
+  return str.rfind(key) == (str.length() - key.length());
 }
 
 // ['a', 'c', 'b', 'a', 'a', 'b'] -> [3, 2, 1]
@@ -71,54 +75,55 @@ paracel::list_type<int> sort_and_cnt(const paracel::list_type<paracel::str_type>
   return r;
 }
 
-bool isfile(paracel::str_type & f) {
+bool isfile(const paracel::str_type & f) {
   struct stat st;
-  stat(f, &st);
+  stat(f.c_str(), &st);
   if(S_ISREG(st.st_mode)) {
     return true;
   }
   return false;
 }
 
-bool isdir(paracel::str_type & d) {
+bool isdir(const paracel::str_type & d) {
   struct stat st;
-  stat(d, &st);
+  stat(d.c_str(), &st);
   if(S_ISDIR(st.st_mode)) {
     return true;
   }
   return false;
 }
 
-paracel::list_type<paracel::str_type> paracel_glob(const paracel::string & pattern) {
+paracel::list_type<paracel::str_type> paracel_glob(const paracel::str_type & pattern) {
   glob_t glob_res;
   paracel::list_type<paracel::str_type> lst;
   glob(pattern.c_str(), GLOB_TILDE, NULL, &glob_res);
-  for(size_t i = 0; i < glob_res.gl_pathc, ++i) {
+  for(size_t i = 0; i < glob_res.gl_pathc; ++i) {
     lst.push_back(std::string(glob_res.gl_pathv[i]));
   }
-  globfree(&glob_result);
+  globfree(&glob_res);
   return lst;
 }
 
 // expand a dictory name recursively
 paracel::list_type<paracel::str_type> expand_dir_rec(const paracel::str_type & dname) {
  paracel::list_type<paracel::str_type> fl;
+ auto dname_new = dname;
  if(!endswith(dname, "/")) {
-   dname = dnmae + "/";
+   dname_new = dname + "/";
  }
- auto lst = paracel_glob(dname + "*");
+ auto lst = paracel_glob(dname_new + "*");
  for(auto & name : lst) {
    if(isfile(name)) {
      fl.push_back(name);
    } else {
      auto tmp_lst = expand_dir_rec(name);
-     fl.insert(fl.end(); tmp_lst.begin(), tmp_lst.end());
+     fl.insert(fl.end(), tmp_lst.begin(), tmp_lst.end());
    }
  }
  return fl;
 }
 
-// fname can be 'demo.txt' or 'demo_dir'
+// fname can be 'demo.txt' or 'demo_dir' or 'demo_dir/*.csv'
 paracel::list_type<paracel::str_type> expand(const paracel::str_type & fname) {
   paracel::list_type<paracel::str_type> fl;
   if(isfile(fname)) {
@@ -132,18 +137,14 @@ paracel::list_type<paracel::str_type> expand(const paracel::str_type & fname) {
   } 
 }
 
-// fname_lst can be ['demo.txt', 'demo_dir', ...]
+// fname_lst can be ['demo.txt', 'demo_dir', 'demo_dir/*.txt', ...]
 paracel::list_type<paracel::str_type> expand(const paracel::list_type<paracel::str_type> & fname_lst) {
   paracel::list_type<paracel::str_type> fl;
-  for(auto & name : lst) {
-    if(isfile(name)) {
-      fl.push_back(name);
-    } else {
-      auto tmp_lst = expand_dir_rec(name);
-      fl.insert(fl.end(); tmp_lst.begin(), tmp_lst.end());
-    }
+  for(auto & name : fname_lst) {
+    auto tmp_lst = expand(name);
+    fl.insert(fl.end(), tmp_lst.begin(), tmp_lst.end());
   }
-  return lst;
+  return fl;
 }
 
 } // namespace paracel
