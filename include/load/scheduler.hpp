@@ -70,6 +70,7 @@ public:
       auto stf = parser_func(line);
       if(stf.size() == 2) {
         // bfs or part of fset case
+	// ['a', 'b'] or ['a', 'b:0.2']
 	auto tmp = paracel::str_split(stf[1], delimiter);
 	if(tmp.size() == 1) {
 	  paracel::triple_type tpl(stf[0], stf[1], 1.);
@@ -80,6 +81,7 @@ public:
 	}
       } else if(mix) {
         // fset case
+	// ['a', 'b', 'c'] or ['a', 'b|0.2', 'c|0.4'], but ['a', '0.2', '0.4'] is not supported here
         for(int i = 1; i < stf.size(); ++i) {
 	  auto item = stf[i];
 	  auto tmp = paracel::str_split(item, delimiter);

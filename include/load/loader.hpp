@@ -98,9 +98,29 @@ public:
     create_matrix(linelst, blk_mtx, rm, cm, dm, col_dm);
   }
 
-  // fvec case, only support line decomposition
+  // fvec case, only support row decomposition
   void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
+  		Eigen::Matrix2d & blk_dense_mtx,
   		paracel::dict_type<size_t, paracel::str_type> & rm) {
+    int csz = 0;
+    size_t indx = 0;
+    bool flag = true;
+    paracel::list_type<Eigen::Vector2d> mtx_llst;
+    for(auto & line : linelst) {
+      auto stf = parserfunc(line);
+      if(flag) { csz = stf.size() - 1; flag = true; }
+      rm[indx] = stf[0];
+      indx += 1;
+      Eigen::Vector2d tmp(csz);
+      for(int i = 0; i < csz; ++i)
+        tmp[i] = std::stod(stf[i + 1]);
+      mtx_llst.push_back(tmp);
+    } 
+    // create dense block matrix
+    blk_dense_mtx.resize(rm.size(), csz);
+    for(int i = 0; i < rm.size(); ++i) {
+      blk_dense_mtx.row(i) = mtx_llst[i];
+    }
   }
 
 private:
