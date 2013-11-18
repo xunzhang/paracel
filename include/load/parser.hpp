@@ -15,6 +15,7 @@
 #ifndef FILE_607caade_25c4_da56_7a7b_c0cd1aa35b74_HPP
 #define FILE_607caade_25c4_da56_7a7b_c0cd1aa35b74_HPP
 
+#include <functional>
 #include "paracel_types.hpp"
 #include "utils/ext_utility.hpp"
 
@@ -75,7 +76,7 @@ auto parser_a =
  *   a2.txt
  *
  * example2: a b:0.1|c:0.2|d:0.4
- *   f = std::bind(parser_b, std::placeholders::_1, '\t', '|')
+ *   f = std::bind(parser_b, std::placeholders::_1, ' ', '|')
  *   f(l) -> ['a', 'b:0.1', 'c:0.2', 'd:0.4']
  *   f.txt
  *
@@ -115,6 +116,23 @@ auto parser_douban_interest =
 auto parser_netflix = 
   []() {};
 */
+
+using parser_type = std::function<paracel::list_type<paracel::str_type>(paracel::str_type)>;
+
+template <class T>
+parser_type gen_parser(T & parser) {
+  return std::bind(parser, std::placeholders::_1);
+}
+
+template <class T>
+parser_type gen_parser(T & parser, char sep1) {
+  return std::bind(parser, std::placeholders::_1, sep1);
+}
+
+template <class T>
+parser_type gen_parser(T & parser, char sep1, char sep2) {
+  return std::bind(parser, std::placeholders::_1, sep1, sep2);
+}
 
 } // namespace paracel
 

@@ -129,10 +129,11 @@ void files_load_lines_impl(paracel::coroutine<paracel::str_type>::caller_type & 
 paracel::deque_type< paracel::coroutine<paracel::str_type> > 
 files_partition(paracel::list_type<paracel::str_type> & name_list, 
                int np,
+	       const paracel::str_type & pattern = "",
 	       int blk_sz = BLK_SZ) {
 
   paracel::deque_type< paracel::coroutine<paracel::str_type> > func_loaders;
-  
+  if(pattern == "linesplit" || pattern == "fvec") blk_sz = 1; 
   np = np * blk_sz;
   paracel::list_type<int> displs(name_list.size() + 1, 0);
   for(int i = 0; i < displs.size(); ++i) {

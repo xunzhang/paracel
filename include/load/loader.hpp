@@ -19,6 +19,7 @@
 #include <functional>
 
 #include <boost/variant.hpp>
+#include <eigen/Eigen/Dense>
 #include <eigen/Eigen/Sparse>
 
 #include "paracel_types.hpp"
@@ -40,6 +41,8 @@ public:
   
   loader(T fns, paracel::Comm comm) : filenames(fns), m_comm(comm) {};
   
+  loader(T fns, paracel::Comm comm, paracel::str_type pt) : filenames(fns), m_comm(comm), pattern(pt) {};
+
   loader(T fns, paracel::Comm comm, parser_type f, paracel::str_type pt) : filenames(fns), m_comm(comm), parserfunc(f), pattern(pt) {};
   
   loader(T fns, paracel::Comm comm, parser_type f, paracel::str_type pt, bool flag) : filenames(fns), m_comm(comm), parserfunc(f), pattern(pt), mix(flag) {};
@@ -49,7 +52,7 @@ public:
     paracel::scheduler scheduler(m_comm, pattern, mix);
     auto fname_lst = paracel::expand(filenames);
     // generate loads
-    auto loads = paracel::files_partition(fname_lst, m_comm.get_size());
+    auto loads = paracel::files_partition(fname_lst, m_comm.get_size(), pattern);
     std::cout << "procs " << m_comm.get_rank() << " loads finished" << std::endl;
     // parallel loading lines
     auto linelst = scheduler.schedule_load(loads);
@@ -100,20 +103,22 @@ public:
 
   // fvec case, only support row decomposition
   void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
-  		Eigen::Matrix2d & blk_dense_mtx,
+  		Eigen::MatrixXd & blk_dense_mtx,
   		paracel::dict_type<size_t, paracel::str_type> & rm) {
+    
     int csz = 0;
     size_t indx = 0;
     bool flag = true;
-    paracel::list_type<Eigen::Vector2d> mtx_llst;
+    paracel::list_type<Eigen::VectorXd> mtx_llst;
     for(auto & line : linelst) {
       auto stf = parserfunc(line);
       if(flag) { csz = stf.size() - 1; flag = true; }
       rm[indx] = stf[0];
       indx += 1;
-      Eigen::Vector2d tmp(csz);
-      for(int i = 0; i < csz; ++i)
+      Eigen::VectorXd tmp(csz);
+      for(int i = 0; i < csz; ++i) {
         tmp[i] = std::stod(stf[i + 1]);
+      }
       mtx_llst.push_back(tmp);
     } 
     // create dense block matrix
