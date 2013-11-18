@@ -28,7 +28,6 @@ int main(int argc, char *argv[])
     //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
     paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
     auto linelst = ld.load();
-    std::cout << "monday" << linelst.size() << std::endl;
     paracel::dict_type<size_t, paracel::str_type> rm, cm;
     Eigen::SparseMatrix<double, Eigen::RowMajor> blk_mtx;
     ld.create_matrix(linelst, blk_mtx, rm, cm);
@@ -51,6 +50,22 @@ int main(int argc, char *argv[])
     if(rk == 0) {
       std::cout << d_blk_mtx << std::endl;
     }
+  }
+  {
+    paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/f.txt", comm, f5_parser, "fsmap", true); 		// fsmap, smap
+    auto linelst = ld.load();
+    paracel::dict_type<size_t, paracel::str_type> rm, cm;
+    Eigen::SparseMatrix<double, Eigen::RowMajor> blk_mtx;
+    paracel::dict_type<size_t, int> dm, col_dm;
+    ld.create_matrix(linelst, blk_mtx, rm, cm, dm, col_dm);
+    for(auto & item : rm) {
+      std::cout << rk << " "<< item.first << " ~ " << item.second << std::endl;
+    }
+    for(auto & item : cm) {
+      std::cout << rk << " " << item.first << " ^ " << item.second << std::endl;
+    }
+    if(rk == 3)
+      std::cout << "last" << blk_mtx << std::endl;
   }
   return 0;
 }
