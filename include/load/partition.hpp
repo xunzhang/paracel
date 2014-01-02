@@ -49,6 +49,7 @@ void file_load_lines_impl(paracel::coroutine<paracel::str_type>::caller_type & y
     offset += l.size() + 1;
     yield(l);
   }
+  f.close();
 }
 
 paracel::deque_type< paracel::coroutine<paracel::str_type> >

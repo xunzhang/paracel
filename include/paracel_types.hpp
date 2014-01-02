@@ -21,6 +21,7 @@
 #include <type_traits>
 #include <string>
 #include <functional>
+#include <stdexcept>
 #include <deque>
 #include <tuple>
 #include <set>

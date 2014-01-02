@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
   int rk = comm.get_rank();
 
   auto f_parser = std::bind(paracel::parser_a, std::placeholders::_1);
+  auto f1_parser = std::bind(paracel::parser_a, std::placeholders::_1, ',');
   auto f2_parser = std::bind(paracel::parser_b, std::placeholders::_1, ' ', '|');
   auto f3_parser = [](const std::string & line) { return paracel::str_split(line, ' '); }; 
   auto f4_parser = paracel::gen_parser(paracel::parser_a);
@@ -26,11 +27,13 @@ int main(int argc, char *argv[])
     //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/d2.txt", comm, f_parser, "fmap"); 		// fsmap, smap
     //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/c.txt", comm, f3_parser, "fmap", true); 		// fsmap, smap
     //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
-    paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
+    paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Data/test/testload.csv", comm, f1_parser, "linesplit"); 		// fsmap, smap
     auto linelst = ld.load();
     paracel::dict_type<size_t, paracel::str_type> rm, cm;
     Eigen::SparseMatrix<double, Eigen::RowMajor> blk_mtx;
     ld.create_matrix(linelst, blk_mtx, rm, cm);
+    /*
     for(auto & item : rm) {
       std::cout << rk << " "<< item.first << " ~ " << item.second << std::endl;
     }
@@ -40,7 +43,9 @@ int main(int argc, char *argv[])
     if(rk == 1) {
       std::cout << blk_mtx << std::endl;
     }
+    */
   }
+  /*
   {
     paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/g.txt", comm, f_parser, "linesplit");
     auto linelst = ld.load();
@@ -67,5 +72,6 @@ int main(int argc, char *argv[])
     if(rk == 3)
       std::cout << "last" << blk_mtx << std::endl;
   }
+  */
   return 0;
 }
