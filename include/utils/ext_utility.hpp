@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013, Douban Inc. 
+ * Copyright (c) 2014, Douban Inc. 
  *   All rights reserved. 
  *
  * Distributed under the BSD License. Check out the LICENSE file for full text.
@@ -59,7 +59,8 @@ bool endswith(const paracel::str_type & str, const std::string & key) {
 }
 
 // ['a', 'c', 'b', 'a', 'a', 'b'] -> [3, 2, 1]
-paracel::list_type<int> sort_and_cnt(const paracel::list_type<paracel::str_type> & in) {
+paracel::list_type<int> 
+sort_and_cnt(const paracel::list_type<paracel::str_type> & in) {
   paracel::list_type<int> r;
   std::map<paracel::str_type, int> m;
   for(auto & str : in) {
@@ -93,7 +94,8 @@ bool isdir(const paracel::str_type & d) {
   return false;
 }
 
-paracel::list_type<paracel::str_type> paracel_glob(const paracel::str_type & pattern) {
+paracel::list_type<paracel::str_type> 
+paracel_glob(const paracel::str_type & pattern) {
   glob_t glob_res;
   paracel::list_type<paracel::str_type> lst;
   glob(pattern.c_str(), GLOB_TILDE, NULL, &glob_res);
@@ -105,7 +107,8 @@ paracel::list_type<paracel::str_type> paracel_glob(const paracel::str_type & pat
 }
 
 // expand a dictory name recursively
-paracel::list_type<paracel::str_type> expand_dir_rec(const paracel::str_type & dname) {
+paracel::list_type<paracel::str_type> 
+expand_dir_rec(const paracel::str_type & dname) {
  paracel::list_type<paracel::str_type> fl;
  auto dname_new = dname;
  if(!endswith(dname, "/")) {
@@ -124,7 +127,8 @@ paracel::list_type<paracel::str_type> expand_dir_rec(const paracel::str_type & d
 }
 
 // fname can be 'demo.txt' or 'demo_dir' or 'demo_dir/*.csv'
-paracel::list_type<paracel::str_type> expand(const paracel::str_type & fname) {
+paracel::list_type<paracel::str_type> 
+expand(const paracel::str_type & fname) {
   paracel::list_type<paracel::str_type> fl;
   if(isfile(fname)) {
     fl.push_back(fname);
@@ -138,7 +142,8 @@ paracel::list_type<paracel::str_type> expand(const paracel::str_type & fname) {
 }
 
 // fname_lst can be ['demo.txt', 'demo_dir', 'demo_dir/*.txt', ...]
-paracel::list_type<paracel::str_type> expand(const paracel::list_type<paracel::str_type> & fname_lst) {
+paracel::list_type<paracel::str_type> 
+expand(const paracel::list_type<paracel::str_type> & fname_lst) {
   paracel::list_type<paracel::str_type> fl;
   for(auto & name : fname_lst) {
     auto tmp_lst = expand(name);

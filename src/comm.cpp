@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013, Douban Inc. 
+ * Copyright (c) 2014, Douban Inc. 
  *   All rights reserved. 
  *
  * Paracel - A distributed optimization framework with parameter server.

@@ -9,6 +9,13 @@ int main(int argc, char *argv[])
 {
   {
     std::cout << "---------" << std::endl;
+    std::string a("ancs,");
+    auto res = paracel::str_split(a, "|");
+    std::cout << res.size() << std::endl;
+    for(auto & s : res) std::cout << s << std::endl;
+  }
+  {
+    std::cout << "---------" << std::endl;
     std::string a("a|bc|d|");
     auto res = paracel::str_split(a, '|');
     std::cout << res.size() << std::endl;

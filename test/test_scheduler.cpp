@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   int sz = comm.get_size();
   
   paracel::scheduler scheduler_obj(comm);
-  paracel::list_type<paracel::str_type> name_lst{"c.txt"};
+  paracel::list_type<paracel::str_type> name_lst{"../demo/unit.txt"};
   auto loads = paracel::files_partition(name_lst, 2);
   auto linelst = scheduler_obj.schedule_load(loads);
   if(rk == 1) {
@@ -19,14 +19,16 @@ int main(int argc, char *argv[]) {
       std::cout << "line: " << line << std::endl;
     }
   }
-
-  auto f_parser = std::bind(paracel::parser_a, std::placeholders::_1);
+  auto local_parser = [](const paracel::str_type & line, char sep = ',') { 
+    return paracel::str_split(line, sep);
+  };
+  auto f_parser = std::bind(local_parser, std::placeholders::_1);
   auto result = scheduler_obj.lines_organize(linelst, f_parser);
   if(rk == 1) {
     std::cout << "aaaaaaaaaaaaaaaaaaaaaa" << std::endl;
     for(auto & lst : result) {
       for(auto & triple : lst) {
-        std::cout << "rank: " << rk << std::get<0>(triple) << " " << std::get<1>(triple) << " " << std::get<2>(triple) << std::endl;
+        std::cout << "rank: " << rk << " " << std::get<0>(triple) << " " << std::get<1>(triple) << " " << std::get<2>(triple) << std::endl;
       }
       std::cout << "xxxxxxxxxxxxxxxxxxxxxx" << std::endl;
     }
@@ -36,7 +38,7 @@ int main(int argc, char *argv[]) {
   
   std::cout << "done" << std::endl;
 
-  if(rk == 0) { 
+  if(rk == 1) { 
     for(auto & tpl : stf) {
       std::cout << std::get<0>(tpl) << " " << std::get<1>(tpl) << " " << std::get<2>(tpl) << std::endl;
     }

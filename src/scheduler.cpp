@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013, Douban Inc. 
+ * Copyright (c) 2014, Douban Inc. 
  *   All rights reserved. 
  *
  * Distributed under the BSD License. Check out the LICENSE file for full text.
@@ -56,9 +56,9 @@ scheduler::schedule_load(schedule_load_para_type & loads) {
     while(1) {
       if(flag) break;
       if(cnt == ntasks - 1) break;
-      m_comm.send(rk, leader, 2013);
-      m_comm.recv(cnt, leader, 2013);
-      m_comm.recv(flag, leader, 2013);
+      m_comm.send(rk, leader, 2014);
+      m_comm.recv(cnt, leader, 2014);
+      m_comm.recv(flag, leader, 2014);
       if(!flag) {
 	// loading lines
 	while(loads[cnt]) {
@@ -76,13 +76,13 @@ scheduler::schedule_load(schedule_load_para_type & loads) {
       auto status = m_comm.recv(tmp, any_source, any_tag);
       if(!flag) cnt += 1;
       int src = m_comm.get_source(status);
-      m_comm.send(cnt, src, 2013);
+      m_comm.send(cnt, src, 2014);
 
       if( (cnt == ntasks - 1) && (!flag) ) {
-	m_comm.send(flag, src, 2013);
+	m_comm.send(flag, src, 2014);
 	flag = 1;
       } else {
-	m_comm.send(flag, src, 2013);
+	m_comm.send(flag, src, 2014);
       }
       mutex.unlock();
     } // end of while

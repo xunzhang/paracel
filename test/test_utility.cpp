@@ -29,7 +29,9 @@ int main(int agrc, char *argv[])
     std::cout << "---------------" << std::endl;
   }
   {
-    std::vector<std::string> tmp{"/home/xunzhang/xunzhang/Proj/paracel/test/*.txt", "/home/xunzhang/xunzhang/Proj/paracel/include/utils/", "/home/xunzhang/xunzhang/Proj/paracel/include/kv.hpp"};
+    std::vector<std::string> tmp{"/home/xunzhang/xunzhang/Proj/paracel/test/*.txt", 
+    				"/home/xunzhang/xunzhang/Proj/paracel/include/utils/", 
+				"/home/xunzhang/xunzhang/Proj/paracel/include/kv.hpp"};
     auto result = paracel::expand(tmp);
     for(auto & item : result)
       std::cout << item << std::endl;

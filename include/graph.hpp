@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013, Douban Inc. 
+ * Copyright (c) 2014, Douban Inc. 
  *   All rights reserved. 
  *
  * Distributed under the BSD License. Check out the LICENSE file for full text.
@@ -107,15 +107,15 @@ private:
 };
 
 // (size_t, size_t, double) type directed graph
-class digraph {
+class bigraph {
 public:
   
-  digraph(size_t v_sz) {
+  bigraph(size_t v_sz) {
     this->v_sz = v_sz;
     adj.resize(v_sz);
   }
   
-  digraph(paracel::list_type<std::pair<size_t, size_t> > & edges) {
+  bigraph(paracel::list_type<std::pair<size_t, size_t> > & edges) {
     for(auto & edge : edges) {
       if(edge.first > v_sz) v_sz = edge.first;
       if(edge.second > v_sz) v_sz = edge.second;
@@ -127,7 +127,7 @@ public:
     }
   }
 
-  digraph(paracel::list_type<std::tuple<size_t, size_t, double> > & tpls) {
+  bigraph(paracel::list_type<std::tuple<size_t, size_t, double> > & tpls) {
     for(auto & tpl : tpls) {
       if(std::get<0>(tpl) > v_sz) v_sz = std::get<0>(tpl);
       if(std::get<1>(tpl) > v_sz) v_sz = std::get<1>(tpl);
@@ -165,17 +165,7 @@ public:
 
   inline size_t indegree(size_t v) {}
   
-  inline double avg_degree() { return * e_sz / v_sz; }
-  
-  inline size_t max_degree() {
-    size_t max = 0;
-    for(size_t v = 0; v < v_sz; ++v) {
-      if(degree(v) > max) {
-        max = degree(v);
-      }
-    }
-    return max;
-  }
+  inline double avg_degree() { return e_sz / v_sz; }
   
   inline int selfloops() {
     int cnt = 0;

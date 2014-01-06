@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013, Douban Inc. 
+ * Copyright (c) 2014, Douban Inc. 
  *   All rights reserved. 
  *
  * Distributed under the BSD License. Check out the LICENSE file for full text.

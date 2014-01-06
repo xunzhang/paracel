@@ -1,4 +1,3 @@
-// mpic++ -std=c++11 test_partition.cpp /usr/lib/libboost_context.so -I../include
 #include <iostream>
 #include <vector>
 #include <deque>
@@ -35,7 +34,7 @@ int main(int argc, char *argv[]) {
   }
 
   { // test file_load_lines_impl
-    paracel::coroutine<paracel::str_type> file_load_lines(std::bind(paracel::file_load_lines_impl, std::placeholders::_1, "a.txt", 0, 67));
+    paracel::coroutine<paracel::str_type> file_load_lines(std::bind(paracel::file_load_lines_impl, std::placeholders::_1, "../demo/a.txt", 0, 67));
     while(file_load_lines) {
       auto tmp = file_load_lines.get();
       std::cout << tmp << std::endl;
@@ -44,7 +43,7 @@ int main(int argc, char *argv[]) {
   }
 
   { // test file_partition
-    auto loads = paracel::file_partition("a.txt", 2);
+    auto loads = paracel::file_partition("../demo/a.txt", 2);
     for(auto & line_iterable : loads) {
       while(line_iterable) {
         auto line = line_iterable.get();
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]) {
   { // test files_load_lines_impl
     std::cout << std::endl;
     std::cout << std::endl;
-    paracel::list_type<paracel::str_type> name_lst{"a.txt"};
+    paracel::list_type<paracel::str_type> name_lst{"../demo/a.txt"};
     paracel::list_type<int> dis{0};
     paracel::coroutine<paracel::str_type> files_load_lines(std::bind(paracel::files_load_lines_impl, std::placeholders::_1, name_lst, dis, 0, 67));
     while(files_load_lines) {
@@ -72,7 +71,7 @@ int main(int argc, char *argv[]) {
     std::cout << "----------------" << std::endl;
     std::cout << std::endl;
     std::cout << std::endl;
-    paracel::list_type<paracel::str_type> name_lst{"a.txt"};
+    paracel::list_type<paracel::str_type> name_lst{"../demo/a.txt"};
     auto loads = paracel::files_partition(name_lst, 2);
     for(auto & line_iterable : loads) {
       while(line_iterable) {
@@ -88,7 +87,7 @@ int main(int argc, char *argv[]) {
     std::cout << "----------------" << std::endl;
     std::cout << std::endl;
     std::cout << std::endl;
-    paracel::list_type<paracel::str_type> name_lst{"a.txt", "b.txt"};
+    paracel::list_type<paracel::str_type> name_lst{"../demo/a.txt", "../demo/b.txt"};
     auto loads = paracel::files_partition(name_lst, 2);
     for(auto & line_iterable : loads) {
       while(line_iterable) {
@@ -104,7 +103,7 @@ int main(int argc, char *argv[]) {
     std::cout << "XXXXXXXXXX" << std::endl;
     std::cout << std::endl;
     std::cout << std::endl;
-    paracel::list_type<paracel::str_type> name_lst{"a.txt", "b.txt"};
+    paracel::list_type<paracel::str_type> name_lst{"../demo/a.txt", "../demo/b.txt"};
     auto loads = paracel::files_partition(name_lst, 1);
     //auto line_iterable = loads[0];
     while(loads[1]) {

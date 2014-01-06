@@ -21,25 +21,32 @@ int main(int argc, char *argv[])
   auto f5_parser = paracel::gen_parser(paracel::parser_b, ' ', '|');
 
   {
-    //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/a.txt", comm, f_parser, "fmap", true); 		// fsmap, smap
-    //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/a2.txt", comm, f2_parser, "fmap", true); 	// fsmap, smap
-    //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/b.txt", comm, f4_parser, "fmap"); 		// fsmap, smap
-    //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/d2.txt", comm, f_parser, "fmap"); 		// fsmap, smap
-    //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/c.txt", comm, f3_parser, "fmap", true); 		// fsmap, smap
-    //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
-    //paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Proj/paracel/demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
-    paracel::loader<paracel::str_type> ld("/home/xunzhang/xunzhang/Data/test/testload.csv", comm, f1_parser, "linesplit"); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("../demo/a.txt", comm, f_parser, "fmap", true); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("../demo/a2.txt", comm, f2_parser, "fmap", true); 	// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("../demo/b.txt", comm, f4_parser, "fmap"); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("../demo/d2.txt", comm, f_parser, "fmap"); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("../demo/c.txt", comm, f3_parser, "fmap", true); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("../demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("../demo/f.txt", comm, f5_parser, "fmap", true); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("/mfs/user/wuhong/Data/training1.csv", comm, f1_parser, "linesplit"); 		// fsmap, smap
+    //paracel::loader<paracel::str_type> ld("/mfs/user/wuhong/tmp/movielen100k", comm, f1_parser, "linesplit"); 		// fsmap, smap
+    paracel::loader<paracel::str_type> ld("../demo/unit.txt", comm, f1_parser, "fmap");
     auto linelst = ld.load();
     paracel::dict_type<size_t, paracel::str_type> rm, cm;
+    paracel::dict_type<size_t, int> dm, col_dm;
     Eigen::SparseMatrix<double, Eigen::RowMajor> blk_mtx;
-    ld.create_matrix(linelst, blk_mtx, rm, cm);
-    /*
-    for(auto & item : rm) {
-      std::cout << rk << " "<< item.first << " ~ " << item.second << std::endl;
+    ld.create_matrix(linelst, blk_mtx, rm, cm, dm, col_dm);
+    if(rk == 0) {
+      std::cout << blk_mtx << std::endl;
+    
+      for(auto & item : dm) {
+        std::cout << rk << " "<< item.first << " ~ " << item.second << std::endl;
+      }
+      for(auto & item : col_dm) {
+        std::cout << rk << " " << item.first << " ^ " << item.second << std::endl;
+      }
     }
-    for(auto & item : cm) {
-      std::cout << rk << " " << item.first << " ^ " << item.second << std::endl;
-    } 
+    /*
     if(rk == 1) {
       std::cout << blk_mtx << std::endl;
     }

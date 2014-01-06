@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013, Douban Inc. 
+ * Copyright (c) 2014, Douban Inc. 
  *   All rights reserved. 
  *
  * Distributed under the BSD License. Check out the LICENSE file for full text.
@@ -29,7 +29,8 @@ void npfacty(const int np, int & nx, int & ny) {
   ny = np;
 }
 
-void npfact2d(const int np, int & nx, int & ny, bool row_master = true) {
+void npfact2d(const int np, int & nx, int & ny, 
+	bool row_master = true) {
   int upbnd = (int)sqrt(np);
   while(upbnd - 1) {
     if((np % upbnd) == 0) {
@@ -46,7 +47,11 @@ void npfact2d(const int np, int & nx, int & ny, bool row_master = true) {
       upbnd -= 1;
     }
   } // end of while
-  if(row_master) { nx = np; ny = 1; } else { nx = 1; ny = np; }
+  if(row_master) { 
+    nx = np; ny = 1; 
+  } else { 
+    nx = 1; ny = np; 
+  }
   return;
 }
 

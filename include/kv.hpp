@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013, Douban Inc. 
+ * Copyright (c) 2014, Douban Inc. 
  *   All rights reserved. 
  * 
  * Distributed under the BSD License. Check out the LICENSE file for full text.
@@ -100,7 +100,9 @@ public:
   gets(const K & k) {
     if(auto v = get(k)) {
       std::pair<V, paracel::hash_return_type> ret(*v, hfunc(*v));
-      return boost::optional<std::pair<V, paracel::hash_return_type> >(ret);
+      return boost::optional<
+      			std::pair<V, paracel::hash_return_type> 
+			>(ret);
     } else {
       return boost::none;
     }
