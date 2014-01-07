@@ -110,9 +110,12 @@ private:
 class bigraph {
 public:
   
+  bigraph() {}
+
   bigraph(size_t v_sz) {
     this->v_sz = v_sz;
     adj.resize(v_sz);
+    reverse_adj.resize(v_sz);
   }
   
   bigraph(paracel::list_type<std::pair<size_t, size_t> > & edges) {
@@ -122,21 +125,27 @@ public:
     }
     v_sz += 1;
     adj.resize(v_sz);
+    reverse_adj.resize(v_sz);
     for(auto & edge : edges) {
       add_edge(edge.first, edge.second);
     }
   }
 
-  bigraph(paracel::list_type<std::tuple<size_t, size_t, double> > & tpls) {
+  void construct_from_triples(const paracel::list_type<std::tuple<size_t, size_t, double> > & tpls) {
     for(auto & tpl : tpls) {
       if(std::get<0>(tpl) > v_sz) v_sz = std::get<0>(tpl);
       if(std::get<1>(tpl) > v_sz) v_sz = std::get<1>(tpl);
     }
     v_sz += 1;
     adj.resize(v_sz);
+    reverse_adj.resize(v_sz);
     for(auto & tpl : tpls) {
       add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
     }
+  }
+
+  bigraph(paracel::list_type<std::tuple<size_t, size_t, double> > & tpls) {
+    construct_from_triples(tpls);
   }
 
   void add_edge(size_t v, size_t w) {
@@ -150,8 +159,34 @@ public:
     reverse_adj[w].emplace_back(std::make_pair(v, wgt));
     e_sz += 1;
   }
+
+  template <class Func>
+  void traverse(Func & f) {  
+    for(int i = 0; i < v_sz; ++i) {
+      for(auto & e_w : adj[i]) {
+        f(std::make_tuple((size_t)i, e_w.first, e_w.second));
+      }
+    }
+  }
+
+  template <class Func>
+  void traverse(size_t v, Func & f) {
+    for(auto & e_w : adj[v]) {
+      f(std::make_tuple(v, e_w.first, e_w.second));
+    }
+  }
+  
+  void dump_triples(paracel::list_type<std::tuple<size_t, size_t, double> > & tpls) {
+    tpls.resize(0);
+    for(int i = 0; i < v_sz; ++i) {
+      for(auto & e_w : adj[i]) {
+        tpls.emplace_back(std::make_tuple((size_t)i, e_w.first, e_w.second));
+      }
+    }
+  }
   
   bigraph reverse() {
+    // TODO
   }
 
   inline size_t v() { return v_sz; }
@@ -159,7 +194,6 @@ public:
   inline size_t e() { return e_sz; }
   
   bag_type<std::pair<size_t, double> > adjacent(size_t v) { return adj[v]; }
-  
   
   inline size_t outdegree(size_t v) { return adj[v].size(); }
 

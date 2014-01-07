@@ -46,6 +46,15 @@ int main(int argc, char *argv[])
         std::cout << rk << " " << item.first << " ^ " << item.second << std::endl;
       }
     }
+
+    // graph test
+    paracel::bigraph grp;
+    ld.create_graph(linelst, grp, rm, cm);
+    auto local_f = [&] (std::tuple<size_t, size_t, double> tpl) {
+      if(rk == 0)
+        std::cout << std::get<0>(tpl) << " A " << std::get<1>(tpl) << " A " << std::get<2>(tpl) << std::endl;
+    };
+    grp.traverse(local_f);
     /*
     if(rk == 1) {
       std::cout << blk_mtx << std::endl;

@@ -23,6 +23,7 @@
 #include <eigen/Eigen/Sparse>
 
 #include "paracel_types.hpp"
+#include "graph.hpp"
 #include "load/scheduler.hpp"
 #include "load/partition.hpp"
 
@@ -126,6 +127,40 @@ public:
     for(int i = 0; i < rm.size(); ++i) {
       blk_dense_mtx.row(i) = mtx_llst[i];
     }
+  }
+  
+  // fmap case
+  void create_graph(
+  		const paracel::list_type<paracel::str_type> & linelst,
+  		paracel::bigraph & grp,
+  		paracel::dict_type<size_t, paracel::str_type> & rm, 
+		paracel::dict_type<size_t, paracel::str_type> & cm,
+		paracel::dict_type<size_t, int> & dm,
+		paracel::dict_type<size_t, int> & col_dm) {
+    paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
+    // hash lines into slotslst
+    auto result = scheduler.lines_organize(linelst, parserfunc);
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    // alltoall exchange
+    auto stf = scheduler.exchange(result);
+    std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
+    m_comm.sync();
+    // mapping inds to ids, get rmap, cmap, std_new...
+    paracel::list_type<std::tuple<size_t, size_t, double> > stf_new;
+    scheduler.index_mapping(stf, stf_new, rm, cm, dm, col_dm);
+    std::cout << "procs " << m_comm.get_rank() << " index mapping" << std::endl;
+    grp.construct_from_triples(stf_new);
+  }
+
+  // simple fmap case, fsmap case
+  void create_graph(const paracel::list_type<paracel::str_type> & linelst,
+                paracel::bigraph & grp,
+  		paracel::dict_type<size_t, paracel::str_type> & rm,
+		paracel::dict_type<size_t, paracel::str_type> & cm) {
+    paracel::dict_type<size_t, int> dm;
+    paracel::dict_type<size_t, int> col_dm;
+    create_graph(linelst, grp, rm, cm, dm, col_dm);
   }
 
 private:
