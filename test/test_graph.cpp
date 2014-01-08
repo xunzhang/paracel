@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     tpls.emplace_back(std::make_tuple(3, 3, 1.));
     paracel::bigraph grp(tpls);
     paracel::bigraph grp2;
-    std::cout << "duckduckgo" << grp2.v() << std::endl;
+    std::cout << "duck" << grp2.v() << std::endl;
     grp2.construct_from_triples(tpls);
     // traverse
     for(int i = 0; i < grp.v(); ++i) {
