@@ -76,7 +76,7 @@ public:
 
 private:
   T val;
-}; // class packer
+};
 
 } // namespace paracel
 #endif
