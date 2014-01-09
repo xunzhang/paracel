@@ -29,16 +29,7 @@ template <class T = paracel::str_type>
 struct packer {
 public:
 
-  packer(const T & v) {
-    val = v;
-  }
-
-  packer& operator=(const T & v) { 
-    val = v;
-    return *this; 
-  }
-  
-  ~packer() {}
+  packer(T v) : val(v) {}
 
   void pack(msgpack::sbuffer & sbuf) {
     msgpack::pack(&sbuf, val);
