@@ -29,6 +29,9 @@ template <class T = paracel::str_type>
 struct packer {
 public:
 
+  // for unpack usage
+  packer() {}
+
   packer(T v) : val(v) {}
 
   void pack(msgpack::sbuffer & sbuf) {
