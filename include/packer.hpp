@@ -39,7 +39,6 @@ public:
     msgpack::sbuffer sbuf;
     msgpack::pack(&sbuf, val);
     std::ostringstream oss;
-    //oss << sbuf.size() << sbuf.data(); // size + data
     oss << sbuf.size();
     oss.write(sbuf.data(), sbuf.size());
     s = std::string(oss.str());
@@ -60,9 +59,6 @@ public:
     std::istringstream iss(s);
     int sz;
     paracel::list_type<char> buf;
-    //std::string data;
-    //iss >> sz >> data;
-    //msgpack::unpack(&msg, data.c_str(), sz);
     iss >> sz;
     buf.resize(sz);
     iss.read(&buf[0], sz);
