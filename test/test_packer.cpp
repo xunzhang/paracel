@@ -1,8 +1,11 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <map>
+#include <tr1/unordered_map>
 #include "paracel_types.hpp"
 #include "packer.hpp"
+//#include "msgpack/type/tr1/unordered_map.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -80,6 +83,66 @@ int main(int argc, char *argv[])
     auto r = obj.unpack(s);
     for(auto & v : r)
       std::cout << v << std::endl;
+  }
+  {
+    std::map<paracel::str_type, paracel::list_type<float> > d;
+    paracel::list_type<float> target1 = {1.1, 2.2, 3.3};
+    paracel::list_type<float> target2 = {3.3, 2.2, 1.1};
+    d["key_0"] = target1;
+    d["key_1"] = target2;
+    paracel::packer<std::map<paracel::str_type, paracel::list_type<float> > > obj(d);
+    std::string s;
+    obj.pack(s);
+    auto r = obj.unpack(s);
+    for(auto & v : r) {
+      for(auto & va : v.second) {
+        std::cout << va << std::endl;
+      }
+    }
+  }
+  {
+    std::tr1::unordered_map<int, int> d;
+    d[1] = 1;
+    d[2] = 2;
+    paracel::packer<std::tr1::unordered_map<int, int> > obj(d);
+    std::string s;
+    obj.pack(s);
+    auto r = obj.unpack(s);
+    for(auto & v : r) {
+        std::cout << "#" << v.first << ":" << v.second << "#" << std::endl;
+    }
+  }
+  {
+    std::tr1::unordered_map<paracel::str_type, paracel::list_type<float> > d;
+    paracel::list_type<float> target1 = {1.1, 2.2, 3.3};
+    paracel::list_type<float> target2 = {3.3, 2.2, 1.1};
+    d["key_0"] = target1;
+    d["key_1"] = target2;
+    paracel::packer<std::tr1::unordered_map<paracel::str_type, paracel::list_type<float> > > obj(d);
+    std::string s;
+    obj.pack(s);
+    auto r = obj.unpack(s);
+    for(auto & v : r) {
+      for(auto & va : v.second) {
+        std::cout << va << std::endl;
+      }
+    }
+  }
+  {
+    std::tr1::unordered_map<paracel::str_type, paracel::list_type<double> > d;
+    paracel::list_type<double> target1 = {1.11, 2.22, 3.33};
+    paracel::list_type<double> target2 = {3.33, 2.22, 1.11};
+    d["key_0"] = target1;
+    d["key_1"] = target2;
+    paracel::packer<std::tr1::unordered_map<paracel::str_type, paracel::list_type<double> > > obj(d);
+    std::string s;
+    obj.pack(s);
+    auto r = obj.unpack(s);
+    for(auto & v : r) {
+      for(auto & va : v.second) {
+        std::cout << va << std::endl;
+      }
+    }
   }
   return 0;
 }

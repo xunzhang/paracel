@@ -29,7 +29,8 @@ struct kvclt {
 public:
 
   kvclt(paracel::str_type hostname, 
-  	paracel::str_type ports) : host(hostname) {
+  	paracel::str_type ports) 
+	  : host(hostname) {
     ports_lst = paracel::str_split(ports, ',');
     conn_prefix = "tcp://" + host + ":";
     // init zmq context
@@ -38,7 +39,8 @@ public:
   }
   
   kvclt(paracel::str_type hostname, 
-  	paracel::str_type ports) : host(hostname), context(ctx) {
+  	paracel::str_type ports) 
+	  : host(hostname), context(ctx) {
     ports_lst = paracel::str_split(ports, ',');
     conn_prefix = "tcp://" + host + ":";
   }
@@ -76,7 +78,7 @@ public:
       pull_multi_sock = create_req_sock(ports_lst[0]);
       pull_multi_flag = true;
     }
-    auto scrip = paste(paracel::str_type("pull_multi"), key, key_lst);
+    auto scrip = paste(paracel::str_type("pull_multi"), key_lst);
     paracel::list_type<V> val;
     req_send_recv(pull_multi_sock, scrip, val);
     return val;
@@ -195,8 +197,7 @@ private:
     return scrip;
   }
 
-  // T must be paracel::str_type
-  // use template T to do recursive variadic
+  // use template T to do recursive variadic(T must be paracel::str_type)
   template<class T, class ...Args>
   T paste(const T & op_str, const Args & ...args) { 
     paracel::packer<T> pk(op_str);
@@ -204,7 +205,6 @@ private:
     pk.pack(scrip); // pack to scrip
     return scrip + paracel::seperator + paste(args...); 
   }
-
 
   template <class V>
   void req_send_recv(zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
