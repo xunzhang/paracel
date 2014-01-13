@@ -71,17 +71,15 @@ public:
     */
   }
 
-/* 
   template <class K, class V>
   paracel::list_type<V> 
   pull_multi(const paracel::list_type<K> & key_lst) {
     if(p_pull_multi_sock == nullptr) {
-      pull_multi_sock = create_req_sock(ports_lst[0]);
-      pull_multi_flag = true;
+      p_pull_multi_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pull_multi"), key_lst);
     paracel::list_type<V> val;
-    req_send_recv(p_pull_multi_sock, scrip, val);
+    req_send_recv(*p_pull_multi_sock, scrip, val);
     return val;
   }
   
@@ -89,79 +87,72 @@ public:
   // TODO: all different types 
   template <class V>
   V pullall() {
-    if(!pullall_flag) {
-      pullall_sock = create_req_sock(ports_lst[0]);
-      pullall_flag = true;
+    if(p_pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pullall"));
     V val;
-    req_send_recv(pullall_sock, scrip, val);
+    req_send_recv(*p_pullall_sock, scrip, val);
     return val;
   }
 
   template <class V>
   V pullall_with_keys(const paracel::str_type & suffix) {
-    if(!pullall_flag) {
-      pullall_sock = create_req_sock(ports_lst[0]);
-      pullall_flag = true;
+    if(p_pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pull_keys"), suffix);
     V val;
-    req_send_recv(pull_multi_sock, scrip, val);
+    req_send_recv(*p_pull_multi_sock, scrip, val);
     return val;
   }
   
   template <class V>
   V pullall_with_vals(const paracel::str_type & suffix) {
-    if(!pullall_flag) {
-      pullall_sock = create_req_sock(ports_lst[0]);
-      pullall_flag = true;
+    if(p_pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pull_vals"), suffix);
     V val;
-    req_send_recv(pull_multi_sock, scrip, val);
+    req_send_recv(*p_pull_multi_sock, scrip, val);
     return val;
   }
   
   template <class V, class F>
   V pullall_with_keys(F & func) {
-    if(!pullall_flag) {
-      pullall_sock = create_req_sock(ports_lst[0]);
-      pullall_flag = true;
+    if(p_pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
     // TODO
   }
   
   template <class V, class F>
   V pullall_with_vals(F & func) {
-    if(!pullall_flag) {
-      pullall_sock = create_req_sock(ports_lst[0]);
-      pullall_flag = true;
+    if(p_pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
     // TODO
   }
 
   template <class K, class V>
   int push(const K & key, const V & val) {
-    if(!push_flag) {
-      push_sock = create_req_sock(ports_lst[1]);
-      push_flag = true;
+    if(p_push_sock == nullptr) {
+      p_push_sock.reset(create_req_sock(ports_lst[1]));
     }
     auto scrip = paste(paracel::str_type("push"), key, val); 
     int stat;
-    req_send_recv(push_sock, scrip, stat);
+    req_send_recv(*p_push_sock, scrip, stat);
     return stat;
   }
   
   template <class K, class V>
   void push_multi(const paracel::dict_type<K, V> & dict) {
-    if(!push_multi_flag) {
-      push_multi_sock = create_req_sock(ports_lst[1]);
-      push__multi_flag = true;
+    if(p_push_multi_sock == nullptr) {
+      p_push_multi_sock.reset(create_req_sock(ports_lst[1]));
     }
     auto scrip = paste(paracel::str_type("push_multi"), dict);
     int stat;
-    req_send_recv(push_multi_sock, scrip, stat);
+    req_send_recv(*p_push_multi_sock, scrip, stat);
     return stat;
   }
   
@@ -170,75 +161,68 @@ public:
   
   template <class K>
   void remove(const K & key) {
-    if(!remove_flag) {
-      remove_sock = create_push_sock(ports_lst[3]);
-      remove_flag = true;
+    if(p_remove_sock == nullptr) {
+      p_remove_sock.reset(create_push_sock(ports_lst[3]));
     }
     auto scrip = paste(paracel::str_type("remove"), key);
-    push_send(remove_sock, scrip);
+    push_send(*p_remove_sock, scrip);
   }
 
   void remove_with_keys(const paracel::str_type & suffix) {
-    if(!remove_flag) {
-      remove_sock = create_push_sock(ports_lst[3]);
-      remove_flag = true;
+    if(p_remove_sock == nullptr) {
+      p_remove_sock.reset(create_push_sock(ports_lst[3]));
     }
     // TODO 
   }
 
   void remove_with_vals(const paracel::str_type & suffix) {
-    if(!remove_flag) {
-      remove_sock = create_push_sock(ports_lst[3]);
-      remove_flag = true;
+    if(p_remove_sock == nullptr) {
+      p_remove_sock.reset(create_push_sock(ports_lst[3]));
     }
     // TODO 
   }
 
   template <class F>
   void remove_with_keys(F & func) {
-    if(!remove_flag) {
-      remove_sock = create_push_sock(ports_lst[3]);
-      remove_flag = true;
+    if(p_remove_sock == nullptr) {
+      p_remove_sock.reset(create_push_sock(ports_lst[3]));
     }
     // TODO 
   }
 
   template <class F>
   void remove_with_vals(F & func) {
-    if(!remove_flag) {
-      remove_sock = create_push_sock(ports_lst[3]);
-      remove_flag = true;
+    if(p_remove_sock == nullptr) {
+      p_remove_sock.reset(create_push_sock(ports_lst[3]));
     }
     // TODO 
   }
 
   void clear() {
-    if(!clear_flag) {
-      clear_sock = create_push_sock(ports_lst[3]);
-      clear_flag = true;
+    if(p_clear_sock == nullptr) {
+      p_clear_sock.reset(create_push_sock(ports_lst[3]));
     }
     auto scrip = paste(paracel::str_type("clear"));
-    push_send(clear_sock, scrip);
+    push_send(*p_clear_sock, scrip);
   }
-*/
 
 private:
 
-  std::unique_ptr<zmq::socket_t>
+  zmq::socket_t*
   create_req_sock(const paracel::str_type & port) {
-    zmq::socket_t sock(context, ZMQ_REQ);
-    sock.connect(conn_prefix + port);
-    return std::unique_ptr<zmq::socket_t>(sock);
+    zmq::socket_t *p_sock = new zmq::socket_t(context, ZMQ_REQ);
+    auto info = conn_prefix + port;
+    p_sock->connect(info.c_str());
+    return p_sock;
   }
 
-/*
-  zmq::socket_t 
+  zmq::socket_t*
   create_push_sock(const paracel::str_type & port) {
-    zmq::socket_t sock(context, ZMQ_PUSH);
-    sock.connect(conn_prefix + port);
-    return sock;
+    zmq::socket_t *p_sock = new zmq::socket_t(context, ZMQ_PUSH);
+    auto info = conn_prefix + port;
+    p_sock->connect(info.c_str());
+    return p_sock;
   }
-*/  
 
   // terminate function for recursive variadic template
   template<class T>
