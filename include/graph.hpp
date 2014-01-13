@@ -160,19 +160,19 @@ public:
     e_sz += 1;
   }
 
-  template <class Func>
-  void traverse(Func & f) {  
+  template <class F>
+  void traverse(F & func) {  
     for(int i = 0; i < v_sz; ++i) {
       for(auto & e_w : adj[i]) {
-        f(std::make_tuple((size_t)i, e_w.first, e_w.second));
+        func(std::make_tuple((size_t)i, e_w.first, e_w.second));
       }
     }
   }
 
-  template <class Func>
-  void traverse(size_t v, Func & f) {
+  template <class F>
+  void traverse(size_t v, F & func) {
     for(auto & e_w : adj[v]) {
-      f(std::make_tuple(v, e_w.first, e_w.second));
+      func(std::make_tuple(v, e_w.first, e_w.second));
     }
   }
   

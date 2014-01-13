@@ -16,6 +16,7 @@
 #define FILE_a68107bb_430d_eb9e_9cce_184c46bad4cd_HPP
 
 #include <cstring> // std::memcpy
+#include <memory>
 
 #include <zmq.hpp>
 
@@ -30,30 +31,29 @@ public:
 
   kvclt(paracel::str_type hostname, 
   	paracel::str_type ports) 
-	  : host(hostname) {
-    ports_lst = paracel::str_split(ports, ',');
-    conn_prefix = "tcp://" + host + ":";
-    // init zmq context
-    zmq::context_t ctx(1);
-    context = ctx; 
-  }
-  
-  kvclt(paracel::str_type hostname, 
-  	paracel::str_type ports) 
-	  : host(hostname), context(ctx) {
+	  : host(hostname), context(1) {
     ports_lst = paracel::str_split(ports, ',');
     conn_prefix = "tcp://" + host + ":";
   }
  
+ /*
+  kvclt(paracel::str_type hostname, 
+  	paracel::str_type ports,
+	zmq::context_t ctx) 
+	  : host(hostname), context(ctx) {
+    ports_lst = paracel::str_split(ports, ',');
+    conn_prefix = "tcp://" + host + ":";
+  }
+*/
+
   template <class K, class V>
   V pull(const K & key) {
-    if(!pull_flag) {
-      pull_sock = create_req_sock(ports_lst[0]);
-      pull_flag = true;
+    if(p_pull_sock == nullptr) {
+      p_pull_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pull"), key); // paracel::str_type
     V val;
-    req_send_recv(pull_sock, scrip, val);
+    req_send_recv(*p_pull_sock, scrip, val);
     return val;
     /*
     zmq::message_t req_msg(scrip.size());
@@ -70,22 +70,23 @@ public:
     return pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data(), rep_msg.size())));
     */
   }
- 
+
+/* 
   template <class K, class V>
   paracel::list_type<V> 
   pull_multi(const paracel::list_type<K> & key_lst) {
-    if(!pull_multi_flag) {
+    if(p_pull_multi_sock == nullptr) {
       pull_multi_sock = create_req_sock(ports_lst[0]);
       pull_multi_flag = true;
     }
     auto scrip = paste(paracel::str_type("pull_multi"), key_lst);
     paracel::list_type<V> val;
-    req_send_recv(pull_multi_sock, scrip, val);
+    req_send_recv(p_pull_multi_sock, scrip, val);
     return val;
   }
   
 
-  // TODO: different types 
+  // TODO: all different types 
   template <class V>
   V pullall() {
     if(!pullall_flag) {
@@ -98,30 +99,48 @@ public:
     return val;
   }
 
-  template <class K>
-  V pullall_with_skey(const paracel::str_type & sprefix) {
-    if(!pullall_multi_flag) {
-      pull_multi_sock = create_req_sock(ports_lst[0]);
-      pull_multi_flag = true;
+  template <class V>
+  V pullall_with_keys(const paracel::str_type & suffix) {
+    if(!pullall_flag) {
+      pullall_sock = create_req_sock(ports_lst[0]);
+      pullall_flag = true;
     }
-    auto scrip = paste(paracel::str_type("pull_skey"), sprefix);
+    auto scrip = paste(paracel::str_type("pull_keys"), suffix);
     V val;
     req_send_recv(pull_multi_sock, scrip, val);
     return val;
   }
   
   template <class V>
-  V pullall_with_sval(const paracel::str_type & vprefix) {
-    if(!pullall_multi_flag) {
-      pull_multi_sock = create_req_sock(ports_lst[0]);
-      pull_multi_flag = true;
+  V pullall_with_vals(const paracel::str_type & suffix) {
+    if(!pullall_flag) {
+      pullall_sock = create_req_sock(ports_lst[0]);
+      pullall_flag = true;
     }
-    auto scrip = paste(paracel::str_type("pull_sval"), vprefix);
+    auto scrip = paste(paracel::str_type("pull_vals"), suffix);
     V val;
     req_send_recv(pull_multi_sock, scrip, val);
     return val;
   }
   
+  template <class V, class F>
+  V pullall_with_keys(F & func) {
+    if(!pullall_flag) {
+      pullall_sock = create_req_sock(ports_lst[0]);
+      pullall_flag = true;
+    }
+    // TODO
+  }
+  
+  template <class V, class F>
+  V pullall_with_vals(F & func) {
+    if(!pullall_flag) {
+      pullall_sock = create_req_sock(ports_lst[0]);
+      pullall_flag = true;
+    }
+    // TODO
+  }
+
   template <class K, class V>
   int push(const K & key, const V & val) {
     if(!push_flag) {
@@ -146,7 +165,7 @@ public:
     return stat;
   }
   
-  template <class K, class V, class Func>
+  template <class K, class V, class F>
   void update() {}
   
   template <class K>
@@ -159,9 +178,39 @@ public:
     push_send(remove_sock, scrip);
   }
 
-  void remove_with_skey(const paracel::str_type & prefix) {}
+  void remove_with_keys(const paracel::str_type & suffix) {
+    if(!remove_flag) {
+      remove_sock = create_push_sock(ports_lst[3]);
+      remove_flag = true;
+    }
+    // TODO 
+  }
 
-  void remove_with_sval() {}
+  void remove_with_vals(const paracel::str_type & suffix) {
+    if(!remove_flag) {
+      remove_sock = create_push_sock(ports_lst[3]);
+      remove_flag = true;
+    }
+    // TODO 
+  }
+
+  template <class F>
+  void remove_with_keys(F & func) {
+    if(!remove_flag) {
+      remove_sock = create_push_sock(ports_lst[3]);
+      remove_flag = true;
+    }
+    // TODO 
+  }
+
+  template <class F>
+  void remove_with_vals(F & func) {
+    if(!remove_flag) {
+      remove_sock = create_push_sock(ports_lst[3]);
+      remove_flag = true;
+    }
+    // TODO 
+  }
 
   void clear() {
     if(!clear_flag) {
@@ -171,23 +220,26 @@ public:
     auto scrip = paste(paracel::str_type("clear"));
     push_send(clear_sock, scrip);
   }
+*/
 
 private:
 
-  zmq::socket_t 
+  std::unique_ptr<zmq::socket_t>
   create_req_sock(const paracel::str_type & port) {
-    zmq::socket_t sock(context, ZMQ.REQ);
+    zmq::socket_t sock(context, ZMQ_REQ);
     sock.connect(conn_prefix + port);
-    return sock
+    return std::unique_ptr<zmq::socket_t>(sock);
   }
 
+/*
   zmq::socket_t 
   create_push_sock(const paracel::str_type & port) {
-    zmq::socket_t sock(context, ZMQ.PUSH);
+    zmq::socket_t sock(context, ZMQ_PUSH);
     sock.connect(conn_prefix + port);
     return sock;
   }
-  
+*/  
+
   // terminate function for recursive variadic template
   template<class T>
   paracel::str_type paste(const T & arg) {
@@ -224,26 +276,19 @@ private:
   }
 
 private:
-  bool pull_flag = false;
-  bool pull_multi_flag = false;
-  bool pullall_flag = false;
-  bool push_flag = false;
-  bool push_multi_flag = false;
-  bool update_flag = false;
-  bool remove_flag = false;
-  bool clear_flag = false;
   paracel::str_type host;
   paracel::list_type<paracel::str_type> ports_lst;
   paracel::str_type conn_prefix;
   zmq::context_t context;
-  zmq::socket_t pull_sock;
-  zmq::socket_t pull_multi_sock;
-  zmq::socket_t pullall_sock;
-  zmq::socket_t push_sock;
-  zmq::socket_t push_multi_sock;
-  zmq::socket_t update_sock;
-  zmq::socket_t remove_sock;
-  zmq::socket_t clear_sock;
+  
+  std::unique_ptr<zmq::socket_t> p_pull_sock;
+  std::unique_ptr<zmq::socket_t> p_pull_multi_sock;
+  std::unique_ptr<zmq::socket_t> p_pullall_sock;
+  std::unique_ptr<zmq::socket_t> p_push_sock;
+  std::unique_ptr<zmq::socket_t> p_push_multi_sock;
+  std::unique_ptr<zmq::socket_t> p_update_sock;
+  std::unique_ptr<zmq::socket_t> p_remove_sock;
+  std::unique_ptr<zmq::socket_t> p_clear_sock;
 }; 
 
 } // namespace paracel
