@@ -15,6 +15,8 @@
 #ifndef FILE_a68107bb_430d_eb9e_9cce_184c46bad4cd_HPP 
 #define FILE_a68107bb_430d_eb9e_9cce_184c46bad4cd_HPP
 
+#include <dlfcn.h>
+
 #include <cstring> // std::memcpy
 #include <memory>
 
@@ -36,16 +38,6 @@ public:
     conn_prefix = "tcp://" + host + ":";
   }
  
- /*
-  kvclt(paracel::str_type hostname, 
-  	paracel::str_type ports,
-	zmq::context_t ctx) 
-	  : host(hostname), context(ctx) {
-    ports_lst = paracel::str_split(ports, ',');
-    conn_prefix = "tcp://" + host + ":";
-  }
-*/
-
   template <class K, class V>
   V pull(const K & key) {
     if(p_pull_sock == nullptr) {
@@ -97,43 +89,14 @@ public:
   }
 
   template <class V>
-  V pullall_with_keys(const paracel::str_type & suffix) {
+  V pullall_special(const paracel::str_type & so_filename = paracel::default_so_file) {
     if(p_pullall_sock == nullptr) {
       p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
-    auto scrip = paste(paracel::str_type("pull_keys"), suffix);
-    V val;
-    req_send_recv(*p_pull_multi_sock, scrip, val);
-    return val;
-  }
-  
-  template <class V>
-  V pullall_with_vals(const paracel::str_type & suffix) {
-    if(p_pullall_sock == nullptr) {
-      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
-    }
-    auto scrip = paste(paracel::str_type("pull_vals"), suffix);
-    V val;
-    req_send_recv(*p_pull_multi_sock, scrip, val);
-    return val;
-  }
-  
-  template <class V, class F>
-  V pullall_with_keys(F & func) {
-    if(p_pullall_sock == nullptr) {
-      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
-    }
+    auto scrip = paste(paracel::str_type(), so_filename);
     // TODO
   }
   
-  template <class V, class F>
-  V pullall_with_vals(F & func) {
-    if(p_pullall_sock == nullptr) {
-      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
-    }
-    // TODO
-  }
-
   template <class K, class V>
   int push(const K & key, const V & val) {
     if(p_push_sock == nullptr) {
@@ -146,7 +109,7 @@ public:
   }
   
   template <class K, class V>
-  void push_multi(const paracel::dict_type<K, V> & dict) {
+  int push_multi(const paracel::dict_type<K, V> & dict) {
     if(p_push_multi_sock == nullptr) {
       p_push_multi_sock.reset(create_req_sock(ports_lst[1]));
     }
@@ -156,8 +119,15 @@ public:
     return stat;
   }
   
-  template <class K, class V, class F>
-  void update() {}
+  template <class K, class V>
+  void update(const K & key, const V & val, 
+  	const paracel::str_type & so_filename = paracel::default_so_file) {
+    if(p_update_sock == nullptr) {
+      p_update_sock.reset(create_push_sock(ports_lst[2]));
+    }
+    auto scrip = paste(paracel::str_type("update"), key, val, so_filename);
+    push_send(*p_update_sock, scrip);
+  }
   
   template <class K>
   void remove(const K & key) {
@@ -168,34 +138,12 @@ public:
     push_send(*p_remove_sock, scrip);
   }
 
-  void remove_with_keys(const paracel::str_type & suffix) {
+  void remove_special(const paracel::str_type & so_filename = paracel::default_so_file) {
     if(p_remove_sock == nullptr) {
       p_remove_sock.reset(create_push_sock(ports_lst[3]));
     }
-    // TODO 
-  }
-
-  void remove_with_vals(const paracel::str_type & suffix) {
-    if(p_remove_sock == nullptr) {
-      p_remove_sock.reset(create_push_sock(ports_lst[3]));
-    }
-    // TODO 
-  }
-
-  template <class F>
-  void remove_with_keys(F & func) {
-    if(p_remove_sock == nullptr) {
-      p_remove_sock.reset(create_push_sock(ports_lst[3]));
-    }
-    // TODO 
-  }
-
-  template <class F>
-  void remove_with_vals(F & func) {
-    if(p_remove_sock == nullptr) {
-      p_remove_sock.reset(create_push_sock(ports_lst[3]));
-    }
-    // TODO 
+    auto scrip = paste(paracel::str_type("remove_special"), so_filename);
+    push_send(*p_remove_sock, scrip);
   }
 
   void clear() {
@@ -224,7 +172,7 @@ private:
     return p_sock;
   }
 
-  // terminate function for recursive variadic template
+  // terminate function
   template<class T>
   paracel::str_type paste(const T & arg) {
     paracel::packer<T> pk(arg);
@@ -233,17 +181,17 @@ private:
     return scrip;
   }
 
-  // use template T to do recursive variadic(T must be paracel::str_type)
+  // use template T to do recursive variadic template(T must be paracel::str_type)
   template<class T, class ...Args>
-  T paste(const T & op_str, const Args & ...args) { 
+  paracel::str_type paste(const T & op_str, const Args & ...args) { 
     paracel::packer<T> pk(op_str);
-    T scrip;
+    paracel::str_type scrip;
     pk.pack(scrip); // pack to scrip
     return scrip + paracel::seperator + paste(args...); 
   }
 
   template <class V>
-  void req_send_recv(zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
+  void req_send_recv(const zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
     zmq::message_t req_msg(scrip.size());
     std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
     sock.send(req_msg);
@@ -253,7 +201,7 @@ private:
     val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data(), rep_msg.size())));
   }
  
-  void push_send(zmq::socket_t & sock, const paracel::str_type & scrip) {
+  void push_send(const zmq::socket_t & sock, const paracel::str_type & scrip) {
     zmq::message_t push_msg(scrip.size());
     std::memcpy((void *)push_msg.data(), &scrip[0], scrip.size());
     sock.send(push_msg);

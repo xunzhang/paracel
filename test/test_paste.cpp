@@ -18,9 +18,9 @@ paracel::str_type paste(const T & arg) {
 // T must be paracel::str_type
 // use template T to do recursive variadic
 template<class T, class ...Args>
-T paste(const T & op_str, const Args & ...args) { 
+paracel::str_type paste(const T & op_str, const Args & ...args) { 
   paracel::packer<T> pk(op_str);
-  T scrip;
+  paracel::str_type scrip;
   pk.pack(scrip); // pack to scrip
   return scrip + paracel::seperator + paste(args...); 
 }
@@ -122,6 +122,22 @@ int main(int argc, char *argv[])
     std::string v1 = "val";
     auto s1 = paste(std::string("clear"));
     check_result(s1);
+  }
+  {
+    double key = 3.14;
+    int v1 = 7;
+    std::string v2 = "hello";
+    auto s1 = paste(std::string("push"), key, v1, v2);
+    auto result = paracel::str_split(s1, paracel::seperator);
+    std::cout << "--------------------------------" << std::endl;
+    paracel::packer<paracel::str_type> pk0;
+    paracel::packer<double> pk1;
+    paracel::packer<int> pk2;
+    std::cout << "#" << pk0.unpack(result[0]) << "#" << std::endl;
+    std::cout << "#" << pk1.unpack(result[1]) << "#" << std::endl;
+    std::cout << "#" << pk2.unpack(result[2]) << "#" << std::endl;
+    std::cout << "#" << pk0.unpack(result[3]) << "#" << std::endl;
+    std::cout << "--------------------------------" << std::endl;
   }
   return 0;
 }

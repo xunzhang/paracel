@@ -37,6 +37,8 @@ const int BLK_SZ = 8;
 
 const std::string seperator = "PARACEL";
 
+const std::string default_so_file = "../src/default.so";
+
 const int any_source = MPI_ANY_SOURCE;
 const int any_tag = MPI_ANY_TAG;
 
