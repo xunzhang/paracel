@@ -41,12 +41,11 @@ paracel::str_type get_hostnames_string(int srv_num) {
     zmq::message_t request;
     sock.recv(&request);
     paracel::str_type msg = paracel::str_type(static_cast<char *>(request.data()), request.size());
-    std::cout << "debug" << msg << std::endl;
     s += msg;
     if(i != srv_num - 1) { 
       s += paracel::seperator; 
     }
-    std::cout << "client: " << s << std::endl;
+    //std::cout << "client: " << s << std::endl;
     zmq::message_t reply(4);
     std::memcpy((void *)reply.data(), "done", 4);
     sock.send(reply);

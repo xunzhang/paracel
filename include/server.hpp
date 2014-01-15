@@ -29,6 +29,7 @@ static paracel::str_type local_parse_port(paracel::str_type && s) {
   return std::move(l[2]);
 }
 
+// init_host is the hostname of starter
 void init_thrds(const paracel::str_type & init_host) {
 
   zmq::context_t context(2);
@@ -36,11 +37,9 @@ void init_thrds(const paracel::str_type & init_host) {
   paracel::str_type info = "tcp://" + init_host + ":" + paracel::default_port;
   sock.connect(info.c_str());
  
-  char hostname[1024], freeport[1024];
-  size_t size = sizeof(freeport);
-  // get hostname
+  char hostname[1024], freeport[1024]; size_t size = sizeof(freeport);
+  // parameter server's hostname
   gethostname(hostname, sizeof(hostname));
-  
   paracel::str_type ports = hostname;
   ports += ":";
   // create sock in every thrd
@@ -63,10 +62,10 @@ void init_thrds(const paracel::str_type & init_host) {
   sock_t3.bind("tcp://*:*");
   sock_t3.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
   ports += local_parse_port(paracel::str_type(freeport));
-   
-  zmq::message_t request(4096); 
+
+  zmq::message_t request(ports.size()); 
   std::memcpy((void *)request.data(), &ports[0], ports.size());
-  std::cout << "server: " << ports << std::endl;
+  //std::cout << "server: " << ports << std::endl;
   sock.send(request);
 
   zmq::message_t reply;
