@@ -191,7 +191,7 @@ private:
   }
 
   template <class V>
-  void req_send_recv(const zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
+  void req_send_recv(zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
     zmq::message_t req_msg(scrip.size());
     std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
     sock.send(req_msg);
@@ -201,7 +201,7 @@ private:
     val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data(), rep_msg.size())));
   }
  
-  void push_send(const zmq::socket_t & sock, const paracel::str_type & scrip) {
+  void push_send(zmq::socket_t & sock, const paracel::str_type & scrip) {
     zmq::message_t push_msg(scrip.size());
     std::memcpy((void *)push_msg.data(), &scrip[0], scrip.size());
     sock.send(push_msg);
@@ -212,7 +212,6 @@ private:
   paracel::list_type<paracel::str_type> ports_lst;
   paracel::str_type conn_prefix;
   zmq::context_t context;
-  
   std::unique_ptr<zmq::socket_t> p_pull_sock;
   std::unique_ptr<zmq::socket_t> p_pull_multi_sock;
   std::unique_ptr<zmq::socket_t> p_pullall_sock;
