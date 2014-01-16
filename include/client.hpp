@@ -38,7 +38,7 @@ public:
     conn_prefix = "tcp://" + host + ":";
   }
  
-  template <class K, class V>
+  template <class V, class K>
   V pull(const K & key) {
     if(p_pull_sock == nullptr) {
       p_pull_sock.reset(create_req_sock(ports_lst[0]));
@@ -93,7 +93,7 @@ public:
     if(p_pullall_sock == nullptr) {
       p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
-    auto scrip = paste(paracel::str_type(), so_filename);
+    auto scrip = paste(paracel::str_type("pullall_special"), so_filename);
     // TODO
   }
   
@@ -198,7 +198,7 @@ private:
     zmq::message_t rep_msg;
     sock.recv(&rep_msg);
     paracel::packer<V> pk;
-    val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data(), rep_msg.size())));
+    val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
   }
  
   void push_send(zmq::socket_t & sock, const paracel::str_type & scrip) {
