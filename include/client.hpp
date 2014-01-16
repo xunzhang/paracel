@@ -37,6 +37,17 @@ public:
     ports_lst = paracel::str_split(ports, ',');
     conn_prefix = "tcp://" + host + ":";
   }
+  
+  template <class K>
+  bool contains(const K & key) {
+    if(p_contains_sock == nullptr) {
+      p_contains_sock.reset(create_req_sock(ports_lst[0]));
+    }
+    auto scrip = paste(paracel::str_type("contains"), key);
+    bool val;
+    req_send_recv(*p_contains_sock, scrip, val);
+    return val;
+  }
  
   template <class V, class K>
   V pull(const K & key) {
@@ -212,6 +223,7 @@ private:
   paracel::list_type<paracel::str_type> ports_lst;
   paracel::str_type conn_prefix;
   zmq::context_t context;
+  std::unique_ptr<zmq::socket_t> p_contains_sock;
   std::unique_ptr<zmq::socket_t> p_pull_sock;
   std::unique_ptr<zmq::socket_t> p_pull_multi_sock;
   std::unique_ptr<zmq::socket_t> p_pullall_sock;

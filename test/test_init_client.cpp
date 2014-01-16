@@ -37,5 +37,12 @@ int main(int argc, char *argv[])
       std::cout << v << std::endl;
     }
   }
+
+  {
+    paracel::str_type key = "test_key3";
+    paracel::str_type key2 = "test_key";
+    std::cout << kvc.contains(key) << std::endl;
+    std::cout << kvc.contains(key2) << std::endl;
+  }
   return 0;
 }

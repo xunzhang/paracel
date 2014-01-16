@@ -43,6 +43,16 @@ void thrd_exec(zmq::socket_t & sock) {
     paracel::packer<> pk;
     auto indicator = pk.unpack(msg[0]);
     paracel::str_type ret;
+    if(indicator == "contains") {
+      auto key = pk.unpack(msg[1]);
+      auto r = paracel::tbl_store.contains(key);
+      paracel::packer<bool> pk(r);
+      paracel::str_type r2;
+      pk.pack(r2);
+      zmq::message_t req(r2.size());
+      std::memcpy((void *)req.data(), &r2[0], r2.size());
+      sock.send(req);
+    }
     if(indicator == "pull") {
       auto key = pk.unpack(msg[1]);
       paracel::str_type r;
