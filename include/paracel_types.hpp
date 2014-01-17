@@ -169,6 +169,11 @@ template <class K, class V>
 using dict_type = std::unordered_map<K, V>;
 
 /*
+template <class K, class V>
+using dict_type = std::tr1::unordered_map<K, V>;
+*/
+
+/*
 template <class F = std::string, class S = std::string>
 using triple_type = std::tuple<F, S, double>;
 */

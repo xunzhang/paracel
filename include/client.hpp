@@ -56,22 +56,22 @@ public:
     }
     auto scrip = paste(paracel::str_type("pull"), key); // paracel::str_type
     V val;
-    req_send_recv(*p_pull_sock, scrip, val);
+    bool r = req_send_recv(*p_pull_sock, scrip, val);
     return val;
-    /*
-    zmq::message_t req_msg(scrip.size());
-    std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
-    // send request scrip
-    pull_sock.send(req_msg);
-
-    // receive reply scrip
-    zmq::message_t rep_msg;
-    pull_sock.recv(&rep_msg);
-
-    // unpack scrip
-    paracel::packer<V> pk;
-    return pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data(), rep_msg.size())));
-    */
+  }
+  
+  template <class V, class K>
+  bool pull(const K & key, V & val) {
+    if(p_pull_sock == nullptr) {
+      p_pull_sock.reset(create_req_sock(ports_lst[0]));
+    }
+    auto scrip = paste(paracel::str_type("pull"), key); // paracel::str_type
+    bool r = req_send_recv(*p_pull_sock, scrip, val);
+    if(!r) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   template <class K, class V>
@@ -86,7 +86,6 @@ public:
     return val;
   }
   
-
   // TODO: all different types 
   template <class V>
   V pullall() {
@@ -202,16 +201,22 @@ private:
   }
 
   template <class V>
-  void req_send_recv(zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
+  bool req_send_recv(zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
     zmq::message_t req_msg(scrip.size());
     std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
     sock.send(req_msg);
     zmq::message_t rep_msg;
     sock.recv(&rep_msg);
     paracel::packer<V> pk;
-    val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+    if(!rep_msg.size()) {
+      // not exist, may be a error
+      return false;
+    } else {
+      val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+      return true;
+    }
   }
- 
+
   void push_send(zmq::socket_t & sock, const paracel::str_type & scrip) {
     zmq::message_t push_msg(scrip.size());
     std::memcpy((void *)push_msg.data(), &scrip[0], scrip.size());

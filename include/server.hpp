@@ -17,6 +17,7 @@
 
 #include <unistd.h>
 #include <thread>
+#include <mutex>
 #include <functional>
 
 #include <zmq.hpp>
@@ -28,9 +29,27 @@
 
 namespace paracel {
 
+std::mutex mutex;
+
 static paracel::str_type local_parse_port(paracel::str_type && s) {
   auto l = paracel::str_split(std::move(s), ':');
   return std::move(l[2]);
+}
+
+static void rep_send(zmq::socket_t & sock, paracel::str_type & val) {
+  zmq::message_t req(val.size());
+  std::memcpy((void *)req.data(), &val[0], val.size());
+  sock.send(req);
+}
+
+template <class V>
+static void rep_pack_send(zmq::socket_t & sock, V & val) {
+  paracel::packer<V> pk(val);
+  paracel::str_type r;
+  pk.pack(r);
+  zmq::message_t req(r.size());
+  std::memcpy((void *)req.data(), &r[0], r.size());
+  sock.send(req);
 }
 
 // thread entry
@@ -43,41 +62,56 @@ void thrd_exec(zmq::socket_t & sock) {
     paracel::packer<> pk;
     auto indicator = pk.unpack(msg[0]);
     paracel::str_type ret;
+    mutex.lock();
     if(indicator == "contains") {
       auto key = pk.unpack(msg[1]);
-      auto r = paracel::tbl_store.contains(key);
-      paracel::packer<bool> pk(r);
-      paracel::str_type r2;
-      pk.pack(r2);
-      zmq::message_t req(r2.size());
-      std::memcpy((void *)req.data(), &r2[0], r2.size());
-      sock.send(req);
+      auto result = paracel::tbl_store.contains(key);
+      rep_pack_send(sock, result);
     }
     if(indicator == "pull") {
       auto key = pk.unpack(msg[1]);
-      paracel::str_type r;
-      paracel::tbl_store.get(key, r);
-      zmq::message_t req(r.size());
-      std::memcpy((void *)req.data(), &r[0], r.size());
-      sock.send(req);
+      paracel::str_type result;
+      auto exist = paracel::tbl_store.get(key, result);
+      rep_send(sock, result);
+      //auto result = paracel::tbl_store.get(key);
+      //rep_send(sock, *result);
     }
-    if(indicator == "pull_multi") {}
-    if(indicator == "pullall") {}
-    if(indicator == "pullall_special") {}
+    if(indicator == "pull_multi") {
+    /*
+      paracel::packer<paracel::list_type<paracel::str_type> > pk_l; 
+      auto key_lst = pk_l.unpack(msg[1]);
+      auto result = paracel::tbl_store.get_multi(key_lst);
+      rep_send(sock, result);
+    */
+    }
+    if(indicator == "pullall") {
+      auto dct = paracel::tbl_store.getall();
+      //rep_pack_send(sock, dct);
+    }
+    if(indicator == "pullall_special") {
+    }
     if(indicator == "push") {
       auto key = pk.unpack(msg[1]);
       paracel::tbl_store.set(key, msg[2]);
-      paracel::packer<int> pk2(1);
-      paracel::str_type r;
-      pk2.pack(r);
-      zmq::message_t req(r.size());
-      std::memcpy((void *)req.data(), &r[0], r.size());
-      sock.send(req);
+      int result = 1; rep_pack_send(sock, result);
+    }
+    if(indicator == "push_multi") {
+    /*
+      paracel::packer<paracel::dict_type<paracel::str_type, paracel::str_type> > pk_d;
+      auto kv_pairs = pk_d.unpack(msg[1]);
+      paracel::tbl_store.set_multi(kv_pairs);
+      int result = 1; rep_pack_send(sock, result);
+    */
     }
     if(indicator == "update") {}
-    if(indicator == "remove") {}
+    if(indicator == "remove") {
+      auto key = pk.unpack(msg[1]);
+      auto result = paracel::tbl_store.del(key);
+      //rep_pack_send(sock, result);
+    }
     if(indicator == "remove_special") {}
-    if(indicator == "clear") {}
+    if(indicator == "clear") { paracel::tbl_store.clean(); }
+    mutex.unlock();
   }
 }
 
@@ -105,12 +139,12 @@ void init_thrds(const paracel::str_type & init_host) {
   sock_t1.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
   ports += local_parse_port(paracel::str_type(freeport)) + ",";
   
-  zmq::socket_t sock_t2(context, ZMQ_REP);
+  zmq::socket_t sock_t2(context, ZMQ_PULL);
   sock_t2.bind("tcp://*:*");
   sock_t2.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
   ports += local_parse_port(paracel::str_type(freeport)) + ",";
   
-  zmq::socket_t sock_t3(context, ZMQ_REP);
+  zmq::socket_t sock_t3(context, ZMQ_PULL);
   sock_t3.bind("tcp://*:*");
   sock_t3.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
   ports += local_parse_port(paracel::str_type(freeport));
