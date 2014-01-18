@@ -107,10 +107,14 @@ void thrd_exec(zmq::socket_t & sock) {
     if(indicator == "remove") {
       auto key = pk.unpack(msg[1]);
       auto result = paracel::tbl_store.del(key);
-      //rep_pack_send(sock, result);
+      rep_pack_send(sock, result);
     }
     if(indicator == "remove_special") {}
-    if(indicator == "clear") { paracel::tbl_store.clean(); }
+    if(indicator == "clear") { 
+      paracel::tbl_store.clean();
+      bool result = true;
+      rep_pack_send(sock, result);
+    }
     mutex.unlock();
   }
 }

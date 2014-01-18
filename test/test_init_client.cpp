@@ -67,35 +67,16 @@ int main(int argc, char *argv[])
       tt += i;
     }
     int r3;
-    int tmp = kvc.pull(key, r3);
-    if(tmp) {
-      std::cout << "remove this " << tmp << std::endl;
-    }
-    tmp = kvc.pull(key, r3);
-    if(tmp) {
-      std::cout << "remove this " << tmp << std::endl;
-    }
-    tmp = kvc.pull(key, r3);
-    if(tmp) {
-      std::cout << "remove this " << tmp << std::endl;
-    }
-    tmp = kvc.pull(key2, r3);
-    if(tmp) {
-      std::cout << "not remove this " << r3 << std::endl;
-    }
+    //std::cout << "remove this " << kvc.pull<int>(key) << std::endl;
+    //std::cout << "remove this " << kvc.pull<int>(key) << std::endl;
+    std::cout << "not remove this " << kvc.pull<int>(key2) << std::endl;
     kvc.clear();
     for(int i = 0; i < 1000000; ++i) {
       tt += i;
     }
-    std::cout << "after clear " << kvc.pull(key2, r3) << std::endl;
-    std::cout << "after clear " << kvc.pull(key2, r3) << std::endl;
-    std::cout << "after clear " << kvc.pull(key2, r3) << std::endl;
-    /*
-    std::cout << kvc.pull<int>(key2) << std::endl;
-    std::cout << kvc.pull<int>(key2) << std::endl;
-    std::cout << kvc.pull<int>(key2) << std::endl;
-    std::cout << kvc.pull<int>(key2) << std::endl;
-    */
+    //std::cout << "after clear " << kvc.pull<int>(key2) << std::endl;
+    //std::cout << "after clear " << kvc.pull<int>(key2) << std::endl;
+    //std::cout << "after clear " << kvc.pull<int>(key2) << std::endl;
   }
   return 0;
 }

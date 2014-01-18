@@ -17,6 +17,8 @@
 
 #include <dlfcn.h>
 
+#include <assert.h>
+
 #include <cstring> // std::memcpy
 #include <memory>
 
@@ -57,6 +59,12 @@ public:
     auto scrip = paste(paracel::str_type("pull"), key); // paracel::str_type
     V val;
     bool r = req_send_recv(*p_pull_sock, scrip, val);
+    assert(r);
+    /*
+    while(!r) {
+      r = req_send_recv(*p_pull_sock, scrip, val);
+    }
+    */
     return val;
   }
   
@@ -140,28 +148,34 @@ public:
   }
   
   template <class K>
-  void remove(const K & key) {
+  bool remove(const K & key) {
     if(p_remove_sock == nullptr) {
-      p_remove_sock.reset(create_push_sock(ports_lst[3]));
+      p_remove_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("remove"), key);
-    push_send(*p_remove_sock, scrip);
+    bool val;
+    req_send_recv(*p_remove_sock, scrip, val);
+    return val;
   }
 
-  void remove_special(const paracel::str_type & so_filename = paracel::default_so_file) {
+  bool remove_special(const paracel::str_type & so_filename = paracel::default_so_file) {
     if(p_remove_sock == nullptr) {
-      p_remove_sock.reset(create_push_sock(ports_lst[3]));
+      p_remove_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("remove_special"), so_filename);
-    push_send(*p_remove_sock, scrip);
+    bool val;
+    req_send_recv(*p_remove_sock, scrip, val);
+    return val;
   }
 
-  void clear() {
+  bool clear() {
     if(p_clear_sock == nullptr) {
-      p_clear_sock.reset(create_push_sock(ports_lst[3]));
+      p_clear_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("clear"));
-    push_send(*p_clear_sock, scrip);
+    bool val;
+    req_send_recv(*p_clear_sock, scrip, val);
+    return val;
   }
 
 private:
@@ -209,7 +223,6 @@ private:
     sock.recv(&rep_msg);
     paracel::packer<V> pk;
     if(!rep_msg.size()) {
-      // not exist, may be a error
       return false;
     } else {
       val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
