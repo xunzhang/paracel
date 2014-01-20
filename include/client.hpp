@@ -123,6 +123,7 @@ public:
     auto scrip = paste(paracel::str_type("push"), key, val); 
     int stat;
     req_send_recv(*p_push_sock, scrip, stat);
+    auto debug_lst = paracel::str_split(scrip, "PARACEL");
     return stat;
   }
   

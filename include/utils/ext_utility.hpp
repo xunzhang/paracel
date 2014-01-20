@@ -37,19 +37,6 @@ slst_type str_split(const paracel::str_type & str, const char sep) {
   return result;
 }
 
-slst_type str_split(const paracel::str_type & str, const paracel::str_type & seps) {
-  slst_type result;
-  size_t st = 0, en = 0;
-  while(1) {
-    en = str.find_first_of(seps, st);
-    auto s = str.substr(st, en - st);
-    if(s != "") result.push_back(std::move(s));
-    if(en == paracel::str_type::npos) break;
-    st = en + 1;
-  }
-  return result;
-}
-
 slst_type str_split(paracel::str_type && str, const char sep) {
   slst_type result;
   size_t st = 0, en = 0;
@@ -63,15 +50,35 @@ slst_type str_split(paracel::str_type && str, const char sep) {
   return result;
 }
 
+
+slst_type str_split(const paracel::str_type & str, const paracel::str_type & seps) {
+  slst_type result;
+  auto last = str.begin();
+  auto i = str.begin();
+  for(; i != str.end(); ++i) {
+    if(paracel::str_type(i, i + seps.size()) == seps) {
+      result.push_back(paracel::str_type(last, i));
+      last = i + seps.size();
+    }
+  }
+  if(last != i) {
+    result.push_back(paracel::str_type(last, i));
+  }
+  return result;
+}
+
 slst_type str_split(paracel::str_type && str, const paracel::str_type & seps) {
   slst_type result;
-  size_t st = 0, en = 0;
-  while(1) {
-    en = str.find_first_of(seps, st);
-    auto s = str.substr(st, en - st);
-    if(s != "") result.push_back(std::move(s));
-    if(en == paracel::str_type::npos) break;
-    st = en + 1;
+  auto last = str.begin();
+  auto i = str.begin();
+  for(; i != str.end(); ++i) {
+    if(paracel::str_type(i, i + seps.size()) == seps) {
+      result.push_back(paracel::str_type(last, i));
+      last = i + seps.size();
+    }
+  }
+  if(last != i) {
+    result.push_back(paracel::str_type(last, i));
   }
   return result;
 }

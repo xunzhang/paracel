@@ -73,5 +73,11 @@ int main(int argc, char *argv[])
       std::cout << item << std::endl;
     }
   }
+  {
+    std::cout << "-----------" << std::endl;
+    std::string aa = "pushPARACELkeyPARACELabcsadsABCDrv";
+    auto v = paracel::str_split(aa, "PARACEL");
+    for(auto & val : v) std::cout << val << std::endl;
+  }
   return 0;
 }

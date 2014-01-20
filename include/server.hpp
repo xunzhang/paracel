@@ -61,6 +61,7 @@ void thrd_exec(zmq::socket_t & sock) {
     auto msg = paracel::str_split(scrip, paracel::seperator);
     paracel::packer<> pk;
     auto indicator = pk.unpack(msg[0]);
+    std::cout << indicator << std::endl;
     paracel::str_type ret;
     mutex.lock();
     if(indicator == "contains") {

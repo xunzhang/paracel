@@ -34,6 +34,13 @@ int main(int argc, char *argv[])
     }
   }
   {
+    paracel::str_type target = "PARACEL";
+    paracel::packer<paracel::str_type> obj(target);
+    msgpack::sbuffer s;
+    obj.pack(s);
+    std::cout << obj.unpack(s) << std::endl;
+  }
+  {
     paracel::list_type<paracel::str_type> target = {"hello", "world"};
     paracel::packer<paracel::list_type<paracel::str_type> > obj(target);
     std::string s;
