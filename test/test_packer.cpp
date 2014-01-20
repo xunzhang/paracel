@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <unordered_map>
 #include <tr1/unordered_map>
 #include "paracel_types.hpp"
 #include "packer.hpp"
@@ -167,6 +168,22 @@ int main(int argc, char *argv[])
     d["key_0"] = target1;
     d["key_1"] = target2;
     paracel::packer<std::tr1::unordered_map<paracel::str_type, paracel::list_type<double> > > obj(d);
+    std::string s;
+    obj.pack(s);
+    auto r = obj.unpack(s);
+    for(auto & v : r) {
+      for(auto & va : v.second) {
+        std::cout << va << std::endl;
+      }
+    }
+  }
+  {
+    std::unordered_map<paracel::str_type, paracel::list_type<double> > d;
+    paracel::list_type<double> target1 = {7.77, 8.88, 9.99};
+    paracel::list_type<double> target2 = {9.99, 8.88, 7.77};
+    d["key_0"] = target1;
+    d["key_1"] = target2;
+    paracel::packer<std::unordered_map<paracel::str_type, paracel::list_type<double> > > obj(d);
     std::string s;
     obj.pack(s);
     auto r = obj.unpack(s);

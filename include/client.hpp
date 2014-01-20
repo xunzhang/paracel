@@ -93,7 +93,6 @@ public:
     return val;
   }
   
-  // TODO: all different types 
   template <class V>
   V pullall() {
     if(p_pullall_sock == nullptr) {
@@ -132,7 +131,7 @@ public:
     }
     auto scrip = paste(paracel::str_type("push_multi"), dict);
     int stat;
-    req_send_recv(*p_push_multi_sock, scrip, stat);
+    //req_send_recv(*p_push_multi_sock, scrip, stat);
     return stat;
   }
   

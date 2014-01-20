@@ -48,14 +48,12 @@ int main(int argc, char *argv[])
     std::cout << kvc.contains(key) << std::endl;
     std::cout << kvc.contains(key2) << std::endl;
   }
-/*
   {
     std::tr1::unordered_map<paracel::str_type, int> tmp{std::pair<paracel::str_type, int>(paracel::str_type("x"), 100), std::pair<paracel::str_type, int>(paracel::str_type("y"), 200)};
     kvc.push_multi(tmp);
     std::cout << kvc.contains(paracel::str_type("x")) << std::endl;
     std::cout << kvc.pull<int>(paracel::str_type("x")) << std::endl;
   }
-*/
   {
     paracel::str_type key = "test_keyn";
     paracel::str_type key2 = "test_key";
