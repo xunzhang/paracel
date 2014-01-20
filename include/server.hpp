@@ -78,12 +78,10 @@ void thrd_exec(zmq::socket_t & sock) {
       //rep_send(sock, *result);
     }
     if(indicator == "pull_multi") {
-    /*
       paracel::packer<paracel::list_type<paracel::str_type> > pk_l; 
       auto key_lst = pk_l.unpack(msg[1]);
       auto result = paracel::tbl_store.get_multi(key_lst);
-      rep_send(sock, result);
-    */
+      rep_pack_send(sock, result);
     }
     if(indicator == "pullall") {
       auto dct = paracel::tbl_store.getall();

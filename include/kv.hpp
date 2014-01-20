@@ -69,7 +69,7 @@ public:
   paracel::list_type<V> get_multi(const paracel::list_type<K> & keylst) {
     paracel::list_type<V> valst;
     for(auto & key : keylst) {
-      valst.push_back(key);
+      valst.push_back(kvdct.at(key));
     }
     return valst;
   } 

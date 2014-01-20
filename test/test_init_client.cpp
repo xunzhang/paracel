@@ -12,7 +12,11 @@ int main(int argc, char *argv[])
   paracel::str_type ports(ports_tmp.begin() + 8, ports_tmp.end());
   paracel::kvclt kvc("beater7", ports);
   {
+    paracel::str_type key0 = "test_key0";
+    kvc.push(key0, 1);
     paracel::str_type key = "test_key";
+    paracel::str_type key10 = "test_key10";
+    kvc.push(key10, 10);
     auto r = kvc.push(key, 2);
     std::cout << r << std::endl;
     auto r2 = kvc.pull<int>(key);
@@ -107,6 +111,18 @@ int main(int argc, char *argv[])
     }
   }
   {
+    paracel::str_type kk = "kk";
+    int aa = 77, bb = 88;
+    kvc.push(kk, aa);
+    paracel::str_type kkk = "kkk";
+    kvc.push(kkk, bb);
+    paracel::list_type<paracel::str_type> s = {"kk", "kkk"};
+    std::cout << kvc.pull<int>(paracel::str_type("kk")) << std::endl;
+    std::cout << kvc.pull<int>(paracel::str_type("kkk")) << std::endl;
+    auto r = kvc.pull_multi<int>(s);
+    for(auto & v : r) {
+      std::cout << v << std::endl; 
+    }
   }
   return 0;
 }

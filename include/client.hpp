@@ -82,15 +82,14 @@ public:
     }
   }
 
-  template <class K, class V>
-  paracel::list_type<V> 
-  pull_multi(const paracel::list_type<K> & key_lst) {
+  template <class V, class K>
+  paracel::list_type<V> pull_multi(const K & key_lst) {
     if(p_pull_multi_sock == nullptr) {
       p_pull_multi_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pull_multi"), key_lst);
     paracel::list_type<V> val;
-    req_send_recv(*p_pull_multi_sock, scrip, val);
+    req_send_recv_multi(*p_pull_multi_sock, scrip, val);
     return val;
   }
   
@@ -123,7 +122,6 @@ public:
     auto scrip = paste(paracel::str_type("push"), key, val); 
     int stat;
     req_send_recv(*p_push_sock, scrip, stat);
-    auto debug_lst = paracel::str_split(scrip, "PARACEL");
     return stat;
   }
   
@@ -227,6 +225,28 @@ private:
       return false;
     } else {
       val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+      return true;
+    }
+  }
+
+  template <class V>
+  bool req_send_recv_multi(zmq::socket_t & sock, 
+  			const paracel::str_type & scrip, 
+			paracel::list_type<V> & val) {
+    zmq::message_t req_msg(scrip.size());
+    std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
+    sock.send(req_msg);
+    zmq::message_t rep_msg;
+    sock.recv(&rep_msg);
+    paracel::packer<paracel::list_type<paracel::str_type> > pk;
+    paracel::packer<V> pk2;
+    if(!rep_msg.size()) {
+      return false;
+    } else {
+      auto tmp = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+      for(auto & item : tmp) {
+        val.push_back(pk2.unpack(item));
+      }
       return true;
     }
   }

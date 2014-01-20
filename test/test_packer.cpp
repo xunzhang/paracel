@@ -68,6 +68,17 @@ int main(int argc, char *argv[])
     std::cout << r << std::endl;
   }
   {
+    paracel::list_type<int> target = {77, 88};
+    paracel::packer<paracel::list_type<int> > obj(target);
+    std::string s;
+    obj.pack(s);
+    std::cout << s << std::endl;
+    auto r = obj.unpack(s);
+    for(auto & v : r) {
+      std::cout << "debug" << v << std::endl;
+    }
+  }
+  {
     paracel::list_type<double> target = {1., 2., 3.};
     paracel::packer<paracel::list_type<double> > obj(target);
     msgpack::sbuffer s;
