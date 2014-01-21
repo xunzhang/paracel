@@ -89,19 +89,31 @@ public:
     }
     auto scrip = paste(paracel::str_type("pull_multi"), key_lst);
     paracel::list_type<V> val;
-    req_send_recv_multi(*p_pull_multi_sock, scrip, val);
+    req_send_recv_lst(*p_pull_multi_sock, scrip, val);
     return val;
   }
-  
+   
+  // pull all V-type-vals
   template <class V>
-  V pullall() {
+  paracel::dict_type<paracel::str_type, V> pullall() {
     if(p_pullall_sock == nullptr) {
       p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pullall"));
-    V val;
-    req_send_recv(*p_pullall_sock, scrip, val);
+    paracel::dict_type<paracel::str_type, V> val;
+    req_send_recv_dct(*p_pullall_sock, scrip, val);
     return val;
+  }
+  
+  // pull all types, to be unpacked
+  template <class V>
+  bool pullall(V & val) {
+    if(p_pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
+    }
+    auto scrip = paste(paracel::str_type("pullall"));
+    auto r = req_send_recv(*p_pullall_sock, scrip, val);
+    return r;
   }
 
   template <class V>
@@ -131,7 +143,7 @@ public:
     }
     auto scrip = paste(paracel::str_type("push_multi"), dict);
     int stat;
-    //req_send_recv(*p_push_multi_sock, scrip, stat);
+    req_send_recv(*p_push_multi_sock, scrip, stat);
     return stat;
   }
   
@@ -227,9 +239,31 @@ private:
       return true;
     }
   }
+  
+  template <class V>
+  bool req_send_recv_dct(zmq::socket_t & sock, 
+  			const paracel::str_type & scrip, 
+			paracel::dict_type<paracel::str_type, V> & val) {
+    zmq::message_t req_msg(scrip.size());
+    std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
+    sock.send(req_msg);
+    zmq::message_t rep_msg;
+    sock.recv(&rep_msg);
+    paracel::packer<paracel::dict_type<paracel::str_type, paracel::str_type> > pk;
+    paracel::packer<V> pk2;
+    if(!rep_msg.size()) {
+      return false;
+    } else {
+      auto tmp = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+      for(auto & kv : tmp) {
+        val[kv.first] = pk2.unpack(kv.second);
+      }
+      return true;
+    }
+  }
 
   template <class V>
-  bool req_send_recv_multi(zmq::socket_t & sock, 
+  bool req_send_recv_lst(zmq::socket_t & sock, 
   			const paracel::str_type & scrip, 
 			paracel::list_type<V> & val) {
     zmq::message_t req_msg(scrip.size());

@@ -85,10 +85,9 @@ void thrd_exec(zmq::socket_t & sock) {
     }
     if(indicator == "pullall") {
       auto dct = paracel::tbl_store.getall();
-      //rep_pack_send(sock, dct);
+      rep_pack_send(sock, dct);
     }
-    if(indicator == "pullall_special") {
-    }
+    if(indicator == "pullall_special") {}
     if(indicator == "push") {
       auto key = pk.unpack(msg[1]);
       paracel::tbl_store.set(key, msg[2]);

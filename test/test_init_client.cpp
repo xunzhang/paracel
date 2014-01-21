@@ -49,12 +49,6 @@ int main(int argc, char *argv[])
     std::cout << kvc.contains(key2) << std::endl;
   }
   {
-    std::tr1::unordered_map<paracel::str_type, int> tmp{std::pair<paracel::str_type, int>(paracel::str_type("x"), 100), std::pair<paracel::str_type, int>(paracel::str_type("y"), 200)};
-    kvc.push_multi(tmp);
-    std::cout << kvc.contains(paracel::str_type("x")) << std::endl;
-    std::cout << kvc.pull<int>(paracel::str_type("x")) << std::endl;
-  }
-  {
     paracel::str_type key = "test_keyn";
     paracel::str_type key2 = "test_key";
     auto r = kvc.push(key, 7);
@@ -93,13 +87,13 @@ int main(int argc, char *argv[])
   }
   {
     paracel::str_type key8 = "key8";
-    std::tr1::unordered_map<paracel::str_type, paracel::list_type<double> > d;
+    std::unordered_map<paracel::str_type, paracel::list_type<double> > d;
     paracel::list_type<double> target1 = {1.11, 2.22, 3.33};
     paracel::list_type<double> target2 = {3.33, 2.22, 1.11};
     d["key_0"] = target1;
     d["key_1"] = target2;
     kvc.push(key8, d);
-    auto r = kvc.pull<std::tr1::unordered_map<paracel::str_type, paracel::list_type<double> > >(key8);
+    auto r = kvc.pull<std::unordered_map<paracel::str_type, paracel::list_type<double> > >(key8);
     for(auto & v : r) {
       std::cout << v.first << ":";
       for(auto & val : v.second) {
@@ -122,5 +116,13 @@ int main(int argc, char *argv[])
       std::cout << v << std::endl; 
     }
   }
+  /*
+  {
+    std::unordered_map<paracel::str_type, int> tmp{std::pair<paracel::str_type, int>(paracel::str_type("x"), 100), std::pair<paracel::str_type, int>(paracel::str_type("y"), 200)};
+    kvc.push_multi(tmp);
+    std::cout << kvc.contains(paracel::str_type("x")) << std::endl;
+    std::cout << kvc.pull<int>(paracel::str_type("x")) << std::endl;
+  }
+  */
   return 0;
 }
