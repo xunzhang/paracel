@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_map>
 
 #include "utils.hpp"
 #include "paracel_types.hpp"
@@ -48,13 +49,13 @@ int main(int argc, char *argv[])
       }
     }
   } 
-  /*
   {
     std::unordered_map<paracel::str_type, int> tmp{std::pair<paracel::str_type, int>(paracel::str_type("x"), 100), std::pair<paracel::str_type, int>(paracel::str_type("y"), 200)};
     kvc.push_multi(tmp);
     std::cout << kvc.contains(paracel::str_type("x")) << std::endl;
     std::cout << kvc.pull<int>(paracel::str_type("x")) << std::endl;
+    std::cout << kvc.contains(paracel::str_type("y")) << std::endl;
+    std::cout << kvc.pull<int>(paracel::str_type("y")) << std::endl;
   }
-  */
   return 0;
 }

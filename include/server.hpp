@@ -91,15 +91,19 @@ void thrd_exec(zmq::socket_t & sock) {
     if(indicator == "push") {
       auto key = pk.unpack(msg[1]);
       paracel::tbl_store.set(key, msg[2]);
-      int result = 1; rep_pack_send(sock, result);
+      bool result = true; rep_pack_send(sock, result);
     }
     if(indicator == "push_multi") {
-    /*
-      paracel::packer<paracel::dict_type<paracel::str_type, paracel::str_type> > pk_d;
-      auto kv_pairs = pk_d.unpack(msg[1]);
+      paracel::packer<paracel::list_type<paracel::str_type> > pk_l;
+      paracel::dict_type<paracel::str_type, paracel::str_type> kv_pairs;
+      auto key_lst = pk_l.unpack(msg[1]);
+      auto val_lst = pk_l.unpack(msg[2]);
+      assert(key_lst.size() == val_lst.size());
+      for(int i = 0; i < (int)key_lst.size(); ++i) {
+        kv_pairs[key_lst[i]] = val_lst[i];
+      }
       paracel::tbl_store.set_multi(kv_pairs);
-      int result = 1; rep_pack_send(sock, result);
-    */
+      bool result = true; rep_pack_send(sock, result);
     }
     if(indicator == "update") {}
     if(indicator == "remove") {

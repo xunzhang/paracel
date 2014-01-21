@@ -126,25 +126,46 @@ public:
   }
   
   template <class K, class V>
-  int push(const K & key, const V & val) {
+  bool push(const K & key, const V & val) {
     if(p_push_sock == nullptr) {
       p_push_sock.reset(create_req_sock(ports_lst[1]));
     }
     auto scrip = paste(paracel::str_type("push"), key, val); 
-    int stat;
-    req_send_recv(*p_push_sock, scrip, stat);
-    return stat;
+    bool stat;
+    auto result = req_send_recv(*p_push_sock, scrip, stat);
+    return result && stat;
   }
   
   template <class K, class V>
-  int push_multi(const paracel::dict_type<K, V> & dict) {
+  bool push_multi(const paracel::list_type<K> & key_lst, const paracel::list_type<V> & val_lst) {
     if(p_push_multi_sock == nullptr) {
       p_push_multi_sock.reset(create_req_sock(ports_lst[1]));
     }
-    auto scrip = paste(paracel::str_type("push_multi"), dict);
-    int stat;
-    req_send_recv(*p_push_multi_sock, scrip, stat);
-    return stat;
+    paracel::list_type<paracel::str_type> pack_val_lst;
+    for(auto & val : val_lst) {
+      paracel::packer<V> pk(val);
+      paracel::str_type s;
+      pk.pack(s);
+      pack_val_lst.push_back(s);
+    }
+    auto scrip = paste(paracel::str_type("push_multi"), key_lst, pack_val_lst);
+    bool stat;
+    auto result = req_send_recv(*p_push_multi_sock, scrip, stat);
+    return result && stat;
+  }
+  
+  template <class K, class V>
+  bool push_multi(const paracel::dict_type<K, V> & dct) {
+    if(p_push_multi_sock == nullptr) {
+      p_push_multi_sock.reset(create_req_sock(ports_lst[1]));
+    } 
+    paracel::list_type<K> key_lst;
+    paracel::list_type<V> val_lst;
+    for(auto & kv : dct) {
+      key_lst.push_back(kv.first);
+      val_lst.push_back(kv.second);
+    }
+    return push_multi(key_lst, val_lst);
   }
   
   template <class K, class V>

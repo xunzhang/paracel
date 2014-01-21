@@ -139,5 +139,20 @@ int main(int argc, char *argv[])
     std::cout << "#" << pk0.unpack(result[3]) << "#" << std::endl;
     std::cout << "--------------------------------" << std::endl;
   }
+  {
+    paracel::list_type<paracel::str_type> kl= {"k1", "k2", "k3"};
+    paracel::list_type<int> vl = {1, 2, 3};
+    auto result = paste(std::string("push_multi"), kl, vl);
+    std::cout << result << std::endl;
+    paracel::packer<paracel::list_type<paracel::str_type> > pk1;
+    paracel::packer<paracel::list_type<int> > pk2;
+    auto tmp = paracel::str_split(result, paracel::seperator);
+    for(auto & v : pk1.unpack(tmp[1])) {
+      std::cout << v << std::endl;
+    }
+    for(auto & v : pk2.unpack(tmp[2])) {
+      std::cout << v << std::endl;
+    }
+  }
   return 0;
 }
