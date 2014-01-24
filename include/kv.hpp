@@ -36,6 +36,7 @@ public:
     kvdct[k] = v;
   }
 
+  // (changsheng): we don't need paracel:: here? Or what's your consideration?
   void set_multi(const paracel::dict_type<K, V> & kvdict) {
     for(auto & kv : kvdict) {
       set(kv.first, kv.second);
