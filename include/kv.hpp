@@ -54,6 +54,7 @@ public:
   }
   */
 
+  // (changsheng): you call contains and at, introducing kvdct.find twice, I think it's not cheap.
   boost::optional<V> get(const K & k) {
     if(contains(k)) {
       return boost::optional<V>(kvdct.at(k));
@@ -70,6 +71,7 @@ public:
   paracel::list_type<V> get_multi(const paracel::list_type<K> & keylst) {
     paracel::list_type<V> valst;
     for(auto & key : keylst) {
+    	// (changsheng): this may throw?
       valst.push_back(kvdct.at(key));
     }
     return valst;
