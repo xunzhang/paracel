@@ -108,6 +108,7 @@ public:
     }
   }
 
+  // (changsheng): I don't get this, it's a usually Compare-and-Swap? add a document?
   bool cas(const K & k, const V & v, const paracel::hash_return_type & uniq) {
     if(auto r = gets(k)) {
       if(uniq == (*r).second) {
@@ -117,6 +118,7 @@ public:
     } else {
       kvdct[k] = v;
     }
+    // (changsheng): return ...
   }
 
   bool del(const K & k) {
