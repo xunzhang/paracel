@@ -19,48 +19,51 @@
 
 namespace paracel {
 
-template <class F>
-struct f_traits;
-
-template <class R, class ...Args>
-struct f_traits< R(Args...) > {
-
-public:
-  using result_type = R;
-  
-  static constexpr std::size_t arity = sizeof...(Args);
-
-  template <std::size_t N>
-  struct args {
-    static_assert(N < arity, "Error: invalid parameter index.");
-    using type = typename std::tuple_element<N, std::tuple<Args...> >::type;
-  };
-};
-
 // lambda & functor
 template <class F>
 struct f_traits {
 
 public:
+
   using call_type = f_traits<decltype(&F::operator())>;
 
 public:
+
   using result_type = typename call_type::result_type;
   
   static constexpr std::size_t arity = call_type::arity - 1;
-
+  
   template <std::size_t N>
+  
   struct args {
     static_assert(N < arity, "Error: invalid parameter index.");
     using type = typename call_type::template args<N+1>::type;
   };
 };
 
+// func ref
 template <class F>
 struct f_traits<F&> : public f_traits<F> {};
 
+// func rval ref
 template <class F>
 struct f_traits<F&&> : public f_traits<F> {};
+
+template <class R, class ...Args>
+struct f_traits< R(Args...) > {
+
+public:
+
+  using result_type = R;  
+  
+  static constexpr std::size_t arity = sizeof...(Args);
+  
+  template <std::size_t N>
+  struct args {
+    static_assert(N < arity, "Error: invalid parameter index.");
+    using type = typename std::tuple_element<N, std::tuple<Args...> >::type;
+  };
+};
 
 // func pt
 template <class R, class ...Args>

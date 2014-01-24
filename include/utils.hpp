@@ -24,6 +24,7 @@
 #include "utils/hash.hpp"
 #include "utils/decomp.hpp"
 #include "utils/ext_utility.hpp"
+#include "utils/func_utility.hpp"
 
 #include "paracel_types.hpp"
 
