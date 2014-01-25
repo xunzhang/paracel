@@ -93,12 +93,13 @@ public:
   incr(const K & k, const T & delta) {
     if(!contains(k)) return false;
     if(kvdct[k].size() != delta.size()) return false;
-    for(int i = 0; i < delta.size(); ++i) {
+    for(int i = 0; i < (int)delta.size(); ++i) {
       kvdct[k][i] += delta[i];
     }
     return true;
   }
 
+  // gets(key) → value, unique
   boost::optional<std::pair<V, paracel::hash_return_type> >
   gets(const K & k) {
     if(auto v = get(k)) {
@@ -111,7 +112,7 @@ public:
     }
   }
 
-  // (changsheng): I don't get this, it's a usually Compare-and-Swap? add a document?
+  // compare-and-set, cas(key, value, unique) → True/False
   bool cas(const K & k, const V & v, const paracel::hash_return_type & uniq) {
     if(auto r = gets(k)) {
       if(uniq == (*r).second) {
@@ -121,7 +122,7 @@ public:
     } else {
       kvdct[k] = v;
     }
-    // (changsheng): return ...
+    return true; 
   }
 
   bool del(const K & k) {
