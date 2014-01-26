@@ -125,6 +125,27 @@ public:
     // TODO
   }
   
+  bool register_update(const paracel::str_type & file_name, 
+  		const paracel::str_type & func_name) {
+    if(p_push_sock == nullptr) {
+      p_push_sock.reset(create_req_sock(ports_lst[1]));
+    }
+    auto scrip = paste(paracel::str_type("register_update"), file_name, func_name); 
+    bool stat;
+    auto result = req_send_recv(*p_push_sock, scrip, stat);
+    return result && stat;
+  }
+  
+  bool push_int(const paracel::str_type & key, int val) {
+    if(p_push_sock == nullptr) {
+      p_push_sock.reset(create_req_sock(ports_lst[1]));
+    }
+    auto scrip = paste(paracel::str_type("push_int"), key, val); 
+    bool stat;
+    auto result = req_send_recv(*p_push_sock, scrip, stat);
+    return result && stat;
+  }
+  
   template <class K, class V>
   bool push(const K & key, const V & val) {
     if(p_push_sock == nullptr) {
@@ -167,14 +188,21 @@ public:
     }
     return push_multi(key_lst, val_lst);
   }
-  
-  template <class K, class V>
-  void update(const K & key, const V & val, 
-  	const paracel::str_type & so_filename = paracel::default_so_file) {
+   
+  void incr_int(const paracel::str_type & key, int delta) {
     if(p_update_sock == nullptr) {
       p_update_sock.reset(create_push_sock(ports_lst[2]));
     }
-    auto scrip = paste(paracel::str_type("update"), key, val, so_filename);
+    auto scrip = paste(paracel::str_type("incr_int"), key, delta);
+    push_send(*p_update_sock, scrip);
+  }
+
+  template <class K, class V>
+  void update(const K & key, const V & delta) {
+    if(p_update_sock == nullptr) {
+      p_update_sock.reset(create_push_sock(ports_lst[2]));
+    }
+    auto scrip = paste(paracel::str_type("update"), key, delta);
     push_send(*p_update_sock, scrip);
   }
   

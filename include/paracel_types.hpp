@@ -43,6 +43,8 @@ const std::string seperator = "PARACEL";
 
 const std::string default_so_file = "../src/default.so";
 
+const std::string default_update_func_name = "paracel_default_incr";
+
 const std::string default_port = "7773";
 
 const int any_source = MPI_ANY_SOURCE;
@@ -198,6 +200,8 @@ using Disable_if_inner = typename std::enable_if<!Cond::value_type, T>::type;
 
 template <class T>
 using coroutine = boost::coroutines::coroutine<T()>;
+
+using update_result = std::function<std::string(std::string, std::string)>;
 
 } // namespace paracel
 

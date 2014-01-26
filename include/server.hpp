@@ -15,6 +15,7 @@
 #ifndef FILE_3abacbd9_27ff_b19b_e2a0_88e092dbc44b_HPP 
 #define FILE_3abacbd9_27ff_b19b_e2a0_88e092dbc44b_HPP
 
+#include <dlfcn.h>
 #include <unistd.h>
 #include <thread>
 #include <mutex>
@@ -26,10 +27,13 @@
 #include "utils.hpp"
 #include "packer.hpp"
 #include "kv_def.hpp"
+#include "proxy.hpp"
 
 namespace paracel {
 
 std::mutex mutex;
+
+using update_result = paracel::update_result;
 
 static paracel::str_type local_parse_port(paracel::str_type && s) {
   auto l = paracel::str_split(std::move(s), ':');
@@ -52,17 +56,27 @@ static void rep_pack_send(zmq::socket_t & sock, V & val) {
   sock.send(req);
 }
 
+void kv_update(const paracel::str_type & key, 
+	const paracel::str_type & delta, 
+	update_result update_func) {
+  paracel::str_type val;
+  auto exist = paracel::tbl_store.get(key, val);
+  auto new_val = update_func(val, delta);
+  paracel::tbl_store.set(key, new_val); 
+}
+
 // thread entry
 void thrd_exec(zmq::socket_t & sock) {
+  paracel::packer<> pk;
+  void *update_handler; 
+  update_result update_f;
   while(1) {
     zmq::message_t s;
     sock.recv(&s);
     auto scrip = paracel::str_type(static_cast<const char *>(s.data()), s.size());
     auto msg = paracel::str_split(scrip, paracel::seperator);
-    paracel::packer<> pk;
     auto indicator = pk.unpack(msg[0]);
     std::cout << indicator << std::endl;
-    paracel::str_type ret;
     mutex.lock();
     if(indicator == "contains") {
       auto key = pk.unpack(msg[1]);
@@ -88,9 +102,25 @@ void thrd_exec(zmq::socket_t & sock) {
       rep_pack_send(sock, dct);
     }
     if(indicator == "pullall_special") {}
+    if(indicator == "register_update") {
+      auto file_name = pk.unpack(msg[1]);
+      auto func_name = pk.unpack(msg[2]);
+      update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+      auto update_local = dlsym(update_handler, func_name.c_str());
+      update_f = (paracel::str_type(*)(paracel::str_type,
+      				paracel::str_type)) update_local;
+      dlclose(update_handler);
+    }
     if(indicator == "push") {
       auto key = pk.unpack(msg[1]);
       paracel::tbl_store.set(key, msg[2]);
+      bool result = true; rep_pack_send(sock, result);
+    }
+    if(indicator == "push_int") {
+      auto key = pk.unpack(msg[1]);
+      paracel::packer<int> pk_i;
+      auto val = pk_i.unpack(msg[2]);
+      paracel::ssp_tbl.set(key, val);
       bool result = true; rep_pack_send(sock, result);
     }
     if(indicator == "push_multi") {
@@ -105,7 +135,23 @@ void thrd_exec(zmq::socket_t & sock) {
       paracel::tbl_store.set_multi(kv_pairs);
       bool result = true; rep_pack_send(sock, result);
     }
-    if(indicator == "update") {}
+    if(indicator == "incr_int") {
+      auto key = pk.unpack(msg[1]);
+      paracel::packer<int> pk_i;
+      int delta = pk_i.unpack(msg[2]);
+      paracel::ssp_tbl.incr(key, delta);
+      std::cout << key << "debug! " << *paracel::ssp_tbl.get(key) << std::endl;
+    }
+    if(indicator == "update") {
+      if(!update_f) {
+        update_handler = dlopen("../lib/default.so", RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+        auto update_local = dlsym(update_handler, "default_incr_d");
+        update_f = (paracel::str_type(*)(paracel::str_type,
+      				paracel::str_type)) update_local;
+        dlclose(update_handler);
+      }
+      kv_update(msg[1], msg[2], update_f);
+    }
     if(indicator == "remove") {
       auto key = pk.unpack(msg[1]);
       auto result = paracel::tbl_store.del(key);

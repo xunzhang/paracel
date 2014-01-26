@@ -5,6 +5,9 @@
 #include "packer.hpp"
 
 double local_incr(double v, double d) { return v + d; }
+//template <class T = double>
+//T local_incr(T v, T d) { return v + d; }
+
 using update_result = std::function<std::string(std::string, std::string)>;
 
 void update(std::string key, std::string delta, update_result update_func) {

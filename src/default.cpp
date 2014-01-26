@@ -12,25 +12,46 @@
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
-#include <string>
-#include "packer.hpp"
+#include <vector>
+#include "paracel_types.hpp"
+#include "proxy.hpp"
 
-void paracel_incr_int(const std::string & k, const std::string & delta) {
-  
+int paracel_incr_i(int a, int b) {
+  return a + b;
 }
 
-void paracel_incr_float() {
-
+float paracel_incr_f(float a, float b) {
+  return a + b;
 }
 
-void paracel_incr_double() {
+double paracel_incr_d(double a, double b) {
+  return a + b;
 }
 
-void paracel_incr_lint() {
+paracel::list_type<int> paracel_incr_li(paracel::list_type<int> a, paracel::list_type<int> b) {
+  paracel::list_type<int> r;
+  for(int i = 0; i < (int)a.size(); ++i) {
+    r.push_back(a[i] + b[i]);
+  }
 }
 
-void paracel_incr_lfloat() {
+paracel::list_type<float> paracel_incr_lf(paracel::list_type<float> a, paracel::list_type<float> b) {
+  paracel::list_type<float> r;
+  for(int i = 0; i < (int)a.size(); ++i) {
+    r.push_back(a[i] + b[i]);
+  }
 }
 
-void paracel_incr_ldouble() {
+paracel::list_type<double> paracel_incr_ld(paracel::list_type<double> a, paracel::list_type<double> b) {
+  paracel::list_type<double> r;
+  for(int i = 0; i < (int)a.size(); ++i) {
+    r.push_back(a[i] + b[i]);
+  }
 }
+
+update_result default_incr_i = paracel::update_proxy(paracel_incr_i);
+update_result default_incr_f = paracel::update_proxy(paracel_incr_f);
+update_result default_incr_d = paracel::update_proxy(paracel_incr_d);
+update_result default_incr_li = paracel::update_proxy(paracel_incr_li);
+update_result default_incr_lf = paracel::update_proxy(paracel_incr_lf);
+update_result default_incr_ld = paracel::update_proxy(paracel_incr_ld);
