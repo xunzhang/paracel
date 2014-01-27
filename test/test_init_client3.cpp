@@ -18,18 +18,9 @@ int main(int argc, char *argv[])
     kvc.push_int(key1, 2);
   }
   {
-    auto d = kvc.pullall<int>();
-    for(auto & k : d) {
-      std::cout << k.first << ":" << k.second << std::endl;
-    }
-  }
-  {
     paracel::str_type key0 = "key_0";
     kvc.incr_int(key0, 9);
-    auto d = kvc.pullall<int>();
-    for(auto & k : d) {
-      std::cout << k.first << ":" << k.second << std::endl;
-    }
+    std::cout << kvc.pull_int(key0) << std::endl;;
   }
   return 0;
 }

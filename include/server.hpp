@@ -65,6 +65,39 @@ void kv_update(const paracel::str_type & key,
   paracel::tbl_store.set(key, new_val); 
 }
 
+// thread entry for ssp 
+void thrd_exec_ssp(zmq::socket_t & sock) {
+  paracel::packer<> pk;
+  while(1) {
+    zmq::message_t s;
+    sock.recv(&s);
+    auto scrip = paracel::str_type(static_cast<const char *>(s.data()), s.size());
+    auto msg = paracel::str_split(scrip, paracel::seperator);
+    auto indicator = pk.unpack(msg[0]);
+    std::cout << indicator << std::endl;
+    if(indicator == "push_int") {
+      auto key = pk.unpack(msg[1]);
+      paracel::packer<int> pk_i;
+      auto val = pk_i.unpack(msg[2]);
+      paracel::ssp_tbl.set(key, val);
+      bool result = true; rep_pack_send(sock, result);
+    }
+    if(indicator == "incr_int") {
+      auto key = pk.unpack(msg[1]);
+      paracel::packer<int> pk_i;
+      int delta = pk_i.unpack(msg[2]);
+      paracel::ssp_tbl.incr(key, delta);
+      bool result = true; rep_pack_send(sock, result);
+    }
+    if(indicator == "pull_int") {
+      auto key = pk.unpack(msg[1]);
+      int result;
+      paracel::ssp_tbl.get(key, result);
+      rep_pack_send(sock, result);
+    }
+  }
+}
+
 // thread entry
 void thrd_exec(zmq::socket_t & sock) {
   paracel::packer<> pk;
@@ -116,13 +149,6 @@ void thrd_exec(zmq::socket_t & sock) {
       paracel::tbl_store.set(key, msg[2]);
       bool result = true; rep_pack_send(sock, result);
     }
-    if(indicator == "push_int") {
-      auto key = pk.unpack(msg[1]);
-      paracel::packer<int> pk_i;
-      auto val = pk_i.unpack(msg[2]);
-      paracel::ssp_tbl.set(key, val);
-      bool result = true; rep_pack_send(sock, result);
-    }
     if(indicator == "push_multi") {
       paracel::packer<paracel::list_type<paracel::str_type> > pk_l;
       paracel::dict_type<paracel::str_type, paracel::str_type> kv_pairs;
@@ -134,13 +160,6 @@ void thrd_exec(zmq::socket_t & sock) {
       }
       paracel::tbl_store.set_multi(kv_pairs);
       bool result = true; rep_pack_send(sock, result);
-    }
-    if(indicator == "incr_int") {
-      auto key = pk.unpack(msg[1]);
-      paracel::packer<int> pk_i;
-      int delta = pk_i.unpack(msg[2]);
-      paracel::ssp_tbl.incr(key, delta);
-      std::cout << key << "debug! " << *paracel::ssp_tbl.get(key) << std::endl;
     }
     if(indicator == "update") {
       if(!update_f) {
@@ -196,7 +215,7 @@ void init_thrds(const paracel::str_type & init_host) {
   sock_t2.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
   ports += local_parse_port(paracel::str_type(freeport)) + ",";
   
-  zmq::socket_t sock_t3(context, ZMQ_PULL);
+  zmq::socket_t sock_t3(context, ZMQ_REP);
   sock_t3.bind("tcp://*:*");
   sock_t3.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
   ports += local_parse_port(paracel::str_type(freeport));
@@ -212,7 +231,7 @@ void init_thrds(const paracel::str_type & init_host) {
   threads.push_back(std::thread(thrd_exec, std::ref(sock_t0)));
   threads.push_back(std::thread(thrd_exec, std::ref(sock_t1)));
   threads.push_back(std::thread(thrd_exec, std::ref(sock_t2)));
-  threads.push_back(std::thread(thrd_exec, std::ref(sock_t3)));
+  threads.push_back(std::thread(thrd_exec_ssp, std::ref(sock_t3)));
   /*
   threads.push_back(std::thread(thrd_exec, std::move(sock_t0)));
   threads.push_back(std::thread(thrd_exec, std::move(sock_t1)));

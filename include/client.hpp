@@ -136,16 +136,6 @@ public:
     return result && stat;
   }
   
-  bool push_int(const paracel::str_type & key, int val) {
-    if(p_push_sock == nullptr) {
-      p_push_sock.reset(create_req_sock(ports_lst[1]));
-    }
-    auto scrip = paste(paracel::str_type("push_int"), key, val); 
-    bool stat;
-    auto result = req_send_recv(*p_push_sock, scrip, stat);
-    return result && stat;
-  }
-  
   template <class K, class V>
   bool push(const K & key, const V & val) {
     if(p_push_sock == nullptr) {
@@ -189,14 +179,6 @@ public:
     return push_multi(key_lst, val_lst);
   }
    
-  void incr_int(const paracel::str_type & key, int delta) {
-    if(p_update_sock == nullptr) {
-      p_update_sock.reset(create_push_sock(ports_lst[2]));
-    }
-    auto scrip = paste(paracel::str_type("incr_int"), key, delta);
-    push_send(*p_update_sock, scrip);
-  }
-
   template <class K, class V>
   void update(const K & key, const V & delta) {
     if(p_update_sock == nullptr) {
@@ -236,7 +218,39 @@ public:
     req_send_recv(*p_clear_sock, scrip, val);
     return val;
   }
-
+  
+  // built-in sock ops for ssp usage
+  bool push_int(const paracel::str_type & key, int val) {
+    if(p_ssp_sock == nullptr) {
+      p_ssp_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    auto scrip = paste(paracel::str_type("push_int"), key, val); 
+    bool stat;
+    auto result = req_send_recv(*p_ssp_sock, scrip, stat);
+    return result && stat;
+  }
+  
+  bool incr_int(const paracel::str_type & key, int delta) {
+    if(p_ssp_sock == nullptr) {
+      p_ssp_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    auto scrip = paste(paracel::str_type("incr_int"), key, delta);
+    bool stat;
+    auto result = req_send_recv(*p_ssp_sock, scrip, stat);
+    return result && stat;
+  }
+  
+  int pull_int(const paracel::str_type & key) {
+    if(p_ssp_sock == nullptr) {
+      p_ssp_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    auto scrip = paste(paracel::str_type("pull_int"), key);
+    int val;
+    bool r = req_send_recv(*p_ssp_sock, scrip, val);
+    assert(r);
+    return val;
+  }
+  
 private:
 
   zmq::socket_t*
@@ -272,7 +286,7 @@ private:
     pk.pack(scrip); // pack to scrip
     return scrip + paracel::seperator + paste(args...); 
   }
-
+  
   template <class V>
   bool req_send_recv(zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
     zmq::message_t req_msg(scrip.size());
@@ -353,6 +367,7 @@ private:
   std::unique_ptr<zmq::socket_t> p_update_sock;
   std::unique_ptr<zmq::socket_t> p_remove_sock;
   std::unique_ptr<zmq::socket_t> p_clear_sock;
+  std::unique_ptr<zmq::socket_t> p_ssp_sock;
 }; 
 
 } // namespace paracel
