@@ -26,7 +26,7 @@ paracel::str_type paste(const T & op_str, const Args & ...args) {
 }
 
 void check_result(const paracel::str_type & s) {
-  auto result = paracel::str_split(s, paracel::seperator);
+  auto result = paracel::str_split_by_word(s, paracel::seperator);
   std::cout << "--------------------------------" << std::endl;
   paracel::packer<paracel::str_type> pk;
   for(auto & s : result) {
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     std::vector<std::string> key_lst = {"p[0,:]", "p[1,:]", "q[:,0]"};
     auto s3 = paste(std::string("pull_multi"), key_lst);
     //check_result(s3);
-    auto result = paracel::str_split(s3, paracel::seperator);
+    auto result = paracel::str_split_by_word(s3, paracel::seperator);
     std::cout << "--------------------------------" << std::endl;
     paracel::packer<paracel::str_type> pk1;
     paracel::packer<paracel::list_type<paracel::str_type> > pk2;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 
     double v2 = 3.14;
     auto s2 = paste(std::string("push"), key, v2);
-    auto result = paracel::str_split(s2, paracel::seperator);
+    auto result = paracel::str_split_by_word(s2, paracel::seperator);
     std::cout << "--------------------------------" << std::endl;
     paracel::packer<paracel::str_type> pk1;
     paracel::packer<double> pk2;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     
     std::vector<double> v3 = {1.1, 2.2, 3.3, 4.4, 5.5};
     auto s3 = paste(std::string("push"), key + "_0", v3);
-    auto result2 = paracel::str_split(s3, paracel::seperator);
+    auto result2 = paracel::str_split_by_word(s3, paracel::seperator);
     std::cout << "--------------------------------" << std::endl;
     paracel::packer<std::vector<double> > pk3;
     std::cout << "#" << pk1.unpack(result2[0]) << "#" << std::endl;
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     d["p[0,:]_0"] = t1;
     d["q[:,0]_0"] = t2;
     auto s4 = paste(std::string("push_multi"), d);
-    auto result3 = paracel::str_split(s4, paracel::seperator);
+    auto result3 = paracel::str_split_by_word(s4, paracel::seperator);
 
     std::cout << "--------------------------------" << std::endl;
     paracel::packer<std::tr1::unordered_map<paracel::str_type, paracel::list_type<double> > > pk4;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
     int v1 = 7;
     std::string v2 = "hello";
     auto s1 = paste(std::string("push"), key, v1, v2);
-    auto result = paracel::str_split(s1, paracel::seperator);
+    auto result = paracel::str_split_by_word(s1, paracel::seperator);
     std::cout << "--------------------------------" << std::endl;
     paracel::packer<paracel::str_type> pk0;
     paracel::packer<double> pk1;
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     std::cout << result << std::endl;
     paracel::packer<paracel::list_type<paracel::str_type> > pk1;
     paracel::packer<paracel::list_type<int> > pk2;
-    auto tmp = paracel::str_split(result, paracel::seperator);
+    auto tmp = paracel::str_split_by_word(result, paracel::seperator);
     for(auto & v : pk1.unpack(tmp[1])) {
       std::cout << v << std::endl;
     }

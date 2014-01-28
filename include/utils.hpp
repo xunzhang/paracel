@@ -57,7 +57,7 @@ paracel::str_type get_hostnames_string(int srv_num) {
 paracel::list_type<local_dict_type> 
 get_hostnames_dict(const paracel::str_type & names) {
   paracel::list_type<local_dict_type> dl;
-  auto lst = paracel::str_split(names, paracel::seperator);
+  auto lst = paracel::str_split_by_word(names, paracel::seperator);
   for(auto & item : lst) {
     local_dict_type d;
     auto l = paracel::str_split(item, ':');
