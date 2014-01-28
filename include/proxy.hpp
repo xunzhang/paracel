@@ -36,7 +36,7 @@ struct update_functor {
 */
 
 template <class F>
-update_result update_proxy(F & func) {
+update_result update_proxy(F & func) { // & is important
   typedef paracel::f_traits<decltype(func)> traits;
   typename traits::result_type result;
   typename traits::template args<0>::type val;
@@ -44,7 +44,9 @@ update_result update_proxy(F & func) {
   update_result update_lambda = [&] (paracel::str_type s_val, paracel::str_type s_delta) {
     paracel::packer<decltype(val)> pk1;
     paracel::packer<decltype(delta)> pk2;
-    auto tmp = func(pk1.unpack(s_val), pk2.unpack(s_delta));
+    auto p1 = pk1.unpack(s_val);
+    auto p2 = pk2.unpack(s_delta);
+    auto tmp = func(p1, p2);
     paracel::packer<decltype(result)> pk3(tmp);
     paracel::str_type r;
     pk3.pack(r);

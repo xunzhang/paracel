@@ -163,13 +163,22 @@ void thrd_exec(zmq::socket_t & sock) {
     }
     if(indicator == "update") {
       if(!update_f) {
-        update_handler = dlopen("../lib/default.so", RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
-        auto update_local = dlsym(update_handler, "default_incr_d");
-        update_f = (paracel::str_type(*)(paracel::str_type,
-      				paracel::str_type)) update_local;
-        dlclose(update_handler);
+        update_handler = dlopen("/mfs/user/wuhong/paracel/lib/default.so", RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+	if(!update_handler) {
+	  std::cerr << "Cannot open library: " << dlerror() << '\n';
+	  return;
+	}
+	auto update_local = dlsym(update_handler, "default_incr_d");
+	if(!update_local) {
+	  std::cerr << "Cannot load symbol: " << dlerror() << '\n';
+	  dlclose(update_handler);
+	  return;
+	}
+	update_f = *(std::function<std::string(paracel::str_type, paracel::str_type)>*) update_local;
+        dlclose(update_handler); // RTLD_NODELETE
       }
-      kv_update(msg[1], msg[2], update_f);
+      auto key = pk.unpack(msg[1]);
+      kv_update(key, msg[2], update_f);
     }
     if(indicator == "remove") {
       auto key = pk.unpack(msg[1]);

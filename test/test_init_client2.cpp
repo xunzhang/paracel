@@ -1,5 +1,7 @@
 #include <iostream>
 #include <unordered_map>
+#include <chrono>
+#include <thread>
 
 #include "utils.hpp"
 #include "paracel_types.hpp"
@@ -56,6 +58,15 @@ int main(int argc, char *argv[])
     std::cout << kvc.pull<int>(paracel::str_type("x")) << std::endl;
     std::cout << kvc.contains(paracel::str_type("y")) << std::endl;
     std::cout << kvc.pull<int>(paracel::str_type("y")) << std::endl;
+  }
+  {
+    paracel::str_type key2 = "key_3";
+    kvc.push(key2, 3.1415);
+    std::cout << kvc.pull<double>(key2) << std::endl;
+    kvc.update(key2, 4.6362);
+    std::chrono::milliseconds dura(1000);
+    std::this_thread::sleep_for(dura);
+    std::cout << kvc.pull<double>(key2) << std::endl;
   }
   return 0;
 }

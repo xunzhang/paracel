@@ -12,20 +12,29 @@
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+#include <functional>
 #include <vector>
 #include "paracel_types.hpp"
+
 #include "proxy.hpp"
 
-int paracel_incr_i(int a, int b) {
-  return a + b;
+using update_result = std::function<paracel::str_type(paracel::str_type, paracel::str_type)>;
+
+extern "C" {
+  extern update_result default_incr_i;
+  extern update_result default_incr_f;
+  extern update_result default_incr_d;
+  extern update_result default_incr_li;
+  extern update_result default_incr_lf;
+  extern update_result default_incr_ld;
 }
 
-float paracel_incr_f(float a, float b) {
-  return a + b;
-}
+int paracel_incr_i(int a, int b) { return a + b; }
 
-double paracel_incr_d(double a, double b) {
-  return a + b;
+float paracel_incr_f(float a, float b) { return a + b; }
+
+double paracel_incr_d(double a, double b) { 
+  return a + b; 
 }
 
 paracel::list_type<int> paracel_incr_li(paracel::list_type<int> a, paracel::list_type<int> b) {
