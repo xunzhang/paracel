@@ -222,11 +222,11 @@ public:
     return val;
   }
 
-  bool remove_special(const paracel::str_type & so_filename = paracel::default_so_file) {
+  bool remove_special() {
     if(p_remove_sock == nullptr) {
       p_remove_sock.reset(create_req_sock(ports_lst[0]));
     }
-    auto scrip = paste(paracel::str_type("remove_special"), so_filename);
+    auto scrip = paste(paracel::str_type("remove_special"));
     bool val;
     req_send_recv(*p_remove_sock, scrip, val);
     return val;

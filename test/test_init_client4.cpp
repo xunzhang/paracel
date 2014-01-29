@@ -59,5 +59,14 @@ int main(int argc, char *argv[])
       std::cout << k.first << ":" << k.second << std::endl;
     }
   }
+  {
+    std::cout << "----" << std::endl;
+    kvc.register_remove_special(paracel::str_type("/mfs/user/wuhong/paracel/lib/local.so"), paracel::str_type("local_filter_remove"));
+    kvc.remove_special();
+    auto d = kvc.pullall<double>();
+    for(auto & k : d) {
+      std::cout << k.first << ":" << k.second << std::endl;
+    }
+  }
   return 0;
 }

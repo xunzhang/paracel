@@ -11,6 +11,7 @@ using filter_result = std::function<bool(std::string, std::string)>;
 extern "C" {
   extern update_result local_update;
   extern filter_result local_filter;
+  extern filter_result local_filter_remove;
 }
 
 double foo(double a, double b) { 
@@ -18,7 +19,7 @@ double foo(double a, double b) {
 }
 
 bool goo0(std::string k, double v) {
-  if(v >= 10.) { return true; }
+  if(v >= 12.) { return true; }
   return false;
 }
 
@@ -28,5 +29,14 @@ bool goo1(std::string k, double v) {
   return false;
 }
 
+bool too0(std::string k, double v) {
+  if(v >= 14.) { return true; }
+  return false;
+}
+
+bool too1(std::string k, double v) {
+}
+
 update_result local_update = paracel::update_proxy(foo);
 filter_result local_filter = paracel::filter_proxy(goo0);
+filter_result local_filter_remove = paracel::filter_proxy(goo0);
