@@ -117,23 +117,46 @@ public:
   }
 
   template <class V>
-  V pullall_special(const paracel::str_type & so_filename = paracel::default_so_file) {
+  paracel::dict_type<paracel::str_type, V> pullall_special() {
     if(p_pullall_sock == nullptr) {
       p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
-    auto scrip = paste(paracel::str_type("pullall_special"), so_filename);
-    // TODO
+    auto scrip = paste(paracel::str_type("pullall_special"));
+    paracel::dict_type<paracel::str_type, V> val;
+    req_send_recv_dct(*p_pullall_sock, scrip, val);
+    return val;
   }
   
+  bool register_pullall_special(const paracel::str_type & file_name, 
+  		const paracel::str_type & func_name) {
+    if(p_pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
+    }
+    auto scrip = paste(paracel::str_type("register_pullall_special"), file_name, func_name); 
+    bool stat;
+    auto r = req_send_recv(*p_pullall_sock, scrip, stat);
+    return r && stat;
+  }
+  
+  bool register_remove_special(const paracel::str_type & file_name, 
+  		const paracel::str_type & func_name) {
+    if(p_remove_sock == nullptr) {
+      p_remove_sock.reset(create_req_sock(ports_lst[0]));
+    }
+    auto scrip = paste(paracel::str_type("register_remove_special"), file_name, func_name); 
+    bool stat;
+    auto r = req_send_recv(*p_remove_sock, scrip, stat);
+    return r && stat;
+  }
+
   bool register_update(const paracel::str_type & file_name, 
   		const paracel::str_type & func_name) {
-    if(p_push_sock == nullptr) {
-      p_push_sock.reset(create_req_sock(ports_lst[1]));
+    if(p_update_sock == nullptr) {
+      p_update_sock.reset(create_push_sock(ports_lst[2]));
     }
     auto scrip = paste(paracel::str_type("register_update"), file_name, func_name); 
-    bool stat;
-    auto result = req_send_recv(*p_push_sock, scrip, stat);
-    return result && stat;
+    push_send(*p_update_sock, scrip);
+    return true;
   }
   
   template <class K, class V>

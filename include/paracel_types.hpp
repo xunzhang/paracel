@@ -202,6 +202,8 @@ template <class T>
 using coroutine = boost::coroutines::coroutine<T()>;
 
 using update_result = std::function<std::string(std::string, std::string)>;
+using filter_result = std::function<bool(std::string, std::string)>;
+
 
 } // namespace paracel
 

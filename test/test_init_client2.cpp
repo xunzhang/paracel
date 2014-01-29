@@ -64,7 +64,15 @@ int main(int argc, char *argv[])
     kvc.push(key2, 3.1415);
     std::cout << kvc.pull<double>(key2) << std::endl;
     kvc.update(key2, 4.6362);
-    std::chrono::milliseconds dura(1000);
+    std::chrono::milliseconds dura(1);
+    std::this_thread::sleep_for(dura);
+    std::cout << kvc.pull<double>(key2) << std::endl;
+  }
+  {
+    paracel::str_type key2 = "key_3";
+    kvc.register_update(paracel::str_type("/mfs/user/wuhong/paracel/lib/local.so"), paracel::str_type("local_update"));
+    kvc.update(key2, 10.);
+    std::chrono::milliseconds dura(10);
     std::this_thread::sleep_for(dura);
     std::cout << kvc.pull<double>(key2) << std::endl;
   }

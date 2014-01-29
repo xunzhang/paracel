@@ -34,6 +34,7 @@ namespace paracel {
 std::mutex mutex;
 
 using update_result = paracel::update_result;
+using filter_result = paracel::filter_result;
 
 static paracel::str_type local_parse_port(paracel::str_type && s) {
   auto l = paracel::str_split(std::move(s), ':');
@@ -54,6 +55,17 @@ static void rep_pack_send(zmq::socket_t & sock, V & val) {
   zmq::message_t req(r.size());
   std::memcpy((void *)req.data(), &r[0], r.size());
   sock.send(req);
+}
+
+void kv_filter(const paracel::dict_type<paracel::str_type, paracel::str_type> & dct, 
+	paracel::dict_type<paracel::str_type, paracel::str_type> & new_dct,
+	filter_result filter_func) {
+  paracel::packer<double> pk;
+  for(auto & kv : dct) {
+    if(filter_func(kv.first, kv.second)) {
+      new_dct[kv.first] = kv.second;
+    }
+  }
 }
 
 void kv_update(const paracel::str_type & key, 
@@ -102,7 +114,11 @@ void thrd_exec_ssp(zmq::socket_t & sock) {
 void thrd_exec(zmq::socket_t & sock) {
   paracel::packer<> pk;
   void *update_handler; 
+  void *pullall_special_handler;
+  void *remove_special_handler;
   update_result update_f;
+  filter_result pullall_special_f;
+  filter_result remove_special_f;
   while(1) {
     zmq::message_t s;
     sock.recv(&s);
@@ -134,14 +150,51 @@ void thrd_exec(zmq::socket_t & sock) {
       auto dct = paracel::tbl_store.getall();
       rep_pack_send(sock, dct);
     }
-    if(indicator == "pullall_special") {}
+    if(indicator == "pullall_special") {
+      if(!pullall_special_f) {
+        std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
+	return;
+      }
+      auto dct = paracel::tbl_store.getall();
+      paracel::dict_type<paracel::str_type, paracel::str_type> new_dct;
+      kv_filter(dct, new_dct, pullall_special_f);
+      rep_pack_send(sock, new_dct);
+    }
+    if(indicator == "register_pullall_special") {
+      auto file_name = pk.unpack(msg[1]);
+      auto func_name = pk.unpack(msg[2]);
+      pullall_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+      if(!pullall_special_handler) {
+        std::cerr << "Cannot open library: " << dlerror() << '\n';
+	return;
+      }
+      auto pullall_special_local = dlsym(pullall_special_handler, func_name.c_str());
+      if(!pullall_special_local) {
+        std::cerr << "Cannot load symbol: " << dlerror() << '\n';
+	dlclose(pullall_special_handler);
+	return;
+      }
+      pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) pullall_special_local;
+      dlclose(pullall_special_handler);
+      bool result = true; rep_pack_send(sock, result);
+    }
+    if(indicator == "register_remove_sepcial") {
+    }
     if(indicator == "register_update") {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
       update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+      if(!update_handler) {
+        std::cerr << "Cannot open library: " << dlerror() << '\n';
+	return;
+      }
       auto update_local = dlsym(update_handler, func_name.c_str());
-      update_f = (paracel::str_type(*)(paracel::str_type,
-      				paracel::str_type)) update_local;
+      if(!update_local) {
+        std::cerr << "Cannot load symbol: " << dlerror() << '\n';
+	dlclose(update_handler);
+	return;
+      }
+      update_f = *(std::function<paracel::str_type(paracel::str_type, paracel::str_type)>*) update_local;
       dlclose(update_handler);
     }
     if(indicator == "push") {

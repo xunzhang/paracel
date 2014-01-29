@@ -24,19 +24,27 @@
 namespace paracel {
 
 using update_result = std::function<paracel::str_type(paracel::str_type, paracel::str_type)>;
+using filter_result = std::function<bool(paracel::str_type, paracel::str_type)>;
 
-/*
 template <class F>
-struct update_functor {
-  update_result operator()(F func, paracel::str_type s_val, paracel::str_type s_delta) {
-    paracel::packer<decltype(val)> pk1;
-    paracel::packer<decltype()>
+filter_result filter_proxy(F & func) {
+  typedef paracel::f_traits<decltype(func)> traits;
+  //typename traits::result_type result;
+  //typename traits::template args<0>::type key;
+  //static_assert(std::is_same<bool, traits::result_type>::value, "filter function in paracel must return bool.");
+  //static_assert(std::is_same<paracel::str_type, key>::value, "key type of filter function in paracel must std::string.");
+  typename traits::template args<1>::type val;
+  filter_result filter_lambda = [&] (paracel::str_type s_key, paracel::str_type s_val) {
+    paracel::packer<> pk1;
+    paracel::packer<decltype(val)> pk2;
+    auto p2 = pk2.unpack(s_val);
+    return func(s_key, p2); // bool
   };
-};
-*/
+  return filter_lambda;
+}
 
 template <class F>
-update_result update_proxy(F & func) { // & is important
+update_result update_proxy(F & func) { // '&' is important
   typedef paracel::f_traits<decltype(func)> traits;
   typename traits::result_type result;
   typename traits::template args<0>::type val;
