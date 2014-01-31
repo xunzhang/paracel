@@ -68,5 +68,16 @@ int main(int argc, char *argv[])
       std::cout << k.first << ":" << k.second << std::endl;
     }
   }
+  {
+    std::cout << "----" << std::endl;
+    paracel::str_type key = "key_3";
+    kvc.push(key, 17.);
+    std::chrono::milliseconds dura(1);
+    std::this_thread::sleep_for(dura);
+    auto d = kvc.pullall_special<double>(paracel::str_type("/mfs/user/wuhong/paracel/lib/local.so"), paracel::str_type("local_filter2"));
+    for(auto & k : d) {
+      std::cout << k.first << ":" << k.second << std::endl;
+    }
+  }
   return 0;
 }

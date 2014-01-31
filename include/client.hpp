@@ -126,6 +126,19 @@ public:
     req_send_recv_dct(*p_pullall_sock, scrip, val);
     return val;
   }
+
+  template <class V>
+  paracel::dict_type<paracel::str_type, V> 
+  pullall_special(const paracel::str_type so_filename,
+  		const paracel::str_type func_name) {
+    if(p_pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
+    }
+    auto scrip = paste(paracel::str_type("pullall_special"), so_filename, func_name);
+    paracel::dict_type<paracel::str_type, V> val;
+    req_send_recv_dct(*p_pullall_sock, scrip, val);
+    return val;
+  }
   
   bool register_pullall_special(const paracel::str_type & file_name, 
   		const paracel::str_type & func_name) {

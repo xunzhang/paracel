@@ -162,14 +162,38 @@ void thrd_exec(zmq::socket_t & sock) {
       rep_pack_send(sock, dct);
     }
     if(indicator == "pullall_special") {
-      if(!pullall_special_f) {
-        std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
-	return;
+      if(msg.size() == 3) {
+        // open request func
+        auto file_name = pk.unpack(msg[1]);
+        auto func_name = pk.unpack(msg[2]);
+        pullall_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
+        if(!pullall_special_handler) {
+          std::cerr << "Cannot open library: " << dlerror() << '\n';
+	  return;
+        }
+        auto pullall_special_local = dlsym(pullall_special_handler, func_name.c_str());
+        if(!pullall_special_local) {
+          std::cerr << "Cannot load symbol: " << dlerror() << '\n';
+	  dlclose(pullall_special_handler);
+	  return;
+        }
+        pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) pullall_special_local;
+        dlclose(pullall_special_handler);
+        auto dct = paracel::tbl_store.getall();
+        paracel::dict_type<paracel::str_type, paracel::str_type> new_dct;
+        kv_filter4pullall(dct, new_dct, pullall_special_f);
+        rep_pack_send(sock, new_dct);
+      } else {
+        // work with registered mode
+        if(!pullall_special_f) {
+          std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
+	  return;
+        }
+        auto dct = paracel::tbl_store.getall();
+        paracel::dict_type<paracel::str_type, paracel::str_type> new_dct;
+        kv_filter4pullall(dct, new_dct, pullall_special_f);
+        rep_pack_send(sock, new_dct);
       }
-      auto dct = paracel::tbl_store.getall();
-      paracel::dict_type<paracel::str_type, paracel::str_type> new_dct;
-      kv_filter4pullall(dct, new_dct, pullall_special_f);
-      rep_pack_send(sock, new_dct);
     }
     if(indicator == "register_pullall_special") {
       auto file_name = pk.unpack(msg[1]);
