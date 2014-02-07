@@ -62,7 +62,7 @@ get_hostnames_dict(const paracel::str_type & names) {
     local_dict_type d;
     auto l = paracel::str_split(item, ':');
     d["host"] = l[0];
-    d["port"] = l[1];
+    d["ports"] = l[1];
     dl.push_back(std::move(d));
   }
   return dl;
