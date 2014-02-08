@@ -100,15 +100,11 @@ public:
   template <class V>
   V paracel_read(const paracel::str_type & key);
   
-  // paracel_batch_read();
-  
   template <class V>
   bool paracel_write(const paracel::str_type & key, const V & val);
   
-  // paracel_batch_write();
-
-  // double calc_loss();
-
+  bool paracel_write(const paracel::str_type & key, const char* val);
+  
 private:
   class parasrv;
   size_t nworker = 1;

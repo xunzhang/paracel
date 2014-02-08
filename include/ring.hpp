@@ -79,7 +79,7 @@ public:
 
   // TODO: relief load of srv_hashring_dct[srv_hashring[0]]
   template <class P>
-  T get_server(P & skey) {
+  T get_server(const P & skey) {
     //std::hash<P> hfunc;
     paracel::hash_type<P> hfunc;
     auto key = hfunc(skey);

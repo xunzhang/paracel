@@ -181,7 +181,28 @@ void paralg::paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
 }
 
 template <class V>
-bool paracel_read(const paracel::str_type & key, V & val) {}
+bool paralg::paracel_read(const paracel::str_type & key, V & val) {
+  auto rg = ps_obj->p_ring;
+  return ps_obj->kvm[rg->get_server(key)].pull(key, val); 
+}
+
+template <class V>
+V paralg::paracel_read(const paracel::str_type & key) {
+  auto rg = ps_obj->p_ring;
+  return ps_obj->kvm[rg->get_server(key)].pull<V>(key);
+}
+
+template <class V>
+bool paralg::paracel_write(const paracel::str_type & key, const V & val) {
+  auto rg = ps_obj->p_ring;
+  return ps_obj->kvm[rg->get_server(key)].push(key, val);
+}
+
+bool paralg::paracel_write(const paracel::str_type & key, const char* val) {
+  auto rg = ps_obj->p_ring;
+  paracel::str_type v = val;
+  return ps_obj->kvm[rg->get_server(key)].push(key, v);
+}
 
 } // namespace ps 
 } // namespace paracel
