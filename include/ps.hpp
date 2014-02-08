@@ -16,13 +16,12 @@
 #define FILE_50cbcab2_09cc_7016_42c0_609317d6df63_HPP
 
 #include <functional>
+
 #include <eigen/Eigen/Sparse>
 #include <eigen/Eigen/Dense>
+
 #include "paracel_types.hpp"
 #include "utils/comm.hpp"
-#include "client.hpp"
-#include "ring.hpp"
-#include "load.hpp"
 #include "graph.hpp"
 
 namespace paracel {
@@ -99,21 +98,12 @@ public:
   bool paracel_read(const paracel::str_type & key, V & val);
   
   template <class V>
-  bool paracel_read(const char* key, V & val);
-  
-  template <class V>
   V paracel_read(const paracel::str_type & key);
   
-  template <class V>
-  V paracel_read(const char* key);
-
   // paracel_batch_read();
   
   template <class V>
-  bool paracel_write(const paracel::str_type & key, V && val);
-
-  template <class V>
-  bool paracel_write(const char* key, V & val);
+  bool paracel_write(const paracel::str_type & key, const V & val);
   
   // paracel_batch_write();
 
@@ -121,8 +111,6 @@ public:
 
 private:
   class parasrv;
-  
-private:
   size_t nworker = 1;
   size_t rounds = 0;
   size_t limit_s = 0;

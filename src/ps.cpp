@@ -13,29 +13,23 @@
  *
  */
 
+#include <functional>
+
+#include <eigen/Eigen/Sparse>
+#include <eigen/Eigen/Dense>
+
+#include "paracel_types.hpp"
 #include "ps.hpp"
+#include "utils.hpp"
+#include "client.hpp"
+#include "graph.hpp"
+#include "load.hpp"
+#include "ring.hpp"
 
 namespace paracel {
 namespace ps {
 
 using parser_type = std::function<paracel::list_type<paracel::str_type>(paracel::str_type)>; 
-
-paralg::paralg(paracel::str_type hosts_dct_str,
-	paracel::Comm comm,
-	size_t n_worker,
-	size_t o_rounds = 1,
-	size_t o_limit_s = 0) : 
-	worker_comm{comm},
-	nworker(n_worker),
-	rounds(o_rounds),
-	limit_s(o_limit_s) {
-  ps_obj = new parasrv(hosts_dct_str);
-  worker_comm.sync();
-}
-
-virtual paralg::~paralg() {
-  delete ps_obj;
-}
 
 class paralg::parasrv{
   
@@ -45,7 +39,7 @@ class paralg::parasrv{
   public:
     parasrv(paracel::str_type hosts_dct_str) {
       // init dct_lst
-      dct_lst = get_hostnames_dict(hosts_dct_str);
+      dct_lst = paracel::get_hostnames_dict(hosts_dct_str);
       // init srv_sz
       srv_sz = dct_lst.size();
       // init kvm
@@ -71,14 +65,31 @@ class paralg::parasrv{
     l_type kvm;
     paracel::list_type<int> servers;
     paracel::ring<int> *p_ring;
-}; // nested class parasrv
+}; // nested class definition 
+
+paralg::paralg(paracel::str_type hosts_dct_str,
+	paracel::Comm comm,
+	size_t n_worker,
+	size_t o_rounds,
+	size_t o_limit_s) : 
+	worker_comm{comm},
+	nworker(n_worker),
+	rounds(o_rounds),
+	limit_s(o_limit_s) {
+  ps_obj = new parasrv(hosts_dct_str);
+  worker_comm.sync();
+}
+
+paralg::~paralg() {
+  delete ps_obj;
+}
 
 template <class T>
 paracel::list_type<paracel::str_type> 
 paralg::paracel_load(const T & fn,
 		parser_type & parser,
-		const paracel::str_type & pattern = "linesplit",
-		bool mix_flag = false) {
+		const paracel::str_type & pattern,
+		bool mix_flag) {
   paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
   paracel::list_type<paracel::str_type> lines = ld.load();
   return lines;
@@ -92,8 +103,8 @@ void paralg::paracel_load_as_graph(paracel::bigraph & grp,
 			paracel::dict_type<size_t, int> & col_degree_map,
 			const T & fn, 
 			parser_type & parser,
-			const paracel::str_type & pattern = "fmap",
-			bool mix_flag = false) {
+			const paracel::str_type & pattern,
+			bool mix_flag) {
   // TODO: check pattern 
   // load lines
   paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
@@ -108,8 +119,8 @@ void paralg::paracel_load_as_graph(paracel::bigraph & grp,
 			paracel::dict_type<size_t, paracel::str_type> & col_map,
 			const T & fn, 
 			parser_type & parser,
-			const paracel::str_type & pattern = "fmap",
-			bool mix_flag = false) {
+			const paracel::str_type & pattern,
+			bool mix_flag) {
   // TODO: check pattern 
   // load lines
   paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
@@ -127,8 +138,8 @@ void paralg::paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor>
 				paracel::dict_type<size_t, int> & col_degree_map,
 				const T & fn, 
   				parser_type & parser,
-				const paracel::str_type & pattern = "fsmap",
-				bool mix_flag = false) {
+				const paracel::str_type & pattern,
+				bool mix_flag) {
   // TODO: check pattern
   // load lines
   paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
@@ -143,8 +154,8 @@ void paralg::paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor>
 				paracel::dict_type<size_t, paracel::str_type> & col_map,
 				const T & fn, 
   				parser_type & parser,
-				const paracel::str_type & pattern = "fsmap",
-				bool mix_flag = false) {
+				const paracel::str_type & pattern,
+				bool mix_flag) {
   // TODO: check pattern
   // load lines
   paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
@@ -159,8 +170,8 @@ void paralg::paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
 				paracel::dict_type<size_t, paracel::str_type> & row_map,
 				const T & fn, 
   				parser_type & parser,
-				const paracel::str_type & pattern = "fsmap",
-				bool mix_flag = false) {
+				const paracel::str_type & pattern,
+				bool mix_flag) {
   // TODO: check pattern
   // load lines
   paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
