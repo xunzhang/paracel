@@ -129,8 +129,8 @@ public:
 
   template <class V>
   paracel::dict_type<paracel::str_type, V> 
-  pullall_special(const paracel::str_type so_filename,
-  		const paracel::str_type func_name) {
+  pullall_special(const paracel::str_type & so_filename,
+  		const paracel::str_type & func_name) {
     if(p_pullall_sock == nullptr) {
       p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
