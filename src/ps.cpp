@@ -180,28 +180,64 @@ void paralg::paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
   ld.create_matrix(lines, blk_dense_mtx, row_map);
 }
 
+bool paralg::register_update(const paracel::str_type & file_name, 
+		const paracel::str_type & func_name) {
+  auto rg = ps_obj->p_ring;
+  bool r = true;
+  for(int i = 0; i < ps_obj->srv_sz; ++i) {
+    r = r && ps_obj->kvm[i].register_update(file_name, func_name);
+  }
+  return r;
+}
+
+bool paralg::register_pullall_special(const paracel::str_type & file_name, 
+				const paracel::str_type & func_name) {
+  auto rg = ps_obj->p_ring;
+  bool r = true;
+  for(int i = 0; i < ps_obj->srv_sz; ++i) {
+    r = r && ps_obj->kvm[i].register_pullall_special(file_name, func_name);
+  }
+  return r;
+}
+
+bool paralg::register_remove_special(const paracel::str_type & file_name, 
+				const paracel::str_type & func_name) {
+  auto rg = ps_obj->p_ring;
+  bool r = true;
+  for(int i = 0; i < ps_obj->srv_sz; ++i) {
+    r = r && ps_obj->kvm[i].register_remove_special(file_name, func_name);
+  }
+  return r;
+}
+
 template <class V>
 bool paralg::paracel_read(const paracel::str_type & key, V & val) {
-  auto rg = ps_obj->p_ring;
-  return ps_obj->kvm[rg->get_server(key)].pull(key, val); 
+  return ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull(key, val); 
 }
 
 template <class V>
 V paralg::paracel_read(const paracel::str_type & key) {
-  auto rg = ps_obj->p_ring;
-  return ps_obj->kvm[rg->get_server(key)].pull<V>(key);
+  return ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key);
 }
 
 template <class V>
 bool paralg::paracel_write(const paracel::str_type & key, const V & val) {
-  auto rg = ps_obj->p_ring;
-  return ps_obj->kvm[rg->get_server(key)].push(key, val);
+  return ps_obj->kvm[ps_obj->p_ring->get_server(key)].push(key, val);
 }
 
 bool paralg::paracel_write(const paracel::str_type & key, const char* val) {
-  auto rg = ps_obj->p_ring;
   paracel::str_type v = val;
-  return ps_obj->kvm[rg->get_server(key)].push(key, v);
+  return paralg::paracel_write(key, v);
+}
+
+template <class V>
+void paralg::paracel_update(const paracel::str_type & key, const V & delta) {
+  ps_obj->kvm[ps_obj->p_ring->get_server(key)].update(key, delta);
+}
+
+void paralg::paracel_update(const paracel::str_type & key, const char* delta) {
+  paracel::str_type d = delta;
+  paralg::paracel_update(key, d);
 }
 
 } // namespace ps 

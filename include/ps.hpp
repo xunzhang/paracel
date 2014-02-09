@@ -93,7 +93,13 @@ public:
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
 			bool mix_flag = false);
+ 
+  bool register_update(const paracel::str_type & file_name, const paracel::str_type & func_name);
   
+  bool register_pullall_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
+  
+  bool register_remove_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
+
   template <class V>
   bool paracel_read(const paracel::str_type & key, V & val);
   
@@ -105,6 +111,11 @@ public:
   
   bool paracel_write(const paracel::str_type & key, const char* val);
   
+  template <class V>
+  void paracel_update(const paracel::str_type & key, const V & delta);
+
+  void paracel_update(const paracel::str_type & key, const char* delta);
+
 private:
   class parasrv;
   size_t nworker = 1;
