@@ -290,13 +290,35 @@ void thrd_exec(zmq::socket_t & sock) {
       rep_pack_send(sock, result);
     }
     if(indicator == "remove_special") {
-      if(!remove_special_f) {
-        std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
-	return;
+      if(msg.size() == 3) {
+        // open request func
+	auto file_name = pk.unpack(msg[1]);
+	auto func_name = pk.unpack(msg[2]);
+	remove_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
+	if(!remove_special_handler) {
+          std::cerr << "Cannot open library: " << dlerror() << '\n';
+	  return;
+	}
+	auto remove_special_local = dlsym(remove_special_handler, func_name.c_str());
+	if(!remove_special_local) {
+          std::cerr << "Cannot load symbol: " << dlerror() << '\n';
+	  dlclose(remove_special_handler);
+	  return;
+	}
+        remove_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) remove_special_local;
+	dlclose(remove_special_handler);
+        auto dct = paracel::tbl_store.getall();
+        kv_filter4remove(dct, remove_special_f);
+        bool result = true; rep_pack_send(sock, result);
+      } else {
+        if(!remove_special_f) {
+          std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
+	  return;
+        }
+        auto dct = paracel::tbl_store.getall();
+        kv_filter4remove(dct, remove_special_f);
+        bool result = true; rep_pack_send(sock, result);
       }
-      auto dct = paracel::tbl_store.getall();
-      kv_filter4remove(dct, remove_special_f);
-      bool result = true; rep_pack_send(sock, result);
     }
     if(indicator == "clear") { 
       paracel::tbl_store.clean();

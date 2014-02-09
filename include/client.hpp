@@ -245,6 +245,17 @@ public:
     return val;
   }
 
+  bool remove_special(const paracel::str_type & file_name,
+  		const paracel::str_type & func_name) {
+    if(p_remove_sock == nullptr) {
+      p_remove_sock.reset(create_req_sock(ports_lst[0]));
+    }
+    auto scrip = paste(paracel::str_type("remove_special"), file_name, func_name);
+    bool val;
+    req_send_recv(*p_remove_sock, scrip, val);
+    return val;
+  }
+
   bool clear() {
     if(p_clear_sock == nullptr) {
       p_clear_sock.reset(create_req_sock(ports_lst[0]));
