@@ -223,7 +223,18 @@ public:
     auto scrip = paste(paracel::str_type("update"), key, delta);
     push_send(*p_update_sock, scrip);
   }
-  
+
+  template <class K, class V>
+  void update(const K & key, const V & delta,
+  	const paracel::str_type & file_name, 
+	const paracel::str_type & func_name) {
+    if(p_update_sock == nullptr) {
+      p_update_sock.reset(create_push_sock(ports_lst[2]));
+    }
+    auto scrip = paste(paracel::str_type("update"), key, delta, file_name, func_name);
+    push_send(*p_update_sock, scrip);
+  }
+
   template <class K>
   bool remove(const K & key) {
     if(p_remove_sock == nullptr) {

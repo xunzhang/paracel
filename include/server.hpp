@@ -179,21 +179,17 @@ void thrd_exec(zmq::socket_t & sock) {
         }
         pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) pullall_special_local;
         dlclose(pullall_special_handler);
-        auto dct = paracel::tbl_store.getall();
-        paracel::dict_type<paracel::str_type, paracel::str_type> new_dct;
-        kv_filter4pullall(dct, new_dct, pullall_special_f);
-        rep_pack_send(sock, new_dct);
       } else {
         // work with registered mode
         if(!pullall_special_f) {
           std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
 	  return;
         }
-        auto dct = paracel::tbl_store.getall();
-        paracel::dict_type<paracel::str_type, paracel::str_type> new_dct;
-        kv_filter4pullall(dct, new_dct, pullall_special_f);
-        rep_pack_send(sock, new_dct);
       }
+      auto dct = paracel::tbl_store.getall();
+      paracel::dict_type<paracel::str_type, paracel::str_type> new_dct;
+      kv_filter4pullall(dct, new_dct, pullall_special_f);
+      rep_pack_send(sock, new_dct);
     }
     if(indicator == "register_pullall_special") {
       auto file_name = pk.unpack(msg[1]);
@@ -266,13 +262,20 @@ void thrd_exec(zmq::socket_t & sock) {
       bool result = true; rep_pack_send(sock, result);
     }
     if(indicator == "update") {
-      if(!update_f) {
-        update_handler = dlopen("/mfs/user/wuhong/paracel/lib/default.so", RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+      if(msg.size() > 3) {
+        if(msg.size() != 5) {
+	  std::cerr << "Invalid invoke!!" << dlerror() << '\n';
+	  return;
+	}
+        // open request func
+	auto file_name = pk.unpack(msg[3]);
+	auto func_name = pk.unpack(msg[4]);
+        update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
 	if(!update_handler) {
 	  std::cerr << "Cannot open library: " << dlerror() << '\n';
 	  return;
 	}
-	auto update_local = dlsym(update_handler, "default_incr_d");
+	auto update_local = dlsym(update_handler, func_name.c_str());
 	if(!update_local) {
 	  std::cerr << "Cannot load symbol: " << dlerror() << '\n';
 	  dlclose(update_handler);
@@ -280,6 +283,22 @@ void thrd_exec(zmq::socket_t & sock) {
 	}
 	update_f = *(std::function<std::string(paracel::str_type, paracel::str_type)>*) update_local;
         dlclose(update_handler); // RTLD_NODELETE
+      } else {
+        if(!update_f) {
+          update_handler = dlopen("/mfs/user/wuhong/paracel/lib/default.so", RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+	  if(!update_handler) {
+	    std::cerr << "Cannot open library: " << dlerror() << '\n';
+	    return;
+	  }
+	  auto update_local = dlsym(update_handler, "default_incr_d");
+	  if(!update_local) {
+	    std::cerr << "Cannot load symbol: " << dlerror() << '\n';
+	    dlclose(update_handler);
+	    return;
+	  }
+	  update_f = *(std::function<std::string(paracel::str_type, paracel::str_type)>*) update_local;
+          dlclose(update_handler); // RTLD_NODELETE
+        }
       }
       auto key = pk.unpack(msg[1]);
       kv_update(key, msg[2], update_f);
@@ -307,18 +326,15 @@ void thrd_exec(zmq::socket_t & sock) {
 	}
         remove_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) remove_special_local;
 	dlclose(remove_special_handler);
-        auto dct = paracel::tbl_store.getall();
-        kv_filter4remove(dct, remove_special_f);
-        bool result = true; rep_pack_send(sock, result);
       } else {
         if(!remove_special_f) {
           std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
 	  return;
         }
-        auto dct = paracel::tbl_store.getall();
-        kv_filter4remove(dct, remove_special_f);
-        bool result = true; rep_pack_send(sock, result);
       }
+      auto dct = paracel::tbl_store.getall();
+      kv_filter4remove(dct, remove_special_f);
+      bool result = true; rep_pack_send(sock, result);
     }
     if(indicator == "clear") { 
       paracel::tbl_store.clean();
