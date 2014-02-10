@@ -67,6 +67,13 @@ public:
 			bool mix_flag = false);
   
   template <class T>
+  void paracel_load_as_graph(paracel::bigraph & grp,
+			const T & fn, 
+			parser_type & parser,
+			const paracel::str_type & pattern = "fmap",
+			bool mix_flag = false);
+  
+  template <class T>
   void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
   			paracel::dict_type<size_t, paracel::str_type> & row_map,
 			paracel::dict_type<size_t, paracel::str_type> & col_map,

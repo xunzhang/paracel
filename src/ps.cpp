@@ -131,13 +131,21 @@ void paralg::paracel_load_as_graph(paracel::bigraph & grp,
 			parser_type & parser,
 			const paracel::str_type & pattern,
 			bool mix_flag) {
-  // TODO: check pattern 
-  // load lines
-  paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
-  paracel::list_type<paracel::str_type> lines = ld.load();
   paracel::dict_type<size_t, int> degree_map, col_degree_map;
-  // create graph 
-  ld.create_graph(lines, grp, row_map, col_map, degree_map, col_degree_map);
+  return paralg::paracel_load_as_graph(grp, 
+  				row_map, col_map, degree_map, col_degree_map, 
+				fn, parser, pattern, mix_flag);
+}
+  
+template <class T>
+void paralg::paracel_load_as_graph(paracel::bigraph & grp,
+			const T & fn, 
+			parser_type & parser,
+			const paracel::str_type & pattern,
+			bool mix_flag) {
+  return paralg::paracel_load_as_graph(grp, 
+  				rm, cm, dm, col_dm,
+				fn, parser, pattern, mix_flag);
 }
   
 template <class T>
@@ -178,7 +186,7 @@ void paralg::paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor>
   				parser_type & parser,
 				const paracel::str_type & pattern,
 				bool mix_flag) {
-  paralg::paracel_load_as_matrix(blk_mtx, 
+  return paralg::paracel_load_as_matrix(blk_mtx, 
   				rm, cm, dm, col_dm, 
 				fn, parser, pattern, mix_flag);
 }
