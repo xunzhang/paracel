@@ -15,6 +15,7 @@
 
 #include <functional>
 
+#include <boost/filesystem.hpp>
 #include <eigen/Eigen/Sparse>
 #include <eigen/Eigen/Dense>
 
@@ -69,6 +70,7 @@ class paralg::parasrv{
 
 paralg::paralg(paracel::str_type hosts_dct_str,
 	paracel::Comm comm,
+	const paracel::str_type & op_folder,
 	size_t n_worker,
 	size_t o_rounds,
 	size_t o_limit_s) : 
@@ -77,6 +79,14 @@ paralg::paralg(paracel::str_type hosts_dct_str,
 	rounds(o_rounds),
 	limit_s(o_limit_s) {
   ps_obj = new parasrv(hosts_dct_str);
+  // create output folder
+  if(worker_comm.get_rank() == 0) {
+    boost::filesystem::path path(op_folder);
+    if(boost::filesystem::exists(path)) {
+      boost::filesystem::remove_all(path);
+    }
+    boost::filesystem::create_directory(path);
+  }
   worker_comm.sync();
 }
 
@@ -239,6 +249,28 @@ void paralg::paracel_update(const paracel::str_type & key, const char* delta) {
   paracel::str_type d = delta;
   paralg::paracel_update(key, d);
 }
+  
+inline size_t paralg::get_worker_id() {
+  return worker_comm.get_rank();
+}
+  
+inline size_t paralg::get_worker_size() {
+  return worker_comm.get_size();
+}
+
+void paralg::sync() {
+  worker_comm.sync();
+}
+
+template <class V>
+paracel::str_type paralg::dump_line_as_vector() {}
+
+template <class V>
+void paralg::dump_vector(const paracel::str_type & path, 
+			const paracel::dict_type<size_t, paracel::str_type> & id_map,
+		  	const paracel::list_type<V> & data,
+		  	const paracel::Comm & comm, 
+			bool merge) {}
 
 } // namespace ps 
 } // namespace paracel

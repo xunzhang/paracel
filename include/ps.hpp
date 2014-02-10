@@ -32,7 +32,8 @@ using parser_type = std::function<paracel::list_type<paracel::str_type>(paracel:
 class paralg {
 public:
   paralg(paracel::str_type hosts_dct_str, 
-  	paracel::Comm comm, 
+  	paracel::Comm comm,
+	const paracel::str_type & op_folder,
 	size_t n_worker,
 	size_t o_rounds = 1, 
 	size_t o_limit_s = 0); 
@@ -115,6 +116,22 @@ public:
   void paracel_update(const paracel::str_type & key, const V & delta);
 
   void paracel_update(const paracel::str_type & key, const char* delta);
+
+  inline size_t get_worker_id();
+  
+  inline size_t get_worker_size();
+
+  void sync();
+  
+  template <class V>
+  paracel::str_type dump_line_as_vector();
+
+  template <class V>
+  void dump_vector(const paracel::str_type & path, 
+                  const paracel::dict_type<size_t, paracel::str_type> & id_map,
+		  const paracel::list_type<V> & data,
+		  const paracel::Comm & comm, 
+		  bool merge = false);
 
 private:
   class parasrv;
