@@ -97,12 +97,21 @@ paralg::~paralg() {
 template <class T>
 paracel::list_type<paracel::str_type> 
 paralg::paracel_load(const T & fn,
+		parser_type & parser,
 		const paracel::str_type & pattern,
 		bool mix_flag) {
-  parser_type parser;
   paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
   paracel::list_type<paracel::str_type> lines = ld.load();
   return lines;
+}
+
+template <class T>
+paracel::list_type<paracel::str_type> 
+paralg::paracel_load(const T & fn,
+		const paracel::str_type & pattern,
+		bool mix_flag) {
+  parser_type parser;
+  return paralg::paracel_load(fn, parser, pattern, mix_flag);
 }
   
 template <class T>

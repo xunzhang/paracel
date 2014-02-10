@@ -42,6 +42,13 @@ public:
   template <class T>
   paracel::list_type<paracel::str_type> 
   paracel_load(const T & fn,
+  	parser_type & parser,
+	const paracel::str_type & pattern = "linesplit",
+	bool mix_flag = false);
+
+  template <class T>
+  paracel::list_type<paracel::str_type> 
+  paracel_load(const T & fn,
 	const paracel::str_type & pattern = "linesplit",
 	bool mix_flag = false);
 

@@ -32,7 +32,7 @@ sgd::sgd(paracel::Comm comm,
 sgd::~sgd() {}
 
 void sgd::solve() {
-  auto lines = paracel_load(input, local_parser);
+  auto lines = paracel_load(input);
 }
 
 } // namespace alg
