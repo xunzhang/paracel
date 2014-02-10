@@ -20,22 +20,19 @@
 namespace alg {
 
 sgd::sgd(paracel::Comm comm, 
-	string hosts_dct_str, 
-	string _input,
-	string output,
-	size_t _rounds,
-	double _alpha,
-	double _beta) :
-	paracel::paralg(hosts_dct_str, comm, output, _rounds),
-	input(_input),
-	worker_id(comm.get_rank()),
-	rounds(_rounds), 
-	alpha(_alpha),
-	beta(_beta) {}
+	string hosts_dct_str, string _input, string output,
+	size_t _rounds, double _alpha, double _beta) :
+		paracel::paralg(hosts_dct_str, comm, output, _rounds),
+		input(_input),
+		worker_id(comm.get_rank()),
+		rounds(_rounds), 
+		alpha(_alpha),
+		beta(_beta) {}
 
 sgd::~sgd() {}
 
 void sgd::solve() {
+  auto lines = paracel_load(input, local_parser);
 }
 
 } // namespace alg

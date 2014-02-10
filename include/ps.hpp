@@ -42,7 +42,6 @@ public:
   template <class T>
   paracel::list_type<paracel::str_type> 
   paracel_load(const T & fn,
-  	parser_type & parser,
 	const paracel::str_type & pattern = "linesplit",
 	bool mix_flag = false);
 
@@ -66,6 +65,7 @@ public:
 			const paracel::str_type & pattern = "fmap",
 			bool mix_flag = false);
   
+  // simple interface
   template <class T>
   void paracel_load_as_graph(paracel::bigraph & grp,
 			const T & fn, 
@@ -93,6 +93,7 @@ public:
 			const paracel::str_type & pattern = "fsmap",
 			bool mix_flag = false);
   
+  // simple interface
   template <class T>
   void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
 			const T & fn, 
@@ -108,6 +109,7 @@ public:
 			const paracel::str_type & pattern = "fsmap",
 			bool mix_flag = false);
 
+  // simple interface
   template <class T>
   void paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
 			const T & fn, 
