@@ -33,9 +33,8 @@ class paralg {
 public:
   paralg(paracel::str_type hosts_dct_str, 
   	paracel::Comm comm,
-	const paracel::str_type & op_folder,
-	size_t n_worker,
-	size_t o_rounds = 1, 
+	paracel::str_type op_folder,
+	size_t o_rounds,
 	size_t o_limit_s = 0); 
 
   virtual ~paralg();
@@ -86,6 +85,13 @@ public:
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
 			bool mix_flag = false);
+  
+  template <class T>
+  void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
+			const T & fn, 
+			parser_type & parser,
+			const paracel::str_type & pattern = "fsmap",
+			bool mix_flag = false);
 
   template <class T>
   void paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
@@ -94,7 +100,14 @@ public:
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
 			bool mix_flag = false);
- 
+
+  template <class T>
+  void paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
+			const T & fn, 
+			parser_type & parser,
+			const paracel::str_type & pattern = "fsmap",
+			bool mix_flag = false);
+  
   bool register_update(const paracel::str_type & file_name, const paracel::str_type & func_name);
   
   bool register_pullall_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
@@ -133,6 +146,8 @@ public:
 		  const paracel::Comm & comm, 
 		  bool merge = false);
 
+  virtual void solve();
+
 private:
   class parasrv;
   size_t nworker = 1;
@@ -140,6 +155,11 @@ private:
   size_t limit_s = 0;
   paracel::Comm worker_comm;
   parasrv *ps_obj;
+  paracel::str_type output;
+  paracel::dict_type<size_t, paracel::str_type> rm;
+  paracel::dict_type<size_t, paracel::str_type> cm;
+  paracel::dict_type<size_t, int> dm;
+  paracel::dict_type<size_t, int> col_dm;
 };
 
 } // namespace ps

@@ -70,12 +70,12 @@ class paralg::parasrv{
 
 paralg::paralg(paracel::str_type hosts_dct_str,
 	paracel::Comm comm,
-	const paracel::str_type & op_folder,
-	size_t n_worker,
+	paracel::str_type op_folder,
 	size_t o_rounds,
 	size_t o_limit_s) : 
-	worker_comm{comm},
-	nworker(n_worker),
+	worker_comm(comm),
+	output(op_folder),
+	nworker(comm.get_size()),
 	rounds(o_rounds),
 	limit_s(o_limit_s) {
   ps_obj = new parasrv(hosts_dct_str);
@@ -166,13 +166,21 @@ void paralg::paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor>
   				parser_type & parser,
 				const paracel::str_type & pattern,
 				bool mix_flag) {
-  // TODO: check pattern
-  // load lines
-  paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
-  paracel::list_type<paracel::str_type> lines = ld.load();
-  // create sparse matrix
   paracel::dict_type<size_t, int> degree_map, col_degree_map;
-  ld.create_matrix(lines, blk_mtx, row_map, col_map, degree_map, col_degree_map);
+  return paralg::paracel_load_as_matrix(blk_mtx, 
+  				row_map, col_map, degree_map, col_degree_map, 
+  				fn, parser, pattern, mix_flag);
+}
+
+template <class T>
+void paralg::paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
+				const T & fn, 
+  				parser_type & parser,
+				const paracel::str_type & pattern,
+				bool mix_flag) {
+  paralg::paracel_load_as_matrix(blk_mtx, 
+  				rm, cm, dm, col_dm, 
+				fn, parser, pattern, mix_flag);
 }
 
 template <class T>
@@ -188,6 +196,15 @@ void paralg::paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
   paracel::list_type<paracel::str_type> lines = ld.load();
   // create sparse matrix
   ld.create_matrix(lines, blk_dense_mtx, row_map);
+}
+
+template <class T>
+void paralg::paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
+				const T & fn, 
+  				parser_type & parser,
+				const paracel::str_type & pattern,
+				bool mix_flag) {
+  return paralg::paracel_load_as_matrix(blk_dense_mtx, rm, fn, parser, pattern, mix_flag);
 }
 
 bool paralg::register_update(const paracel::str_type & file_name, 
@@ -271,6 +288,8 @@ void paralg::dump_vector(const paracel::str_type & path,
 		  	const paracel::list_type<V> & data,
 		  	const paracel::Comm & comm, 
 			bool merge) {}
+
+void paralg::solve() {}
 
 } // namespace ps 
 } // namespace paracel
