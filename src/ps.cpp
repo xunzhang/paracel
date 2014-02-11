@@ -224,7 +224,7 @@ void paralg::paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
   return paralg::paracel_load_as_matrix(blk_dense_mtx, rm, fn, parser, pattern, mix_flag);
 }
 
-bool paralg::register_update(const paracel::str_type & file_name, 
+bool paralg::paracel_register_update(const paracel::str_type & file_name, 
 		const paracel::str_type & func_name) {
   auto rg = ps_obj->p_ring;
   bool r = true;
@@ -234,7 +234,7 @@ bool paralg::register_update(const paracel::str_type & file_name,
   return r;
 }
 
-bool paralg::register_pullall_special(const paracel::str_type & file_name, 
+bool paralg::paracel_register_pullall_special(const paracel::str_type & file_name, 
 				const paracel::str_type & func_name) {
   auto rg = ps_obj->p_ring;
   bool r = true;
@@ -244,7 +244,7 @@ bool paralg::register_pullall_special(const paracel::str_type & file_name,
   return r;
 }
 
-bool paralg::register_remove_special(const paracel::str_type & file_name, 
+bool paralg::paracel_register_remove_special(const paracel::str_type & file_name, 
 				const paracel::str_type & func_name) {
   auto rg = ps_obj->p_ring;
   bool r = true;

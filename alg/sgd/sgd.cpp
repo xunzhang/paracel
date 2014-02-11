@@ -60,37 +60,38 @@ void sgs::learning() {
   int data_sz = samples.size(), data_dim = samples[0].size();
   
   theta = paracel::random_double_list(data_dim); 
-  paralg_wrire("theta", theta); // push
+  paracel_wrire("theta", theta); // push
   
   vector<int> idx;
   for(int i = 0; i < data_sz; ++i) { 
     idx.push_back(i);
   }
+  paracel_register_update();
   // main loop
   for(int rd = 0; rd < rounds; ++rd) {
     std::random_shuffle(idx.begin(), idx.end()); 
     // traverse data
     for(auto id : idx) {
-      theta = paralg_read<vector<double> >("theta"); 
+      theta = paracel_read<vector<double> >("theta"); 
       double grad = labels[id] - sgd::loss_func_grad(samples[id]); 
       vector<double> delta; 
       for(int i = 0; i < data_dim; ++i) {
         double t = alpha * grad * samples[id][i] - 2. * beta * alpha * theta[i];
         delta.push_back(t);
       }
-      paralg_update("theta", delta); // update with delta
+      paracel_update("theta", delta); // update with delta
       for(int i = 0; i < data_dim; ++i) {
         theta[i] += delta[i];
       }
     } // end traverse
   } // end rounds
   sync();
-  theta = paralg_read<vector<double> >("theta"); // last pull
+  theta = paracel_read<vector<double> >("theta"); // last pull
   sync();
 }
 
 void sgd::solve() {
-  auto lines = paralg_load(input);
+  auto lines = paracel_load(input);
   local_parser(lines); // init data
   sync();
   learning();

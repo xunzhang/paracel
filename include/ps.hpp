@@ -124,11 +124,11 @@ public:
 			const paracel::str_type & pattern = "fsmap",
 			bool mix_flag = false);
   
-  bool register_update(const paracel::str_type & file_name, const paracel::str_type & func_name);
+  bool paracel_register_update(const paracel::str_type & file_name, const paracel::str_type & func_name);
   
-  bool register_pullall_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
+  bool paracel_register_pullall_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
   
-  bool register_remove_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
+  bool paracel_register_remove_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
 
   template <class V>
   bool paracel_read(const paracel::str_type & key, V & val);
