@@ -1,0 +1,7 @@
+{
+  "input" : "/mfs/user/wuhong/data/data",
+  "output" : "/mfs/user/wuhong/tmp/",
+  "alpha" : 0.01,
+  "beta" : 0.001,
+  "rounds" : 1
+}

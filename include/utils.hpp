@@ -17,6 +17,7 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <random>
 
 #include <zmq.hpp>
 
@@ -89,6 +90,20 @@ paracel::list_type<size_t> get_ports() {
     ports_lst.emplace_back(std::move(gen_port()));
   }
   return ports_lst;
+}
+
+double random_double() {
+  std::random_device rd;
+  std::uniform_real_distribution<double> dis(0., 1.);
+  return dis(gen);
+}
+
+paracel::list_type<double> random_double_list(int len) {
+  paracel::list_type<double> r;
+  for(int i = 0; i < len; ++i) {
+    r.push_back(random_double());
+  }
+  return r;
 }
 
 } // namespace paracel

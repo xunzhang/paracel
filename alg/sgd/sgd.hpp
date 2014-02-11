@@ -17,26 +17,43 @@
 #define PARACEL_SGD_HPP
 
 #include <string>
+#include <vector>
 #include "ps.hpp"
 #include "utils.hpp"
 
 using namespace std;
 
+namespace paracel {
 namespace alg {
 
 class sgd : public paracel::paralg {
+
 public:
-  sgd(paracel::Comm, string, string, size_t, size_t, size_t = 1, double = 0.002, double = 0.1);
+  sgd(paracel::Comm, string, string, string, size_t = 1, size_t = 1, double = 0.002, double = 0.1);
   virtual ~sgd();
-  virtual solve();
+  
+  double loss_func_grad(const vector<double> &);
+  void local_parser(const vector<string> &);
+  
+  virtual void learning();
+  virtual void solve();
+  
+  double calc_loss();
+  void dump_result();
+
 private:
   size_t worker_id;
   size_t rounds;
   double alpha;
   double beta;
   string input;
+  vector<vector<double> > samples;
+  vector<double> labels;
+  vector<double> theta;
+
 }; 
 
 } // namespace alg 
+} // namespace paracel
 
 #endif

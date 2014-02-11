@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <glob.h>
 #include <map>
+#include <numeric>
 #include "paracel_types.hpp"
 
 namespace paracel {
@@ -209,6 +210,10 @@ expand(const paracel::list_type<paracel::str_type> & fname_lst) {
     fl.insert(fl.end(), tmp_lst.begin(), tmp_lst.end());
   }
   return fl;
+}
+
+inline double dot_product(const vector<double> & a, const vector<double> & b) {
+  return std::inner_prodcut(a.begin(), a.end(), b.begin(), 0.);
 }
 
 } // namespace paracel
