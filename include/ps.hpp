@@ -205,7 +205,7 @@ public:
     return r;
   }
   
-  bool paracel_register_pullall_special(const paracel::str_type & file_name, const paracel::str_type & func_name) {
+  bool paracel_register_read_special(const paracel::str_type & file_name, const paracel::str_type & func_name) {
     auto rg = ps_obj->p_ring;
     bool r = true;
     for(int i = 0; i < ps_obj->srv_sz; ++i) {
@@ -224,31 +224,31 @@ public:
   }
 
   template <class V>
-  bool paracel_read(const paracel::str_type & key, V & val) {
+  bool paracel_read(const paracel::str_type & key, V & val, int replica_id = -1) {
     return ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull(key, val); 
   }
   
   template <class V>
-  V paracel_read(const paracel::str_type & key) {
+  V paracel_read(const paracel::str_type & key, int replica_id = -1) {
     return ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key);
   }
   
   template <class V>
-  bool paracel_write(const paracel::str_type & key, const V & val) {
+  bool paracel_write(const paracel::str_type & key, const V & val, bool replica_flag = true) {
     return ps_obj->kvm[ps_obj->p_ring->get_server(key)].push(key, val);
   }
   
-  bool paracel_write(const paracel::str_type & key, const char* val) {
+  bool paracel_write(const paracel::str_type & key, const char* val, bool replica_flag = true) {
     paracel::str_type v = val;
     return paralg::paracel_write(key, v); 
   }
   
   template <class V>
-  void paracel_update(const paracel::str_type & key, const V & delta) {
+  void paracel_update(const paracel::str_type & key, const V & delta, bool replica_flag = true) {
     ps_obj->kvm[ps_obj->p_ring->get_server(key)].update(key, delta);
   }
 
-  void paracel_update(const paracel::str_type & key, const char* delta) {
+  void paracel_update(const paracel::str_type & key, const char* delta, bool replica_flag = true) {
     paracel::str_type d = delta;
     paralg::paracel_update(key, d);
   }
@@ -314,6 +314,7 @@ private:
       paracel::ring<int> *p_ring;
   }; // nested class definition
 
+private:
   size_t nworker = 1;
   size_t rounds = 0;
   size_t limit_s = 0;
@@ -324,6 +325,8 @@ private:
   paracel::dict_type<size_t, paracel::str_type> cm;
   paracel::dict_type<size_t, int> dm;
   paracel::dict_type<size_t, int> col_dm;
+  paracel::dict_type<paracel::str_type, paracel::str_type> keymap;
+
 };
 
 } // namespace paracel
