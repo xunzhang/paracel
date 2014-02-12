@@ -17,40 +17,70 @@
 
 #include <functional>
 
+#include <boost/filesystem.hpp>
+
 #include <eigen/Eigen/Sparse>
 #include <eigen/Eigen/Dense>
 
 #include "paracel_types.hpp"
-#include "utils/comm.hpp"
+#include "client.hpp"
+#include "utils.hpp"
 #include "graph.hpp"
+#include "load.hpp"
+#include "ring.hpp"
 
 namespace paracel {
-namespace ps {
 
 using parser_type = std::function<paracel::list_type<paracel::str_type>(paracel::str_type)>;
 
 class paralg {
+
 public:
   paralg(paracel::str_type hosts_dct_str, 
   	paracel::Comm comm,
 	paracel::str_type op_folder,
 	size_t o_rounds,
-	size_t o_limit_s = 0); 
+	size_t o_limit_s = 0) :
+	worker_comm(comm),
+	output(op_folder),
+	nworker(comm.get_size()),
+	rounds(o_rounds),
+	limit_s(o_limit_s) {
+    ps_obj = new parasrv(hosts_dct_str);
+    // create output folder
+    if(worker_comm.get_rank() == 0) {
+      boost::filesystem::path path(op_folder);
+      if(boost::filesystem::exists(path)) {
+        boost::filesystem::remove_all(path);
+      }
+      boost::filesystem::create_directory(path);
+    }
+    worker_comm.sync();
+  }
 
-  virtual ~paralg();
+  virtual ~paralg() {
+    delete ps_obj;
+  }
 
   template <class T>
   paracel::list_type<paracel::str_type> 
   paracel_load(const T & fn,
   	parser_type & parser,
 	const paracel::str_type & pattern = "linesplit",
-	bool mix_flag = false);
+	bool mix_flag = false) {
+    paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
+    paracel::list_type<paracel::str_type> lines = ld.load();
+    return lines;
+  }
 
   template <class T>
   paracel::list_type<paracel::str_type> 
   paracel_load(const T & fn,
 	const paracel::str_type & pattern = "linesplit",
-	bool mix_flag = false);
+	bool mix_flag = false) {
+    parser_type parser;
+    return paralg::paracel_load(fn, parser, pattern, mix_flag);	
+  }
 
   template <class T>
   void paracel_load_as_graph(paracel::bigraph & grp,
@@ -61,7 +91,14 @@ public:
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fmap",
-			bool mix_flag = false);
+			bool mix_flag = false) {
+    // TODO: check pattern 
+    // load lines
+    paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
+    paracel::list_type<paracel::str_type> lines = ld.load();
+    // create graph 
+    ld.create_graph(lines, grp, row_map, col_map, degree_map, col_degree_map);
+  }
 
   template <class T>
   void paracel_load_as_graph(paracel::bigraph & grp,
@@ -70,7 +107,12 @@ public:
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fmap",
-			bool mix_flag = false);
+			bool mix_flag = false) {
+    paracel::dict_type<size_t, int> degree_map, col_degree_map;
+    return paralg::paracel_load_as_graph(grp, 
+    					row_map, col_map, degree_map, col_degree_map, 
+					fn, parser, pattern, mix_flag);
+  }
   
   // simple interface
   template <class T>
@@ -78,7 +120,11 @@ public:
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fmap",
-			bool mix_flag = false);
+			bool mix_flag = false) {
+    return paralg::paracel_load_as_graph(grp, 
+    					rm, cm, dm, col_dm,
+					fn, parser, pattern, mix_flag);
+  }
   
   template <class T>
   void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
@@ -89,7 +135,14 @@ public:
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
-			bool mix_flag = false);
+			bool mix_flag = false) {			
+    // TODO: check pattern
+    // load lines
+    paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
+    paracel::list_type<paracel::str_type> lines = ld.load();
+    // create sparse matrix
+    ld.create_matrix(lines, blk_mtx, row_map, col_map, degree_map, col_degree_map);
+  }
   
   template <class T>
   void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
@@ -98,7 +151,12 @@ public:
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
-			bool mix_flag = false);
+			bool mix_flag = false) {
+    paracel::dict_type<size_t, int> degree_map, col_degree_map;
+    return paralg::paracel_load_as_matrix(blk_mtx, 
+    					row_map, col_map, degree_map, col_degree_map, 
+  					fn, parser, pattern, mix_flag);
+  }
   
   // simple interface
   template <class T>
@@ -106,7 +164,11 @@ public:
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
-			bool mix_flag = false);
+			bool mix_flag = false) {
+    return paralg::paracel_load_as_matrix(blk_mtx, 
+    					rm, cm, dm, col_dm, 
+					fn, parser, pattern, mix_flag);
+  }
 
   template <class T>
   void paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
@@ -114,7 +176,15 @@ public:
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
-			bool mix_flag = false);
+			bool mix_flag = false) {
+			
+    // TODO: check pattern
+    // load lines
+    paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
+    paracel::list_type<paracel::str_type> lines = ld.load();
+    // create sparse matrix
+    ld.create_matrix(lines, blk_dense_mtx, row_map);
+  }
 
   // simple interface
   template <class T>
@@ -122,50 +192,128 @@ public:
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
-			bool mix_flag = false);
+			bool mix_flag = false) {
+    return paralg::paracel_load_as_matrix(blk_dense_mtx, rm, fn, parser, pattern, mix_flag);	
+  }
   
-  bool paracel_register_update(const paracel::str_type & file_name, const paracel::str_type & func_name);
+  bool paracel_register_update(const paracel::str_type & file_name, const paracel::str_type & func_name) {
+    auto rg = ps_obj->p_ring;
+    bool r = true;
+    for(int i = 0; i < ps_obj->srv_sz; ++i) {
+      r = r && ps_obj->kvm[i].register_update(file_name, func_name);
+    }
+    return r;
+  }
   
-  bool paracel_register_pullall_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
+  bool paracel_register_pullall_special(const paracel::str_type & file_name, const paracel::str_type & func_name) {
+    auto rg = ps_obj->p_ring;
+    bool r = true;
+    for(int i = 0; i < ps_obj->srv_sz; ++i) {
+      r = r && ps_obj->kvm[i].register_pullall_special(file_name, func_name);
+    }
+    return r;
+  }
   
-  bool paracel_register_remove_special(const paracel::str_type & file_name, const paracel::str_type & func_name);
+  bool paracel_register_remove_special(const paracel::str_type & file_name, const paracel::str_type & func_name) {
+    auto rg = ps_obj->p_ring;
+    bool r = true;
+    for(int i = 0; i < ps_obj->srv_sz; ++i) {
+      r = r && ps_obj->kvm[i].register_remove_special(file_name, func_name);
+    }
+    return r;
+  }
 
   template <class V>
-  bool paracel_read(const paracel::str_type & key, V & val);
+  bool paracel_read(const paracel::str_type & key, V & val) {
+    return ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull(key, val); 
+  }
   
   template <class V>
-  V paracel_read(const paracel::str_type & key);
+  V paracel_read(const paracel::str_type & key) {
+    return ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key);
+  }
   
   template <class V>
-  bool paracel_write(const paracel::str_type & key, const V & val);
+  bool paracel_write(const paracel::str_type & key, const V & val) {
+    return ps_obj->kvm[ps_obj->p_ring->get_server(key)].push(key, val);
+  }
   
-  bool paracel_write(const paracel::str_type & key, const char* val);
+  bool paracel_write(const paracel::str_type & key, const char* val) {
+    paracel::str_type v = val;
+    return paralg::paracel_write(key, v); 
+  }
   
   template <class V>
-  void paracel_update(const paracel::str_type & key, const V & delta);
+  void paracel_update(const paracel::str_type & key, const V & delta) {
+    ps_obj->kvm[ps_obj->p_ring->get_server(key)].update(key, delta);
+  }
 
-  void paracel_update(const paracel::str_type & key, const char* delta);
+  void paracel_update(const paracel::str_type & key, const char* delta) {
+    paracel::str_type d = delta;
+    paralg::paracel_update(key, d);
+  }
 
-  inline size_t get_worker_id();
+  inline size_t get_worker_id() {
+    return worker_comm.get_rank();
+  }
   
-  inline size_t get_worker_size();
+  inline size_t get_worker_size() {
+    return worker_comm.get_size();
+  }
 
-  void sync();
+  void sync() {
+    worker_comm.sync();
+  }
   
   template <class V>
-  paracel::str_type dump_line_as_vector();
+  paracel::str_type dump_line_as_vector() {}
 
   template <class V>
   void dump_vector(const paracel::str_type & path, 
                   const paracel::dict_type<size_t, paracel::str_type> & id_map,
 		  const paracel::list_type<V> & data,
 		  const paracel::Comm & comm, 
-		  bool merge = false);
+		  bool merge = false) {}
 
-  virtual void solve();
+  virtual void solve() {}
 
 private:
-  class parasrv;
+  class parasrv {
+    
+    using l_type = paracel::list_type<paracel::kvclt>;
+    using dl_type = paracel::list_type<paracel::dict_type<paracel::str_type, paracel::str_type> >; 
+  
+    public:
+      parasrv(paracel::str_type hosts_dct_str) {
+        // init dct_lst
+        dct_lst = paracel::get_hostnames_dict(hosts_dct_str);
+        // init srv_sz
+        srv_sz = dct_lst.size();
+        // init kvm
+        for(auto & srv : dct_lst) {
+          paracel::kvclt kvc(srv["node"], srv["ports"]);
+          kvm.push_back(std::move(kvc));
+        }
+        // init servers
+        for(auto i = 0; i < srv_sz; ++i) {
+          servers.push_back(i);
+        }
+        // init hashring
+        p_ring = new paracel::ring<int>(servers);
+      }
+
+      virtual ~parasrv() {
+        delete p_ring;
+      }
+
+    public:
+      dl_type dct_lst;
+      size_t srv_sz = 1;
+      l_type kvm;
+      paracel::list_type<int> servers;
+      paracel::ring<int> *p_ring;
+  }; // nested class definition
+
   size_t nworker = 1;
   size_t rounds = 0;
   size_t limit_s = 0;
@@ -178,7 +326,6 @@ private:
   paracel::dict_type<size_t, int> col_dm;
 };
 
-} // namespace ps
 } // namespace paracel
 
 #endif

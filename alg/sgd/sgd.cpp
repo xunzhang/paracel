@@ -21,7 +21,6 @@
 #include "utils.hpp"
 
 namespace paracel {
-namespace alg {
 
 sgd::sgd(paracel::Comm comm, string hosts_dct_str, 
 	string _input, string output, size_t nworker,
@@ -56,24 +55,24 @@ void sgd::local_parser(const vector<string> & linelst, const char sep = ',') {
   }
 } 
 
-void sgs::learning() {
+void sgd::learning() {
   int data_sz = samples.size(), data_dim = samples[0].size();
   
   theta = paracel::random_double_list(data_dim); 
-  paracel_wrire("theta", theta); // push
+  paracel_write("theta", theta); // push
   
   vector<int> idx;
   for(int i = 0; i < data_sz; ++i) { 
     idx.push_back(i);
   }
-  paracel_register_update();
+  paracel_register_update("/mfs/user/wuhong/paracel/alg/sgd/update.so", "sgd_theta_update");
   // main loop
   for(int rd = 0; rd < rounds; ++rd) {
     std::random_shuffle(idx.begin(), idx.end()); 
     // traverse data
     for(auto id : idx) {
       theta = paracel_read<vector<double> >("theta"); 
-      double grad = labels[id] - sgd::loss_func_grad(samples[id]); 
+      double grad = labels[id] - loss_func_grad(samples[id]); 
       vector<double> delta; 
       for(int i = 0; i < data_dim; ++i) {
         double t = alpha * grad * samples[id][i] - 2. * beta * alpha * theta[i];
@@ -96,8 +95,7 @@ void sgd::solve() {
   sync();
   learning();
 }
-
+double sgd::calc_loss() {}
 void sgd::dump_result() {}
 
-} // namespace alg
 } // namespace paracel

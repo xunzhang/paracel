@@ -37,21 +37,27 @@ double paracel_incr_d(double a, double b) {
   return a + b; 
 }
 
-paracel::list_type<int> paracel_incr_li(paracel::list_type<int> a, paracel::list_type<int> b) {
+paracel::list_type<int> 
+paracel_incr_li(paracel::list_type<int> a, 
+		paracel::list_type<int> b) {
   paracel::list_type<int> r;
   for(int i = 0; i < (int)a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
 }
 
-paracel::list_type<float> paracel_incr_lf(paracel::list_type<float> a, paracel::list_type<float> b) {
+paracel::list_type<float> 
+paracel_incr_lf(paracel::list_type<float> a, 
+		paracel::list_type<float> b) {
   paracel::list_type<float> r;
   for(int i = 0; i < (int)a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
 }
 
-paracel::list_type<double> paracel_incr_ld(paracel::list_type<double> a, paracel::list_type<double> b) {
+paracel::list_type<double> 
+paracel_incr_ld(paracel::list_type<double> a, 
+		paracel::list_type<double> b) {
   paracel::list_type<double> r;
   for(int i = 0; i < (int)a.size(); ++i) {
     r.push_back(a[i] + b[i]);

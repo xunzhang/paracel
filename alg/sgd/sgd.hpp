@@ -24,7 +24,6 @@
 using namespace std;
 
 namespace paracel {
-namespace alg {
 
 class sgd : public paracel::paralg {
 
@@ -33,7 +32,7 @@ public:
   virtual ~sgd();
   
   double loss_func_grad(const vector<double> &);
-  void local_parser(const vector<string> &);
+  void local_parser(const vector<string> &, const char);
   
   virtual void learning();
   virtual void solve();
@@ -53,7 +52,6 @@ private:
 
 }; 
 
-} // namespace alg 
 } // namespace paracel
 
 #endif

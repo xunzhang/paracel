@@ -95,7 +95,7 @@ paracel::list_type<size_t> get_ports() {
 double random_double() {
   std::random_device rd;
   std::uniform_real_distribution<double> dis(0., 1.);
-  return dis(gen);
+  return dis(rd);
 }
 
 paracel::list_type<double> random_double_list(int len) {
