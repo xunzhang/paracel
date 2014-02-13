@@ -22,7 +22,7 @@ except:
 try:
     from optparse import OptionParser
 except:
-    print 'sklearn module required'
+    print 'optparse module required'
     exit(0)
 
 def dump_data(output, sample, label, sep):

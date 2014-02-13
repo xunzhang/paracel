@@ -346,11 +346,12 @@ void thrd_exec(zmq::socket_t & sock) {
 }
 
 // init_host is the hostname of starter
-void init_thrds(const paracel::str_type & init_host) {
+void init_thrds(const paracel::str_type & init_host, const paracel::str_type & init_port) {
 
   zmq::context_t context(2);
   zmq::socket_t sock(context, ZMQ_REQ);
-  paracel::str_type info = "tcp://" + init_host + ":" + paracel::default_port;
+  //paracel::str_type info = "tcp://" + init_host + ":" + paracel::default_port;
+  paracel::str_type info = "tcp://" + init_host + ":" + init_port;
   sock.connect(info.c_str());
  
   char hostname[1024], freeport[1024]; size_t size = sizeof(freeport);

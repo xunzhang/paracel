@@ -14,6 +14,7 @@
  */
 
 #include <string>
+#include <iostream>
 
 #include <mpi.h>
 #include <google/gflags.h>
@@ -26,19 +27,16 @@
 
 using namespace boost::property_tree;
 
-DEFINE_string(hostsname, "host1:7777PARACELhost2:8888", "hosts name string of paracel-servers.\n");
+DEFINE_string(server_info, "host1:7777PARACELhost2:8888", "hosts name string of paracel-servers.\n");
 
 DEFINE_string(cfg_file, "", "config json file with absolute path.\n");
-
-DEFINE_int64(nworker, 1, "worker number.\n");
-DEFINE_int64(nserver, 1, "server number.\n");
 
 int main(int argc, char *argv[])
 {
   paracel::main_env comm_main_env(argc, argv);
   paracel::Comm comm(MPI_COMM_WORLD);
 
-  google::SetUsageMessage("[options]\n\t--hostsname\n\t--cfg_file\n\t--nworker\n\t--nserver\n");
+  google::SetUsageMessage("[options]\n\t--server_info\n\t--cfg_file\n");
   google::ParseCommandLineFlags(&argc, &argv, true);
   
   ptree pt;
@@ -49,8 +47,9 @@ int main(int argc, char *argv[])
   double beta = pt.get<double>("beta");
   int rounds = pt.get<int>("rounds");
 
-  paracel::sgd sgd_solver(comm, FLAGS_hostsname, input, output, FLAGS_nworker, rounds, alpha, beta); 
-  sgd_solver.solve();
+  paracel::sgd sgd_solver(comm, FLAGS_server_info, input, output, rounds, alpha, beta); 
+  std::cout << "hello sgd" << std::endl;
+  //sgd_solver.solve();
   //sgd_solver.calc_loss();
   //sgd_solver.dump_result();
 

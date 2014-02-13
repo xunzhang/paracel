@@ -23,7 +23,7 @@
 namespace paracel {
 
 sgd::sgd(paracel::Comm comm, string hosts_dct_str, 
-	string _input, string output, size_t nworker,
+	string _input, string output,
 	size_t _rounds, double _alpha, double _beta) :
 		paracel::paralg(hosts_dct_str, comm, output, _rounds),
 		input(_input),

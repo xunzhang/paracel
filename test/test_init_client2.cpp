@@ -10,7 +10,8 @@
 
 int main(int argc, char *argv[])
 {
-  auto ports_tmp = paracel::get_hostnames_string(1); 
+  paracel::str_type init_port = paracel::gen_init_port();
+  auto ports_tmp = paracel::get_hostnames_string(1, "7773"); 
   paracel::str_type ports(ports_tmp.begin() + 8, ports_tmp.end());
   paracel::kvclt kvc("beater7", ports);
   {

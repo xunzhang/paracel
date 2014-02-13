@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <random>
+#include <string>
 
 #include <zmq.hpp>
 
@@ -33,11 +34,13 @@ namespace paracel {
 
 typedef paracel::dict_type<paracel::str_type, paracel::str_type> local_dict_type;
 
-paracel::str_type get_hostnames_string(int srv_num) {
+// talk with init machine, get parameter servers' info
+paracel::str_type get_hostnames_string(int srv_num, const paracel::str_type & init_port) {
   paracel::str_type s;
   zmq::context_t context(2);
   zmq::socket_t sock(context, ZMQ_REP);
-  paracel::str_type info = "tcp://*:" + paracel::default_port;
+  //paracel::str_type info = "tcp://*:" + paracel::default_port;
+  paracel::str_type info  = "tcp://*:" + init_port;
   sock.bind(info.c_str());
   for(int i = 0; i < srv_num; ++i) {
     zmq::message_t request;
@@ -47,7 +50,7 @@ paracel::str_type get_hostnames_string(int srv_num) {
     if(i != srv_num - 1) { 
       s += paracel::seperator; 
     }
-    std::cout << "client: " << s << std::endl;
+    //std::cout << "client: " << s << std::endl;
     zmq::message_t reply(4);
     std::memcpy((void *)reply.data(), "done", 4);
     sock.send(reply);
@@ -55,6 +58,7 @@ paracel::str_type get_hostnames_string(int srv_num) {
   return s;
 }
 
+// take output from get_hostnames_string as input
 paracel::list_type<local_dict_type> 
 get_hostnames_dict(const paracel::str_type & names) {
   paracel::list_type<local_dict_type> dl;
@@ -90,6 +94,11 @@ paracel::list_type<size_t> get_ports() {
     ports_lst.emplace_back(std::move(gen_port()));
   }
   return ports_lst;
+}
+
+std::string gen_init_port() {
+  size_t p = random_size_t(10000, 30000);
+  return std::to_string(p);
 }
 
 double random_double() {

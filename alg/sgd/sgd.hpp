@@ -28,7 +28,7 @@ namespace paracel {
 class sgd : public paracel::paralg {
 
 public:
-  sgd(paracel::Comm, string, string, string, size_t = 1, size_t = 1, double = 0.002, double = 0.1);
+  sgd(paracel::Comm, string, string, string, size_t = 1, double = 0.002, double = 0.1);
   virtual ~sgd();
   
   double loss_func_grad(const vector<double> &);
