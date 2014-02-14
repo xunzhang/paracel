@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
   paracel::sgd sgd_solver(comm, FLAGS_server_info, input, output, rounds, alpha, beta); 
   std::cout << "hello sgd" << std::endl;
-  //sgd_solver.solve();
+  sgd_solver.solve();
   //sgd_solver.calc_loss();
   //sgd_solver.dump_result();
 

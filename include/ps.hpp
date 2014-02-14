@@ -235,7 +235,9 @@ public:
   
   template <class V>
   bool paracel_write(const paracel::str_type & key, const V & val, bool replica_flag = true) {
-    return ps_obj->kvm[ps_obj->p_ring->get_server(key)].push(key, val);
+    auto indx = ps_obj->p_ring->get_server(key);
+    std::cout << indx << std::endl;
+    return (ps_obj->kvm[indx]).push(key, val);
   }
   
   bool paracel_write(const paracel::str_type & key, const char* val, bool replica_flag = true) {
@@ -286,12 +288,13 @@ private:
     public:
       parasrv(paracel::str_type hosts_dct_str) {
         // init dct_lst
+	std::cout << "irc" << hosts_dct_str << std::endl;
         dct_lst = paracel::get_hostnames_dict(hosts_dct_str);
         // init srv_sz
         srv_sz = dct_lst.size();
         // init kvm
         for(auto & srv : dct_lst) {
-          paracel::kvclt kvc(srv["node"], srv["ports"]);
+          paracel::kvclt kvc(srv["host"], srv["ports"]);
           kvm.push_back(std::move(kvc));
         }
         // init servers

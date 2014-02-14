@@ -20,6 +20,8 @@
 #include "ps.hpp"
 #include "utils.hpp"
 
+#include <iostream>
+
 namespace paracel {
 
 sgd::sgd(paracel::Comm comm, string hosts_dct_str, 
@@ -53,6 +55,12 @@ void sgd::local_parser(const vector<string> & linelst, const char sep = ',') {
     samples.push_back(tmp);
     labels.push_back(std::stod(linev[linev.size() - 1]));
   }
+/*
+  for(auto & v : samples[0]) {
+    std::cout << "dim: " << v << std::endl;
+  }
+  std::cout << "label: " << labels[0] << std::endl;
+*/
 } 
 
 void sgd::learning() {
@@ -79,6 +87,9 @@ void sgd::learning() {
         delta.push_back(t);
       }
       paracel_update("theta", delta); // update with delta
+      for(int k = 0; k < 100000; ++k) {
+        int p = k + 1;
+      }
       for(int i = 0; i < data_dim; ++i) {
         theta[i] += delta[i];
       }
@@ -86,7 +97,6 @@ void sgd::learning() {
   } // end rounds
   sync();
   theta = paracel_read<vector<double> >("theta"); // last pull
-  sync();
 }
 
 void sgd::solve() {
@@ -94,8 +104,16 @@ void sgd::solve() {
   local_parser(lines); // init data
   sync();
   learning();
+  sync();
+  print(theta);
 }
 double sgd::calc_loss() {}
 void sgd::dump_result() {}
+void sgd::print(const vector<double> & vl) {
+  for(auto & v : vl) {
+    std::cout << v << "|";
+  }
+  std::cout << std::endl;
+}
 
 } // namespace paracel

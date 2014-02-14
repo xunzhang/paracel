@@ -39,6 +39,7 @@ public:
   
   double calc_loss();
   void dump_result();
+  void print(const vector<double> &);
 
 private:
   size_t worker_id;

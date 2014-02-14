@@ -28,6 +28,7 @@ vector<double> local_update(vector<double> a, vector<double> b) {
   for(int i = 0; i < (int)a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
+  return r;
 }
 
 paracel::update_result sgd_theta_update = paracel::update_proxy(local_update);
