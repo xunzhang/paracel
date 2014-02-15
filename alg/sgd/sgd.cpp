@@ -26,17 +26,20 @@ namespace paracel {
 
 sgd::sgd(paracel::Comm comm, string hosts_dct_str, 
 	string _input, string output,
-	size_t _rounds, double _alpha, double _beta) :
+	size_t _rounds, double _alpha, double _beta, bool _debug) :
 		paracel::paralg(hosts_dct_str, comm, output, _rounds),
 		input(_input),
 		worker_id(comm.get_rank()),
 		rounds(_rounds), 
 		alpha(_alpha),
-		beta(_beta) {}
+		beta(_beta),
+		debug(_debug) {}
 
 sgd::~sgd() {}
 
-double sgd::loss_func_grad(const vector<double> & v) {
+// logistic regression hypothesis function
+// e .** (v .dot theta) / (1 + e .** (v .dot theta))
+double sgd::lg_hypothesis(const vector<double> & v) {
   double dp = paracel::dot_product(v, theta);
   double temp = 1. / (1. + exp(dp));
   return exp(dp) * temp;
@@ -80,18 +83,20 @@ void sgd::learning() {
     // traverse data
     for(auto id : idx) {
       theta = paracel_read<vector<double> >("theta"); 
-      double grad = labels[id] - loss_func_grad(samples[id]); 
+      double grad = labels[id] - lg_hypothesis(samples[id]); 
+      double opt1 = alpha * grad;
+      double opt2 = 2. * beta * alpha;
       vector<double> delta; 
       for(int i = 0; i < data_dim; ++i) {
-        double t = alpha * grad * samples[id][i] - 2. * beta * alpha * theta[i];
+        double t = opt1 * samples[id][i] - opt2 * theta[i];
         delta.push_back(t);
       }
       paracel_update("theta", delta); // update with delta
-      for(int k = 0; k < 100000; ++k) {
-        int p = k + 1;
-      }
       for(int i = 0; i < data_dim; ++i) {
         theta[i] += delta[i];
+      }
+      if(debug) {
+        loss_error.push_back(calc_loss());
       }
     } // end traverse
   } // end rounds
@@ -107,8 +112,24 @@ void sgd::solve() {
   sync();
   print(theta);
 }
-double sgd::calc_loss() {}
-void sgd::dump_result() {}
+
+double sgd::calc_loss() {
+  double loss = 0.;
+  for(int i = 0; i < samples.size(); ++i) {
+    double j = lg_hypothesis(samples[i]);
+    loss += j * j;
+  }
+  worker_comm.allreduce(loss);
+  return loss;
+}
+
+void sgd::dump_result() {
+  if(get_worker_id == 0) {
+    dump_vector(theta, "lg_theta_", '|');
+    dump_vector(loss_error, "lg_loss_error_", ',');
+  }
+}
+
 void sgd::print(const vector<double> & vl) {
   for(auto & v : vl) {
     std::cout << v << "|";

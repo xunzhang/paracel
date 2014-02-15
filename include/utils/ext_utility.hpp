@@ -217,5 +217,13 @@ inline double dot_product(const std::vector<double> & a, const std::vector<doubl
   return std::inner_product(a.begin(), a.end(), b.begin(), 0.);
 }
 
+
+paracel::str_type todir(const paracel::str_type & f) {
+  if(endswith(f, "/")) {
+    return f;
+  } 
+  return f + "/";
+}
+
 } // namespace paracel
 #endif

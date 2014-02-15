@@ -15,6 +15,8 @@
 #ifndef FILE_50cbcab2_09cc_7016_42c0_609317d6df63_HPP
 #define FILE_50cbcab2_09cc_7016_42c0_609317d6df63_HPP
 
+#include <fstream>
+#include <algorithm>
 #include <functional>
 
 #include <boost/filesystem.hpp>
@@ -36,6 +38,17 @@ using parser_type = std::function<paracel::list_type<paracel::str_type>(paracel:
 class paralg {
 
 public:
+  
+  // interface for direct usage
+  paralg(paracel::Comm comm,
+  	paracel::str_type op_folder,
+  	size_t o_rounds) : 
+		worker_comm(comm), 
+		output(op_folder), 
+		rounds(o_rounds) {
+    init_output(op_folder);
+  }
+
   paralg(paracel::str_type hosts_dct_str, 
   	paracel::Comm comm,
 	paracel::str_type op_folder,
@@ -47,19 +60,25 @@ public:
 	rounds(o_rounds),
 	limit_s(o_limit_s) {
     ps_obj = new parasrv(hosts_dct_str);
+    init_output(op_folder);
+    worker_comm.sync();
+  }
+
+  virtual ~paralg() {
+    if(ps_obj) {
+      delete ps_obj;
+    }
+  }
+  
+  void init_output(const paracel::str_type & folder) {
     // create output folder
     if(worker_comm.get_rank() == 0) {
-      boost::filesystem::path path(op_folder);
+      boost::filesystem::path path(folder);
       if(boost::filesystem::exists(path)) {
         boost::filesystem::remove_all(path);
       }
       boost::filesystem::create_directory(path);
     }
-    worker_comm.sync();
-  }
-
-  virtual ~paralg() {
-    delete ps_obj;
   }
 
   template <class T>
@@ -271,11 +290,19 @@ public:
   paracel::str_type dump_line_as_vector() {}
 
   template <class V>
-  void dump_vector(const paracel::str_type & path, 
-                  const paracel::dict_type<size_t, paracel::str_type> & id_map,
-		  const paracel::list_type<V> & data,
-		  const paracel::Comm & comm, 
-		  bool merge = false) {}
+  void dump_vector(const paracel::list_type<V> & data,
+  		const paracel::dict_type<size_t, paracel::str_type> & id_map,
+  		const char sep = ',',
+		bool merge = false) {}
+
+  template <class V>
+  void dump_vector(const paracel::list_type<V> & data, 
+  		const paracel::str_type filename = "result_",
+  		const char sep = ',', bool merge = false) {
+    std::ofstream output_file(paracel::todir(output, '/') + filename + std::to_string(worker_comm.get_rank()));
+    std::ostream_iterator<paracel::str_type> output_iter(output_file, sep);
+    std::copy(data.begin(), data.end(), output_iter);
+  }
 
   virtual void solve() {}
 
@@ -329,7 +356,6 @@ private:
   paracel::dict_type<size_t, int> dm;
   paracel::dict_type<size_t, int> col_dm;
   paracel::dict_type<paracel::str_type, paracel::str_type> keymap;
-
 };
 
 } // namespace paracel

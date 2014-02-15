@@ -28,10 +28,10 @@ namespace paracel {
 class sgd : public paracel::paralg {
 
 public:
-  sgd(paracel::Comm, string, string, string, size_t = 1, double = 0.002, double = 0.1);
+  sgd(paracel::Comm, string, string, string, size_t = 1, double = 0.002, double = 0.1, bool = false);
   virtual ~sgd();
   
-  double loss_func_grad(const vector<double> &);
+  double lg_hypothesis(const vector<double> &);
   void local_parser(const vector<string> &, const char);
   
   virtual void learning();
@@ -50,7 +50,8 @@ private:
   vector<vector<double> > samples;
   vector<double> labels;
   vector<double> theta;
-
+  bool debug;
+  vector<double> loss_error;
 }; 
 
 } // namespace paracel
