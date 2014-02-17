@@ -81,6 +81,7 @@ void sgd::learning() {
     idx.push_back(i);
   }
   paracel_register_update("/mfs/user/wuhong/paracel/alg/sgd/update.so", "sgd_theta_update");
+  //paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/sgd/update.so", "sgd_theta_update");
   double coff2 = 2. * beta * alpha;
   double tmp = 1. / get_worker_size();
   std::cout << "wgt: " << tmp << std::endl;
@@ -105,6 +106,7 @@ void sgd::learning() {
 	delta[i] *= tmp; // average delta
       }
       paracel_update("theta", delta); // update with delta
+      //paracel_bupdate("theta", delta); // update with delta
       if(debug) {
         loss_error.push_back(calc_loss());
       }

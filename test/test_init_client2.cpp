@@ -71,10 +71,14 @@ int main(int argc, char *argv[])
   }
   {
     paracel::str_type key2 = "key_3";
+    kvc.register_bupdate(paracel::str_type("/mfs/user/wuhong/paracel/lib/local.so"), paracel::str_type("local_update"));
+    kvc.bupdate(key2, 10.);
+    /*
     kvc.register_update(paracel::str_type("/mfs/user/wuhong/paracel/lib/local.so"), paracel::str_type("local_update"));
     kvc.update(key2, 10.);
-    std::chrono::milliseconds dura(10);
+    std::chrono::milliseconds dura(100);
     std::this_thread::sleep_for(dura);
+    */
     std::cout << kvc.pull<double>(key2) << std::endl;
   }
   return 0;

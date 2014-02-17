@@ -172,6 +172,17 @@ public:
     return true;
   }
   
+  bool register_bupdate(const paracel::str_type & file_name, 
+  		const paracel::str_type & func_name) {
+    if(p_bupdate_sock == nullptr) {
+      p_bupdate_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    auto scrip = paste(paracel::str_type("register_bupdate"), file_name, func_name); 
+    bool stat;
+    auto r = req_send_recv(*p_bupdate_sock, scrip, stat);
+    return r && stat;
+  }
+  
   template <class K, class V>
   bool push(const K & key, const V & val) {
     if(p_push_sock == nullptr) {
@@ -233,6 +244,30 @@ public:
     }
     auto scrip = paste(paracel::str_type("update"), key, delta, file_name, func_name);
     push_send(*p_update_sock, scrip);
+  }
+  
+  template <class K, class V>
+  bool bupdate(const K & key, const V & delta) {
+    if(p_bupdate_sock == nullptr) {
+      p_bupdate_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    auto scrip = paste(paracel::str_type("bupdate"), key, delta);
+    bool val;
+    req_send_recv(*p_bupdate_sock, scrip, val);
+    return val;
+  }
+
+  template <class K, class V>
+  bool bupdate(const K & key, const V & delta,
+  	const paracel::str_type & file_name, 
+	const paracel::str_type & func_name) {
+    if(p_bupdate_sock == nullptr) {
+      p_bupdate_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    auto scrip = paste(paracel::str_type("bupdate"), key, delta, file_name, func_name);
+    bool val;
+    req_send_recv(*p_bupdate_sock, scrip, val);
+    return val;
   }
 
   template <class K>
@@ -423,6 +458,7 @@ private:
   std::unique_ptr<zmq::socket_t> p_push_sock;
   std::unique_ptr<zmq::socket_t> p_push_multi_sock;
   std::unique_ptr<zmq::socket_t> p_update_sock;
+  std::unique_ptr<zmq::socket_t> p_bupdate_sock;
   std::unique_ptr<zmq::socket_t> p_remove_sock;
   std::unique_ptr<zmq::socket_t> p_clear_sock;
   std::unique_ptr<zmq::socket_t> p_ssp_sock;

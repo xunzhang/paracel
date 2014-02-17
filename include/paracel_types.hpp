@@ -37,7 +37,7 @@ namespace paracel {
 
 const int BLK_SZ = 8;
 
-const int threads_num = 4;
+const int threads_num = 5;
 
 const std::string seperator = "PARACEL";
 

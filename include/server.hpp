@@ -227,7 +227,7 @@ void thrd_exec(zmq::socket_t & sock) {
       dlclose(remove_special_handler);
       bool result = true; rep_pack_send(sock, result);
     }
-    if(indicator == "register_update") {
+    if(indicator == "register_update" || indicator == "register_bupdate") {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
       update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
@@ -243,6 +243,9 @@ void thrd_exec(zmq::socket_t & sock) {
       }
       update_f = *(std::function<paracel::str_type(paracel::str_type, paracel::str_type)>*) update_local;
       dlclose(update_handler);
+      if(indicator == "register_bupdate") {
+        bool result = true; rep_pack_send(sock, result);
+      }
     }
     if(indicator == "push") {
       auto key = pk.unpack(msg[1]);
@@ -261,7 +264,7 @@ void thrd_exec(zmq::socket_t & sock) {
       paracel::tbl_store.set_multi(kv_pairs);
       bool result = true; rep_pack_send(sock, result);
     }
-    if(indicator == "update") {
+    if(indicator == "update" || indicator == "bupdate") {
       if(msg.size() > 3) {
         if(msg.size() != 5) {
 	  std::cerr << "Invalid invoke!!" << dlerror() << '\n';
@@ -302,6 +305,10 @@ void thrd_exec(zmq::socket_t & sock) {
       }
       auto key = pk.unpack(msg[1]);
       kv_update(key, msg[2], update_f);
+      if(indicator == "bupdate") {
+        bool result = true;
+        rep_pack_send(sock, result);
+      }
     }
     if(indicator == "remove") {
       auto key = pk.unpack(msg[1]);
@@ -378,6 +385,11 @@ void init_thrds(const paracel::str_type & init_host, const paracel::str_type & i
   zmq::socket_t sock_t3(context, ZMQ_REP);
   sock_t3.bind("tcp://*:*");
   sock_t3.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
+  ports += local_parse_port(paracel::str_type(freeport)) + ",";
+  
+  zmq::socket_t sock_t4(context, ZMQ_REP);
+  sock_t4.bind("tcp://*:*");
+  sock_t4.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
   ports += local_parse_port(paracel::str_type(freeport));
 
   zmq::message_t request(ports.size()); 
@@ -391,7 +403,8 @@ void init_thrds(const paracel::str_type & init_host, const paracel::str_type & i
   threads.push_back(std::thread(thrd_exec, std::ref(sock_t0)));
   threads.push_back(std::thread(thrd_exec, std::ref(sock_t1)));
   threads.push_back(std::thread(thrd_exec, std::ref(sock_t2)));
-  threads.push_back(std::thread(thrd_exec_ssp, std::ref(sock_t3)));
+  threads.push_back(std::thread(thrd_exec, std::ref(sock_t3)));
+  threads.push_back(std::thread(thrd_exec_ssp, std::ref(sock_t4)));
   /*
   threads.push_back(std::thread(thrd_exec, std::move(sock_t0)));
   threads.push_back(std::thread(thrd_exec, std::move(sock_t1)));

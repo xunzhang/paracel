@@ -224,6 +224,15 @@ public:
     return r;
   }
   
+  bool paracel_register_bupdate(const paracel::str_type & file_name, const paracel::str_type & func_name) {
+    auto rg = ps_obj->p_ring;
+    bool r = true;
+    for(int i = 0; i < ps_obj->srv_sz; ++i) {
+      r = r && ps_obj->kvm[i].register_bupdate(file_name, func_name);
+    }
+    return r;
+  }
+  
   bool paracel_register_read_special(const paracel::str_type & file_name, const paracel::str_type & func_name) {
     auto rg = ps_obj->p_ring;
     bool r = true;
@@ -271,6 +280,16 @@ public:
   void paracel_update(const paracel::str_type & key, const char* delta, bool replica_flag = true) {
     paracel::str_type d = delta;
     paralg::paracel_update(key, d);
+  }
+  
+  template <class V>
+  void paracel_bupdate(const paracel::str_type & key, const V & delta, bool replica_flag = true) {
+    ps_obj->kvm[ps_obj->p_ring->get_server(key)].bupdate(key, delta);
+  }
+
+  void paracel_bupdate(const paracel::str_type & key, const char* delta, bool replica_flag = true) {
+    paracel::str_type d = delta;
+    paralg::paracel_bupdate(key, d);
   }
 
   inline size_t get_worker_id() {
