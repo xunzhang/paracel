@@ -97,7 +97,7 @@ void thrd_exec_ssp(zmq::socket_t & sock) {
     auto scrip = paracel::str_type(static_cast<const char *>(s.data()), s.size());
     auto msg = paracel::str_split_by_word(scrip, paracel::seperator);
     auto indicator = pk.unpack(msg[0]);
-    std::cout << indicator << std::endl;
+    //std::cout << indicator << std::endl;
     if(indicator == "push_int") {
       auto key = pk.unpack(msg[1]);
       paracel::packer<int> pk_i;
@@ -136,7 +136,7 @@ void thrd_exec(zmq::socket_t & sock) {
     auto scrip = paracel::str_type(static_cast<const char *>(s.data()), s.size());
     auto msg = paracel::str_split_by_word(scrip, paracel::seperator);
     auto indicator = pk.unpack(msg[0]);
-    std::cout << indicator << std::endl;
+    //std::cout << indicator << std::endl;
     mutex.lock();
     if(indicator == "contains") {
       auto key = pk.unpack(msg[1]);

@@ -47,11 +47,12 @@ int main(int argc, char *argv[])
   double beta = pt.get<double>("beta");
   int rounds = pt.get<int>("rounds");
 
-  paracel::sgd sgd_solver(comm, FLAGS_server_info, input, output, rounds, alpha, beta); 
+  paracel::sgd sgd_solver(comm, FLAGS_server_info, input, output, rounds, alpha, beta, false); 
   std::cout << "hello sgd" << std::endl;
   sgd_solver.solve();
   //sgd_solver.calc_loss();
   //sgd_solver.dump_result();
+  sgd_solver.predict("/mfs/user/wuhong/paracel/data/classification/test_000.csv");
 
   return 0;
 }

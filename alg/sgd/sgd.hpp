@@ -40,6 +40,7 @@ public:
   double calc_loss();
   void dump_result();
   void print(const vector<double> &);
+  void predict(const std::string &);
 
 private:
   size_t worker_id;
@@ -50,7 +51,7 @@ private:
   vector<vector<double> > samples;
   vector<double> labels;
   vector<double> theta;
-  bool debug;
+  bool debug = false;
   vector<double> loss_error;
 }; 
 

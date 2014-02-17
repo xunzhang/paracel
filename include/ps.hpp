@@ -255,7 +255,6 @@ public:
   template <class V>
   bool paracel_write(const paracel::str_type & key, const V & val, bool replica_flag = true) {
     auto indx = ps_obj->p_ring->get_server(key);
-    std::cout << indx << std::endl;
     return (ps_obj->kvm[indx]).push(key, val);
   }
   
@@ -285,6 +284,10 @@ public:
   void sync() {
     worker_comm.sync();
   }
+
+  paracel::Comm get_comm() {
+    return worker_comm;
+  }
   
   template <class V>
   paracel::str_type dump_line_as_vector() {}
@@ -292,16 +295,21 @@ public:
   template <class V>
   void dump_vector(const paracel::list_type<V> & data,
   		const paracel::dict_type<size_t, paracel::str_type> & id_map,
-  		const char sep = ',',
+		const paracel::str_type & filename = "result_",
+  		const paracel::str_type & sep = ",",
 		bool merge = false) {}
 
   template <class V>
   void dump_vector(const paracel::list_type<V> & data, 
-  		const paracel::str_type filename = "result_",
-  		const char sep = ',', bool merge = false) {
-    std::ofstream output_file(paracel::todir(output, '/') + filename + std::to_string(worker_comm.get_rank()));
-    std::ostream_iterator<paracel::str_type> output_iter(output_file, sep);
-    std::copy(data.begin(), data.end(), output_iter);
+  		const paracel::str_type & filename = "result_",
+  		const paracel::str_type & sep = ",", bool merge = false) {
+    std::ofstream os;
+    os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()));
+    for(int i = 0; i < (int)data.size() - 1; ++i) {
+      os << std::to_string(data[i]) << sep;
+    }
+    os << std::to_string(data[data.size() - 1]) << '\n';
+    os.close();
   }
 
   virtual void solve() {}
@@ -315,7 +323,6 @@ private:
     public:
       parasrv(paracel::str_type hosts_dct_str) {
         // init dct_lst
-	std::cout << "irc" << hosts_dct_str << std::endl;
         dct_lst = paracel::get_hostnames_dict(hosts_dct_str);
         // init srv_sz
         srv_sz = dct_lst.size();
