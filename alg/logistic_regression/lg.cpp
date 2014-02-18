@@ -73,7 +73,6 @@ void logistic_regression::local_parser(const vector<string> & linelst, const cha
 void logistic_regression::dgd_learning() {
   int data_sz = samples.size(), data_dim = samples[0].size();
   theta = paracel::random_double_list(data_dim); 
-  for(int i = 0; i < data_dim; ++i) theta[i] = 0.17;
   paracel_write("theta", theta); // init push
   vector<int> idx;
   for(int i = 0; i < data_sz; ++i) { 
@@ -151,15 +150,62 @@ void logistic_regression::ipm_learning() {
   theta = paracel_read<vector<double> >("theta"); // last pull
 }
 
-void logistic_regression::agd_learning() {}
+void logistic_regression::agd_learning() {
+  int data_sz = samples.size(), data_dim = samples[0].size();
+  int cnt = 0, read_batch = data_sz / 100, update_batch = data_sz / 100;
+  if(read_batch == 0) { read_batch = 10; }
+  if(update_batch == 0) { update_batch = 10; }
+  theta = paracel::random_double_list(data_dim); 
+  paracel_write("theta", theta); // init push
+  vector<int> idx;
+  for(int i = 0; i < data_sz; ++i) { 
+    idx.push_back(i);
+  }
+  paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/logistic_regression/update.so", 
+  			"lg_theta_update");
+  double coff2 = 2. * beta * alpha;
+  vector<double> delta(data_dim);
+  // main loop
+  for(int rd = 0; rd < rounds; ++rd) {
+    std::random_shuffle(idx.begin(), idx.end()); 
+    theta = paracel_read<vector<double> >("theta"); 
+    vector<double> theta_old(theta);
+    // traverse data
+    cnt = 0;
+    for(auto sample_id : idx) {
+      if( (cnt % read_batch == 0) || (cnt == idx.size() - 1) ) { 
+        theta = paracel_read<vector<double> >("theta"); 
+	theta_old = theta;
+      }
+      for(int i = 0; i < data_dim; ++i) {
+        double coff1 = alpha * (labels[sample_id] - lg_hypothesis(samples[sample_id])); 
+        double t = coff1 * samples[sample_id][i] - coff2 * theta[i];
+	theta[i] += t;
+      }
+      if(debug) {
+        loss_error.push_back(calc_loss());
+      }
+      if( (cnt % update_batch == 0) || (cnt == idx.size() - 1) ) {
+        for(int i = 0; i < data_dim; ++i) {
+          delta[i] = theta[i] - theta_old[i];
+        }
+	paracel_bupdate("theta", delta);
+      }
+      cnt += 1;
+    } // traverse
+    sync();
+    std::cout << "worker" << get_worker_id() << " at the end of rd" << rd << std::endl;
+  } // rounds
+  theta = paracel_read<vector<double> >("theta"); // last pull
+}
 
 void logistic_regression::solve() {
   auto lines = paracel_load(input);
   local_parser(lines); // init data
   sync();
   //dgd_learning();
-  ipm_learning();
-  //agd_learning();
+  //ipm_learning();
+  agd_learning();
   sync();
   //print(theta);
 }

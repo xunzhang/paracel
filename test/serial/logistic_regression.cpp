@@ -87,9 +87,8 @@ public:
       std::cout << "round:" << rd << std::endl;
       double opt2 = 2. * beta * alpha;
       for(auto id : idx) {
-        double grad = labels[id] - lg_hypothesis(samples[id]);
-	double opt1 = alpha * grad;
         for(int i = 0; i < data_dim; ++i) {
+          double opt1 = alpha * (labels[id] - lg_hypothesis(samples[id]));
 	  double t = opt1 * samples[id][i] - opt2 * theta[i];
 	  theta[i] += t;
         }
