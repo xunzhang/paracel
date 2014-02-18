@@ -103,7 +103,7 @@ std::string gen_init_port() {
 
 double random_double() {
   std::random_device rd;
-  std::uniform_real_distribution<double> dis(0., 1.);
+  std::uniform_real_distribution<double> dis(0., 0.2);
   return dis(rd);
 }
 

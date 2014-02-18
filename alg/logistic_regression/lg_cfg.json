@@ -2,6 +2,6 @@
   "input" : "/mfs/user/wuhong/paracel/data/classification/train_000.csv",
   "output" : "/mfs/user/wuhong/paracel/data/tmp/",
   "alpha" : 0.001,
-  "beta" : 0.1,
+  "beta" : 0.01,
   "rounds" : 10
 }

@@ -24,10 +24,10 @@ using namespace boost::property_tree;
 
 namespace paracel {
 
-class sgd {
+class logistic_regression {
 
 public:  
-  sgd(Comm comm,
+  logistic_regression(Comm comm,
   	std::string _input, 
   	std::string _output, 
 	size_t _rounds = 1, 
@@ -43,7 +43,7 @@ public:
     pt = new paralg(comm, output, rounds);
   }
   
-  ~sgd() {
+  ~logistic_regression() {
     delete pt;
   }
  
@@ -90,8 +90,8 @@ public:
         double grad = labels[id] - lg_hypothesis(samples[id]);
 	double opt1 = alpha * grad;
         for(int i = 0; i < data_dim; ++i) {
-          theta[i] += opt1 * samples[id][i] - opt2 * theta[i];
-	  //thera[i] += alpha * grad * samples[id][i] - 2. * beta * alpha * theta[i];
+	  double t = opt1 * samples[id][i] - opt2 * theta[i];
+	  theta[i] += t;
         }
 	if(debug) {
 	  loss_error.push_back(calc_loss());
@@ -105,6 +105,13 @@ public:
     local_parser(lines);
     learning();
     //dump_result();
+  }
+  
+  void print(const vector<double> & vl) {
+    for(auto & v : vl) {
+      std::cout << v << "|";
+    }
+    std::cout << std::endl;
   }
 
   double calc_loss() {
@@ -159,9 +166,9 @@ int main(int argc, char *argv[])
   double alpha = pt.get<double>("alpha");
   double beta = pt.get<double>("beta");
   int rounds = pt.get<int>("rounds");
-  paracel::sgd sgd_solver(comm, input, output, rounds, alpha, beta, false);
-  sgd_solver.solve();
-  //sgd_solver.dump_result();
-  sgd_solver.predict();
+  paracel::logistic_regression lg_solver(comm, input, output, rounds, alpha, beta, false);
+  lg_solver.solve();
+  //lg_solver.dump_result();
+  lg_solver.predict();
   return 0;
 }

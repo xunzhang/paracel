@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef PARACEL_SGD_HPP
-#define PARACEL_SGD_HPP
+#ifndef PARACEL_LOGISTIC_REGRESSION_HPP
+#define PARACEL_LOGISTIC_REGRESSION_HPP
 
 #include <string>
 #include <vector>
@@ -25,16 +25,19 @@ using namespace std;
 
 namespace paracel {
 
-class sgd : public paracel::paralg {
+class logistic_regression: public paracel::paralg {
 
 public:
-  sgd(paracel::Comm, string, string, string, size_t = 1, double = 0.002, double = 0.1, bool = false);
-  virtual ~sgd();
+  logistic_regression(paracel::Comm, string, string, string, size_t = 1, double = 0.002, double = 0.1, bool = false);
+  virtual ~logistic_regression();
   
   double lg_hypothesis(const vector<double> &);
   void local_parser(const vector<string> &, const char);
   
-  virtual void learning();
+  void dgd_learning(); // distributed gradient descent learning
+  void ipm_learning(); // iterative parameter mixtures learning
+  void agd_learning(); // asynchronous gradient descent learning
+
   virtual void solve();
   
   double calc_loss();

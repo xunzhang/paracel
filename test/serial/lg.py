@@ -25,6 +25,25 @@ def log_reg_regularized_sgd(x, y, alpha, beta = 0.1, max_iter = 100, debug = Fal
         return theta,err
     return theta
 
+def log_reg_regularized_bgd(x, y, alpha, beta = 0.1, max_iter = 100, debug = False):
+    if debug: 
+    	err = array('f', [])
+    m,n = x.shape
+    theta = np.random.random(n)
+    z = np.arange(m)
+    for t in xrange(max_iter):
+        z = np.random.permutation(z)
+	opt = 2. * alpha * beta
+	delta = [0 for i in xrange(n)]
+        for i in z:
+	    delta += alpha * (y[i] - h(x[i], theta)) * x[i] - opt * theta
+	    #theta = theta + alpha * (y[i] - h(x[i], theta)) * x[i] - beta * 2. * alpha * theta
+            if debug: 
+	    	err.append(sum([(y[i] - h(x[i], theta)) ** 2 for i in range(m)]))
+        theta += delta
+    if debug:
+        return theta,err
+    return theta
 
 def load(f):
     x = []
@@ -49,7 +68,7 @@ if __name__ == '__main__':
     x, y = load(f)
     f.close()
 
-    theta = log_reg_regularized_sgd(x, y, 0.001, 0.01, max_iter = 10, debug = False)
+    theta = log_reg_regularized_sgd(x, y, 0.001, 0.01, max_iter = 100, debug = False)
     print theta
 
     #theta, err = log_reg_regularized_sgd(x, y, 0.001, 0.1, max_iter = 1, debug = True)

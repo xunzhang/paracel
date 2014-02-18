@@ -20,7 +20,7 @@
 using std::vector;
 
 extern "C" {
-  extern paracel::update_result sgd_theta_update;
+  extern paracel::update_result lg_theta_update;
 }
 
 vector<double> local_update(vector<double> a, vector<double> b) {
@@ -31,4 +31,4 @@ vector<double> local_update(vector<double> a, vector<double> b) {
   return r;
 }
 
-paracel::update_result sgd_theta_update = paracel::update_proxy(local_update);
+paracel::update_result lg_theta_update = paracel::update_proxy(local_update);
