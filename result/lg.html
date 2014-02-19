@@ -1,0 +1,161 @@
+<html>
+<body>
+
+  <p>train_000.csv | test_000.csv | alpha: 0.001 | beta: 0.01 | rounds: 10</p>
+  
+  <li>ipm</li>
+  <table border="1">
+    <tr>
+      <th>procs</th>
+      <th>time</th>
+      <th>pred_loss</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>30s</td>
+      <td>0.254643</td>     
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>16s</td>
+      <td>0.253594</td>     
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>10s</td>
+      <td>0.254095</td>     
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>6s</td>
+      <td>0.254503</td>     
+    </tr>
+  </table>
+
+  <br>
+  <li>agd</li>
+  <table border="1">
+    <tr>
+      <th>procs</th>
+      <th>time</th>
+      <th>pred_loss</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>31s</td>
+      <td>0.312383</td>     
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>17s</td>
+      <td>0.303078</td>     
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>9s</td>
+      <td>0.374852</td>     
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>6s</td>
+      <td>0.263132</td>     
+    </tr>
+    </table>
+    
+    <br>
+    <li>dgd: not convergent</li>
+
+
+  <p>train_000.csv | test_000.csv | alpha: 0.00005 | beta: 0.01 | rounds: 10</p>
+  
+  <li>ipm</li>
+  <table border="1">
+    <tr>
+      <th>procs</th>
+      <th>time</th>
+      <th>pred_loss</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>35s</td>
+      <td>0.261532</td> 
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>18s</td>
+      <td>0.291992</td>     
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>9s</td>
+      <td>0.283213</td>     
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>6s</td>
+      <td>0.323499</td>     
+    </tr>
+  </table>
+
+  <br>
+  <li>agd</li>
+  <table border="1">
+    <tr>
+      <th>procs</th>
+      <th>time</th>
+      <th>pred_loss</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>35s</td>
+      <td>0.305329</td>     
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>18s</td>
+      <td>0.338787</td>     
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>12s</td>
+      <td>0.305069</td>     
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>8s</td>
+      <td>0.328028</td>     
+    </tr>
+    </table>
+    
+    <br>
+    <li>dgd</li>
+    <table border="1">
+    <tr>
+      <th>procs</th>
+      <th>time</th>
+      <th>pred_loss</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>3.1s</td>
+      <td>0.261834</td>     
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>1.5s</td>
+      <td>0.259587</td>     
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>1.3s</td>
+      <td>0.270904</td>     
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>1.1s</td>
+      <td>0.265052</td>     
+    </tr>
+    </table>
+
+</body>
+</html>

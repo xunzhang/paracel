@@ -43,8 +43,7 @@ logistic_regression::~logistic_regression() {}
 // e .** (v .dot theta) / (1 + e .** (v .dot theta))
 double logistic_regression::lg_hypothesis(const vector<double> & v) {
   double dp = paracel::dot_product(v, theta);
-  double temp = 1. / (1. + exp(dp));
-  return exp(dp) * temp;
+  return 1. / (1. + exp(-dp));
 }
 
 // set samples and labels member
@@ -102,7 +101,6 @@ void logistic_regression::dgd_learning() {
       }
     } // traverse
     sync(); // sync for map
-    print(delta);
     paracel_bupdate("theta", delta); // update with delta
     sync(); // sync for reduce
     std::cout << "worker" << get_worker_id() << " at the end of rd" << rd << std::endl;
