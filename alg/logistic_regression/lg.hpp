@@ -28,7 +28,7 @@ namespace paracel {
 class logistic_regression: public paracel::paralg {
 
 public:
-  logistic_regression(paracel::Comm, string, string, string, size_t = 1, double = 0.002, double = 0.1, bool = false);
+  logistic_regression(paracel::Comm, string, string, string, string = "ipm", size_t = 1, double = 0.002, double = 0.1, bool = false);
   virtual ~logistic_regression();
   
   double lg_hypothesis(const vector<double> &);
@@ -56,6 +56,7 @@ private:
   vector<double> theta;
   bool debug = false;
   vector<double> loss_error;
+  std::string learning_method;
 }; 
 
 } // namespace paracel

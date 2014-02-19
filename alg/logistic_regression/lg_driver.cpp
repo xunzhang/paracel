@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
   double beta = pt.get<double>("beta");
   int rounds = pt.get<int>("rounds");
 
-  paracel::logistic_regression lg_solver(comm, FLAGS_server_info, input, output, rounds, alpha, beta, false); 
+  paracel::logistic_regression lg_solver(comm, FLAGS_server_info, input, output, "ipm", rounds, alpha, beta, false); 
   lg_solver.solve();
   //lg_solver.calc_loss();
   //lg_solver.dump_result();

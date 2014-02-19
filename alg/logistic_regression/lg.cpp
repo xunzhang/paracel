@@ -27,10 +27,11 @@ using std::string;
 namespace paracel {
 
 logistic_regression::logistic_regression(paracel::Comm comm, string hosts_dct_str, 
-					string _input, string output,
+					string _input, string output, string method,
 					size_t _rounds, double _alpha, double _beta, bool _debug) :
 	paracel::paralg(hosts_dct_str, comm, output, _rounds),
 	input(_input),
+	learning_method(method),
 	worker_id(comm.get_rank()),
 	rounds(_rounds), 
 	alpha(_alpha),
@@ -201,9 +202,16 @@ void logistic_regression::solve() {
   auto lines = paracel_load(input);
   local_parser(lines); // init data
   sync();
-  //dgd_learning();
-  //ipm_learning();
-  agd_learning();
+  if(learning_method == "dgd") {
+    dgd_learning();
+  } else if(learning_method == "ipm") {
+    ipm_learning();
+  } else if(learning_method == "agd") {
+    agd_learning();
+  } else {
+    std::cout << "learning method not supported." << std::endl;
+    return;
+  }
   sync();
   //print(theta);
 }
