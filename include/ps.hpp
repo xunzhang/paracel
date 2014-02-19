@@ -20,6 +20,7 @@
 #include <functional>
 
 #include <boost/filesystem.hpp>
+#include <boost/any.hpp>
 
 #include <eigen/Eigen/Sparse>
 #include <eigen/Eigen/Dense>
@@ -47,20 +48,32 @@ public:
 		output(op_folder), 
 		rounds(o_rounds) {
     init_output(op_folder);
+    clock = 0;
+    stale_cache = 0;
+    clock_server = 0;
   }
 
   paralg(paracel::str_type hosts_dct_str, 
   	paracel::Comm comm,
 	paracel::str_type op_folder,
 	size_t o_rounds,
-	size_t o_limit_s = 0) :
+	size_t o_limit_s = 0,
+	bool _ssp_switch = false) :
 	worker_comm(comm),
 	output(op_folder),
 	nworker(comm.get_size()),
 	rounds(o_rounds),
-	limit_s(o_limit_s) {
+	limit_s(o_limit_s),
+	ssp_switch(_ssp_switch) {
     ps_obj = new parasrv(hosts_dct_str);
     init_output(op_folder);
+    clock = 0;
+    stale_cache = 0;
+    clock_server = 0;
+    if(worker_comm.get_rank() == 0) {
+      paracel::str_type key = "worker_sz";
+      (ps_obj->kvm[clock_server]).push(key, worker_comm.get_size());
+    }
     worker_comm.sync();
   }
 
@@ -214,6 +227,20 @@ public:
 			bool mix_flag = false) {
     return paralg::paracel_load_as_matrix(blk_dense_mtx, rm, fn, parser, pattern, mix_flag);	
   }
+
+  void iter_commit() {
+    paracel::str_type clock_key;
+    if(limit_s == 0) {
+      clock_key = "client_clock_0";
+    } else {
+      clock_key = "client_clock_" + std::to_string(clock % limit_s);
+    }
+    ps_obj->kvm[clock_server].update(paracel::str_type(clock_key), 1, "/mfs/user/wuhong/paracel/src/default.so", "default_incr_i");
+    clock += 1;
+    if(clock == dataset_sz) {
+      ps_obj->kvm[clock_server].update(paracel::str_type("clt_sz"), -1, "/mfs/user/wuhong/paracel/src/default.so", "default_incr_i");
+    }
+  }
   
   bool paracel_register_update(const paracel::str_type & file_name, const paracel::str_type & func_name) {
     auto rg = ps_obj->p_ring;
@@ -253,6 +280,23 @@ public:
 
   template <class V>
   bool paracel_read(const paracel::str_type & key, V & val, int replica_id = -1) {
+    if(ssp_switch) {
+      if(clock == 0 || clock == dataset_sz) {
+        cached_para[key] = ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key); 
+	return cached_para[key];
+      } else if(stale_cache + limit_s > clock) {
+        // cache hit
+	return cached_para[key];
+      } else {
+        // cache miss
+	// pull from server until leading slowest less than s clocks
+	while(stale_cache + limit_s < clock) {
+	  stale_cache = ps_obj->kvm[clock_server].pull<size_t>(paracel::str_type("serverclock"));
+	}
+	cached_para[key] = ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key);
+	return cached_para[key];
+      }
+    }
     return ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull(key, val); 
   }
   
@@ -264,6 +308,9 @@ public:
   template <class V>
   bool paracel_write(const paracel::str_type & key, const V & val, bool replica_flag = true) {
     auto indx = ps_obj->p_ring->get_server(key);
+    if(ssp_switch) {
+      cached_para[key] = boost::any_cast<V>(val);
+    }
     return (ps_obj->kvm[indx]).push(key, val);
   }
   
@@ -372,8 +419,10 @@ private:
 
 private:
   size_t nworker = 1;
-  size_t rounds = 0;
+  size_t rounds = 1;
   size_t limit_s = 0;
+  size_t stale_cache, clock;
+  int clock_server = 0;
   paracel::Comm worker_comm;
   parasrv *ps_obj;
   paracel::str_type output;
@@ -382,6 +431,8 @@ private:
   paracel::dict_type<size_t, int> dm;
   paracel::dict_type<size_t, int> col_dm;
   paracel::dict_type<paracel::str_type, paracel::str_type> keymap;
+  paracel::dict_type<paracel::str_type, boost::any> cached_para;
+  bool ssp_switch;
 };
 
 } // namespace paracel
