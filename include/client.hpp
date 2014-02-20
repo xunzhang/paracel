@@ -315,7 +315,7 @@ public:
   // built-in sock ops for ssp usage
   bool push_int(const paracel::str_type & key, int val) {
     if(p_ssp_sock == nullptr) {
-      p_ssp_sock.reset(create_req_sock(ports_lst[3]));
+      p_ssp_sock.reset(create_req_sock(ports_lst[4]));
     }
     auto scrip = paste(paracel::str_type("push_int"), key, val); 
     bool stat;
@@ -325,7 +325,7 @@ public:
   
   bool incr_int(const paracel::str_type & key, int delta) {
     if(p_ssp_sock == nullptr) {
-      p_ssp_sock.reset(create_req_sock(ports_lst[3]));
+      p_ssp_sock.reset(create_req_sock(ports_lst[4]));
     }
     auto scrip = paste(paracel::str_type("incr_int"), key, delta);
     bool stat;
@@ -335,7 +335,7 @@ public:
   
   int pull_int(const paracel::str_type & key) {
     if(p_ssp_sock == nullptr) {
-      p_ssp_sock.reset(create_req_sock(ports_lst[3]));
+      p_ssp_sock.reset(create_req_sock(ports_lst[4]));
     }
     auto scrip = paste(paracel::str_type("pull_int"), key);
     int val;

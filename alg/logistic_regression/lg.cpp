@@ -28,7 +28,7 @@ namespace paracel {
 
 logistic_regression::logistic_regression(paracel::Comm comm, string hosts_dct_str, 
 					string _input, string output, string method,
-					size_t _rounds, double _alpha, double _beta, bool _debug) :
+					int _rounds, double _alpha, double _beta, bool _debug) :
 	paracel::paralg(hosts_dct_str, comm, output, _rounds),
 	input(_input),
 	learning_method(method),

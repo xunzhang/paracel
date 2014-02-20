@@ -107,6 +107,17 @@ void thrd_exec_ssp(zmq::socket_t & sock) {
     }
     if(indicator == "incr_int") {
       auto key = pk.unpack(msg[1]);
+      if(paracel::startswith(key, "client_clock_")) {
+        if(paracel::ssp_tbl.get(key)) {
+	  paracel::ssp_tbl.incr(key, 1);
+	} else {
+	  paracel::ssp_tbl.set(key, 1);
+	}
+	if(paracel::ssp_tbl.get(key) >= paracel::ssp_tbl.get("worker_sz")) {
+	  paracel::ssp_tbl.incr("server_clock", 1);
+	  paracel::ssp_tbl.set(key, 0); 
+	}
+      }
       paracel::packer<int> pk_i;
       int delta = pk_i.unpack(msg[2]);
       paracel::ssp_tbl.incr(key, delta);

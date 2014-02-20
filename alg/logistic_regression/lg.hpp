@@ -28,7 +28,7 @@ namespace paracel {
 class logistic_regression: public paracel::paralg {
 
 public:
-  logistic_regression(paracel::Comm, string, string, string, string = "ipm", size_t = 1, double = 0.002, double = 0.1, bool = false);
+  logistic_regression(paracel::Comm, string, string, string, string = "ipm", int = 1, double = 0.002, double = 0.1, bool = false);
   virtual ~logistic_regression();
   
   double lg_hypothesis(const vector<double> &);
@@ -46,8 +46,8 @@ public:
   void predict(const std::string &);
 
 private:
-  size_t worker_id;
-  size_t rounds;
+  int worker_id;
+  int rounds;
   double alpha;
   double beta;
   string input;
