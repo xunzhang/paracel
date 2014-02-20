@@ -81,7 +81,7 @@ public:
     clock = 0;
     stale_cache = 0;
     clock_server = 0;
-    phases = rounds;
+    total_iters = rounds;
   }
 
   paralg(paracel::str_type hosts_dct_str, 
@@ -101,7 +101,7 @@ public:
     clock = 0;
     stale_cache = 0;
     clock_server = 0;
-    phases = rounds;
+    total_iters = rounds;
     if(worker_comm.get_rank() == 0) {
       paracel::str_type key = "worker_sz";
       (ps_obj->kvm[clock_server]).push_int(key, worker_comm.get_size());
@@ -258,7 +258,7 @@ public:
     }
     ps_obj->kvm[clock_server].incr_int(paracel::str_type(clock_key), 1); // value 1 is not important
     clock += 1;
-    if(clock == phases) {
+    if(clock == total_iters) {
       ps_obj->kvm[clock_server].incr_int(paracel::str_type("worker_sz"), -1);
     }
   }
@@ -304,7 +304,7 @@ public:
   template <class V>
   bool paracel_read(const paracel::str_type & key, V & val, int replica_id = -1) {
     if(ssp_switch) {
-      if(clock == 0 || clock == phases) {
+      if(clock == 0 || clock == total_iters) {
         cached_para[key] = boost::any_cast<V>(ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key));
 	val = boost::any_cast<V>(cached_para[key]);
       } else if(stale_cache + limit_s > clock) {
@@ -388,8 +388,8 @@ public:
     paralg::paracel_bupdate(key, d);
   }
 
-  void set_phases(int n) {
-    phases = n;
+  void set_total_iters(int n) {
+    total_iters = n;
   }
 
   inline int get_worker_id() {
@@ -486,7 +486,7 @@ private:
   int nworker = 1;
   int rounds = 1;
   int limit_s = 0;
-  int stale_cache, clock, phases;
+  int stale_cache, clock, total_iters;
   int clock_server = 0;
   paracel::Comm worker_comm;
   parasrv *ps_obj;
