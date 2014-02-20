@@ -134,13 +134,63 @@ void thrd_exec_ssp(zmq::socket_t & sock) {
 
 // thread entry
 void thrd_exec(zmq::socket_t & sock) {
+
   paracel::packer<> pk;
-  void *update_handler; 
+  //void *update_handler; 
   void *pullall_special_handler;
   void *remove_special_handler;
   update_result update_f;
   filter_result pullall_special_f;
   filter_result remove_special_f;
+  
+  auto dlopen_update_lambda = [&](const paracel::str_type & fn, const paracel::str_type & fcn) {
+    void *handler = dlopen(fn.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+    if(!handler) {
+      std::cerr << "Cannot open library in dlopen_update_lambda: " << dlerror() << '\n';
+      return;
+    }
+    auto local = dlsym(handler, fcn.c_str());
+    if(!local) {
+      std::cerr << "Cannot load symbol in dlopen_update_lambda: " << dlerror() << '\n';
+      dlclose(handler);
+      return;
+    }
+    update_f = *(std::function<paracel::str_type(paracel::str_type, paracel::str_type)>*) local;
+    dlclose(handler);
+  };
+
+  auto dlopen_pullall_lambda = [&](const paracel::str_type & fn, const paracel::str_type & fcn) {
+    void *handler = dlopen(fn.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
+    if(!handler) {
+      std::cerr << "Cannot open library in dlopen_pullall_lambda: " << dlerror() << '\n';
+      return;
+    }
+    auto local = dlsym(handler, fcn.c_str());
+    if(!local) {
+      std::cerr << "Cannot load symbol in dlopen_pullall_lambda: " << dlerror() << '\n';
+      dlclose(handler);
+      return;
+    }
+    pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) local;
+    dlclose(handler);
+  };
+
+  auto dlopen_remove_lambda = [&](const paracel::str_type & fn, const paracel::str_type & fcn) {
+    void *handler = dlopen(fn.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
+    if(!handler) {
+      std::cerr << "Cannot open library in dlopen_remove_lambda: " << dlerror() << '\n';
+      return;
+    }
+    auto local = dlsym(handler, fcn.c_str());
+    if(!local) {
+      std::cerr << "Cannot load symbol in dlopen_remove_lambda: " << dlerror() << '\n';
+      dlclose(handler);
+      return;
+    }
+    remove_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) local;
+    dlclose(handler);
+  };
+
   while(1) {
     zmq::message_t s;
     sock.recv(&s);
@@ -177,6 +227,8 @@ void thrd_exec(zmq::socket_t & sock) {
         // open request func
         auto file_name = pk.unpack(msg[1]);
         auto func_name = pk.unpack(msg[2]);
+	dlopen_pullall_lambda(file_name, func_name);
+	/*
         pullall_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
         if(!pullall_special_handler) {
           std::cerr << "Cannot open library: " << dlerror() << '\n';
@@ -190,6 +242,7 @@ void thrd_exec(zmq::socket_t & sock) {
         }
         pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) pullall_special_local;
         dlclose(pullall_special_handler);
+        */
       } else {
         // work with registered mode
         if(!pullall_special_f) {
@@ -205,6 +258,8 @@ void thrd_exec(zmq::socket_t & sock) {
     if(indicator == "register_pullall_special") {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
+      dlopen_pullall_lambda(file_name, func_name);
+      /*
       pullall_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
       if(!pullall_special_handler) {
         std::cerr << "Cannot open library: " << dlerror() << '\n';
@@ -218,11 +273,14 @@ void thrd_exec(zmq::socket_t & sock) {
       }
       pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) pullall_special_local;
       dlclose(pullall_special_handler);
+      */
       bool result = true; rep_pack_send(sock, result);
     }
     if(indicator == "register_remove_special") {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
+      dlopen_remove_lambda(file_name, func_name);
+      /*
       remove_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
       if(!remove_special_handler) {
         std::cerr << "Cannot open library: " << dlerror() << '\n';
@@ -236,11 +294,14 @@ void thrd_exec(zmq::socket_t & sock) {
       }
       remove_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) remove_special_local;
       dlclose(remove_special_handler);
+      */
       bool result = true; rep_pack_send(sock, result);
     }
     if(indicator == "register_update" || indicator == "register_bupdate") {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
+      dlopen_update_lambda(file_name, func_name);
+      /*
       update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
       if(!update_handler) {
         std::cerr << "Cannot open library: " << dlerror() << '\n';
@@ -254,6 +315,7 @@ void thrd_exec(zmq::socket_t & sock) {
       }
       update_f = *(std::function<paracel::str_type(paracel::str_type, paracel::str_type)>*) update_local;
       dlclose(update_handler);
+      */
       if(indicator == "register_bupdate") {
         bool result = true; rep_pack_send(sock, result);
       }
@@ -284,6 +346,8 @@ void thrd_exec(zmq::socket_t & sock) {
         // open request func
 	auto file_name = pk.unpack(msg[3]);
 	auto func_name = pk.unpack(msg[4]);
+	dlopen_update_lambda(file_name, func_name);
+	/*
         update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
 	if(!update_handler) {
 	  std::cerr << "Cannot open library: " << dlerror() << '\n';
@@ -297,8 +361,11 @@ void thrd_exec(zmq::socket_t & sock) {
 	}
 	update_f = *(std::function<std::string(paracel::str_type, paracel::str_type)>*) update_local;
         dlclose(update_handler); // RTLD_NODELETE
+        */
       } else {
         if(!update_f) {
+	  dlopen_update_lambda("/mfs/user/wuhong/paracel/lib/default.so", "default_incr_d");
+	  /*
           update_handler = dlopen("/mfs/user/wuhong/paracel/lib/default.so", RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
 	  if(!update_handler) {
 	    std::cerr << "Cannot open library: " << dlerror() << '\n';
@@ -312,7 +379,8 @@ void thrd_exec(zmq::socket_t & sock) {
 	  }
 	  update_f = *(std::function<std::string(paracel::str_type, paracel::str_type)>*) update_local;
           dlclose(update_handler); // RTLD_NODELETE
-        }
+          */
+	}
       }
       auto key = pk.unpack(msg[1]);
       kv_update(key, msg[2], update_f);
@@ -331,6 +399,8 @@ void thrd_exec(zmq::socket_t & sock) {
         // open request func
 	auto file_name = pk.unpack(msg[1]);
 	auto func_name = pk.unpack(msg[2]);
+	dlopen_remove_lambda(file_name, func_name);
+	/*
 	remove_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
 	if(!remove_special_handler) {
           std::cerr << "Cannot open library: " << dlerror() << '\n';
@@ -344,6 +414,7 @@ void thrd_exec(zmq::socket_t & sock) {
 	}
         remove_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) remove_special_local;
 	dlclose(remove_special_handler);
+        */
       } else {
         if(!remove_special_f) {
           std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
