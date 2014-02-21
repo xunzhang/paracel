@@ -28,9 +28,9 @@ namespace paracel {
 
 logistic_regression::logistic_regression(paracel::Comm comm, string hosts_dct_str, 
 					string _input, string output, string method,
-					int _rounds, double _alpha, double _beta, bool _debug,
+					int _rounds, double _alpha, double _beta, bool _debug, 
 					int limit_s, bool ssp_switch) :
-	paracel::paralg(hosts_dct_str, comm, output, _rounds),
+	paracel::paralg(hosts_dct_str, comm, output, _rounds, limit_s, ssp_switch),
 	input(_input),
 	learning_method(method),
 	worker_id(comm.get_rank()),
@@ -102,9 +102,10 @@ void logistic_regression::dgd_learning() {
         loss_error.push_back(calc_loss());
       }
     } // traverse
-    sync(); // sync for map
+    //sync(); // sync for map
     paracel_bupdate("theta", delta); // update with delta
-    sync(); // sync for reduce
+    //sync(); // sync for reduce
+    iter_commit();
     std::cout << "worker" << get_worker_id() << " at the end of rd" << rd << std::endl;
   } // rounds
   theta = paracel_read<vector<double> >("theta"); // last pull
@@ -142,9 +143,10 @@ void logistic_regression::ipm_learning() {
     for(int i = 0; i < data_dim; ++i) {
       delta[i] = wgt * (theta[i] - theta_old[i]);
     }
-    sync(); // sync for map
+    //sync(); // sync for map
     paracel_bupdate("theta", delta); // update with delta
-    sync(); // sync for reduce
+    //sync(); // sync for reduce
+    iter_commit();
     std::cout << "worker" << get_worker_id() << " at the end of rd" << rd << std::endl;
   } // rounds
   theta = paracel_read<vector<double> >("theta"); // last pull
@@ -199,16 +201,60 @@ void logistic_regression::agd_learning() {
   theta = paracel_read<vector<double> >("theta"); // last pull
 }
 
+void logistic_regression::slow_agd_learning() {
+  int data_sz = samples.size(), data_dim = samples[0].size();
+  theta = paracel::random_double_list(data_dim); 
+  paracel_write("theta", theta); // init push
+  vector<int> idx;
+  for(int i = 0; i < data_sz; ++i) { 
+    idx.push_back(i);
+  }
+  paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/logistic_regression/update.so", 
+  			"lg_theta_update");
+  double coff2 = 2. * beta * alpha;
+  vector<double> delta(data_dim);
+  // main loop
+  for(int rd = 0; rd < rounds; ++rd) {
+    std::random_shuffle(idx.begin(), idx.end()); 
+    theta = paracel_read<vector<double> >("theta"); 
+    vector<double> theta_old(theta);
+    // traverse data
+    for(auto sample_id : idx) {
+      theta = paracel_read<vector<double> >("theta"); 
+      theta_old = theta;
+      for(int i = 0; i < data_dim; ++i) {
+        double coff1 = alpha * (labels[sample_id] - lg_hypothesis(samples[sample_id])); 
+        double t = coff1 * samples[sample_id][i] - coff2 * theta[i];
+	theta[i] += t;
+      }
+      if(debug) {
+        loss_error.push_back(calc_loss());
+      }
+      for(int i = 0; i < data_dim; ++i) {
+        delta[i] = theta[i] - theta_old[i];
+      }
+      paracel_bupdate("theta", delta);
+      iter_commit();
+    } // traverse
+  } // rounds
+  theta = paracel_read<vector<double> >("theta"); // last pull
+}
+
 void logistic_regression::solve() {
   auto lines = paracel_load(input);
   local_parser(lines); // init data
   sync();
   if(learning_method == "dgd") {
+    set_total_iters(rounds); // default value
     dgd_learning();
   } else if(learning_method == "ipm") {
+    set_total_iters(rounds);
     ipm_learning();
   } else if(learning_method == "agd") {
     agd_learning();
+  } else if(learning_method == "slow_agd") {
+    set_total_iters(lines.size() * rounds);
+    slow_agd_learning();
   } else {
     std::cout << "learning method not supported." << std::endl;
     return;

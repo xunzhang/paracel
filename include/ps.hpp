@@ -83,7 +83,7 @@ public:
     clock_server = 0;
     total_iters = rounds;
   }
-
+  
   paralg(paracel::str_type hosts_dct_str, 
   	paracel::Comm comm,
 	paracel::str_type op_folder,
@@ -108,6 +108,7 @@ public:
     }
     worker_comm.sync();
   }
+
 
   virtual ~paralg() {
     if(ps_obj) {
@@ -249,6 +250,7 @@ public:
     return paralg::paracel_load_as_matrix(blk_dense_mtx, rm, fn, parser, pattern, mix_flag);	
   }
 
+  // put where you want to control iter with ssp
   void iter_commit() {
     paracel::str_type clock_key;
     if(limit_s == 0) {
@@ -304,7 +306,7 @@ public:
   template <class V>
   bool paracel_read(const paracel::str_type & key, V & val, int replica_id = -1) {
     if(ssp_switch) {
-      if(clock == 0 || clock == total_iters) {
+      if(clock == 0 || clock == total_iters) { // check total_iters for last pull
         cached_para[key] = boost::any_cast<V>(ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key));
 	val = boost::any_cast<V>(cached_para[key]);
       } else if(stale_cache + limit_s > clock) {
@@ -388,6 +390,7 @@ public:
     paralg::paracel_bupdate(key, d);
   }
 
+  // set invoke cnts
   void set_total_iters(int n) {
     total_iters = n;
   }
@@ -485,7 +488,6 @@ private:
 private:
   int nworker = 1;
   int rounds = 1;
-  int limit_s = 0;
   int stale_cache, clock, total_iters;
   int clock_server = 0;
   paracel::Comm worker_comm;
@@ -497,7 +499,8 @@ private:
   paracel::dict_type<size_t, int> col_dm;
   paracel::dict_type<paracel::str_type, paracel::str_type> keymap;
   paracel::dict_type<paracel::str_type, boost::any> cached_para;
-  bool ssp_switch;
+  int limit_s = 0;
+  bool ssp_switch = false;
   paracel::update_result update_f;
 };
 

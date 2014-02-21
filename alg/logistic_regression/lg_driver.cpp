@@ -46,12 +46,23 @@ int main(int argc, char *argv[])
   double alpha = pt.get<double>("alpha");
   double beta = pt.get<double>("beta");
   int rounds = pt.get<int>("rounds");
-
-  paracel::logistic_regression lg_solver(comm, FLAGS_server_info, input, output, "ipm", rounds, alpha, beta, false); 
-  lg_solver.solve();
-  //lg_solver.calc_loss();
-  //lg_solver.dump_result();
-  lg_solver.predict("/mfs/user/wuhong/paracel/data/classification/test_000.csv");
-
+  int limit_s = pt.get<int>("limit_s");
+  
+  /*
+  {
+    paracel::logistic_regression lg_solver(comm, FLAGS_server_info, input, output, "ipm", rounds, alpha, beta, false);
+    lg_solver.solve();
+    //lg_solver.calc_loss();
+    //lg_solver.dump_result();
+    lg_solver.predict("/mfs/user/wuhong/paracel/data/classification/test_000.csv");
+  }
+  */
+  {
+    paracel::logistic_regression lg_solver(comm, FLAGS_server_info, input, output, "slow_agd", rounds, alpha, beta, false, limit_s, true);
+    lg_solver.solve();
+    //lg_solver.calc_loss();
+    //lg_solver.dump_result();
+    lg_solver.predict("/mfs/user/wuhong/paracel/data/classification/test_000.csv");
+  }
   return 0;
 }

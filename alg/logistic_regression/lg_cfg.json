@@ -3,5 +3,6 @@
   "output" : "/mfs/user/wuhong/paracel/data/tmp/",
   "alpha" : 0.001,
   "beta" : 0.01,
-  "rounds" : 10
+  "rounds" : 10,
+  "limit_s" : 0
 }
