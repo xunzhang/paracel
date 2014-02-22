@@ -15,11 +15,13 @@
 
 #ifndef FILE_da1cd0b3_ecfe_3fcd_43e9_aa5c48ace349_HPP
 #define FILE_da1cd0b3_ecfe_3fcd_43e9_aa5c48ace349_HPP
-
+#include <set>
 #include <vector>
 #include <string>
 #include <utility>
+#include <iostream>
 
+#include <boost/regex.hpp>
 #include <boost/algorithm/string/regex.hpp>
 
 #include "ps.hpp"
@@ -32,18 +34,19 @@ class word_count : public paracel::paralg {
 
 public:
   word_count(paracel::Comm comm, std::string hosts_dct_str, 
-  	std::string input, std::string output, 
+  	std::string _input, std::string _output, 
 	int k, int limit_s = 3, bool ssp_switch = true) : 
-	paracel::paralg(hosts_dct_str, comm, output, rounds = 1, limit_s, ssp_switch),
+	paracel::paralg(hosts_dct_str, comm, _output, 1, limit_s, ssp_switch),
+	input(_input),
 	topk(k) {}
 
-  virtual ~word_count();
+  virtual ~word_count() {}
   
   std::vector<std::string> parser(const std::string & line) {
     std::vector<std::string> wl, rl;
-    boost::algorithm::split_regex(wl, line, regex("[^-a-zA-Z0-9_]"));
+    boost::algorithm::split_regex(wl, line, boost::regex("[^-a-zA-Z0-9_]"));
     for(int i = 0; i < wl.size(); ++i) {
-      if(wl[i]) {
+      if(wl[i] != "") {
         rl.push_back(wl[i]);
       }
     }
@@ -70,12 +73,21 @@ public:
       } // word_lst
     } // lines
     sync();
-    result = paracel_read_topk(topk);
+    paracel_read_topk(topk, result);
+  }
+
+  void print() {
+    if(get_worker_id() == 0) {
+      for(auto & pr : result) {
+        std::cout << std::get<0>(pr) << " : " << std::get<1>(pr) << std::endl;
+      }
+    }
   }
 
 private:
   int topk = 10;
-  std::vector<std::pair<std::string, size_t> > result;
+  std::string input;
+  std::vector<std::pair<std::string, int> > result;
 };
 
 } // namespace paracel

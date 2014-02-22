@@ -23,7 +23,7 @@ extern "C" {
   extern paracel::update_result wc_updater;
 }
 
-size_t local_update(size_t a, size_t b) {
+int local_update(int a, int b) {
   return a + b;
 }
 

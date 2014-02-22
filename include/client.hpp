@@ -21,6 +21,7 @@
 
 #include <cstring> // std::memcpy
 #include <memory>
+#include <functional>
 
 #include <zmq.hpp>
 
@@ -115,6 +116,26 @@ public:
     auto r = req_send_recv(*p_pullall_sock, scrip, val);
     return r;
   }
+/*
+  // TODO: default fn * fcn
+  template <class V>
+  void pullall_1by1(const paracel::str_type & so_filename,
+  		const paracel::str_type & func_name,
+		paracel::dict_type<paracel::str_type, V> & d) {
+    d.clear();
+    if(pullall_sock == nullptr) {
+      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
+    }
+    auto scrip = paste(paracel::str_type("pullall_1by1"));
+
+    // load func
+    void *handler = dlopen(so_filaname.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
+    auto local = dlsym(handler, func_name.c_str());
+    paracel::filter_result filter = *(std::function<bool(paracel::str_type, paracel::str_type)>*) local;
+    dlclose(handler);
+    req_send_recv_dct_1by1(*p_pullall_sock, scrip, d, filter);
+  }
+*/
 
   template <class V>
   paracel::dict_type<paracel::str_type, V> pullall_special() {
@@ -417,6 +438,37 @@ private:
       return true;
     }
   }
+
+/*
+  template <class V>
+  void req_send_recv_dct_1by1(zmq::socket_t & sock,
+  			const paracel::str_type & scrip,
+			paracel::filter_result & filter,
+			paracel::dict_type<paracel::str_type, V> & val) {
+			
+    zmq::message_t req_msg(scrip.size());
+    std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
+    sock.send(req_msg);
+    zmq::message_t rep_msg;
+    
+    paracel::packer<paracel::size_t> pk1;
+    paracel::packer<paracel::dict_type<paracel::str_type, paracel::str_type> > pk2;
+    paracel::packer<V> pk3;
+    
+    sock.recv(&rep_msg);
+    size_t n = pk1.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+    for(int i = 0; i < n; ++i) {
+      sock.recv(&rep_msg);
+      auto tmp = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+      for(auto & kv : tmp) {
+        auto k = kv.first, v = kv.second;
+	if(filter(k, v)) {
+          val[k] = pk3.unpack(v);
+	}
+      }
+    }
+  }
+*/
 
   template <class V>
   bool req_send_recv_lst(zmq::socket_t & sock, 

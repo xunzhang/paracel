@@ -39,6 +39,8 @@ const int BLK_SZ = 8;
 
 const int threads_num = 5;
 
+const size_t split_sz = 500;
+
 const std::string seperator = "PARACEL";
 
 const std::string default_so_file = "../src/default.so";

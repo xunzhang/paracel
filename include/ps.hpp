@@ -16,6 +16,7 @@
 #define FILE_50cbcab2_09cc_7016_42c0_609317d6df63_HPP
 
 #include <dlfcn.h>
+#include <set>
 #include <fstream>
 #include <algorithm>
 #include <functional>
@@ -108,7 +109,6 @@ public:
     }
     worker_comm.sync();
   }
-
 
   virtual ~paralg() {
     if(ps_obj) {
@@ -332,10 +332,40 @@ public:
   }
 
   // TODO
-  void paracel_readall() {}
+  template<class V>
+  paracel::dict_type<paracel::str_type, V> paracel_readall() {
+    paracel::dict_type<paracel::str_type, V> d;
+    for(int indx = 0; indx < ps_obj->srv_sz; ++indx) {
+      auto tmp = ps_obj->kvm[indx].pullall<V>();
+      for(auto & kv : tmp) {
+        d[kv.first] = kv.second;
+      }
+    }
+    return d;
+  }
 
-  // TODO
-  void paracel_read_topk() {}
+  template<class V>
+  V paracel_read_special() {}
+  
+  void paracel_read_topk(int k,
+  		paracel::list_type<std::pair<paracel::str_type, int> > & result) {
+    paracel::dict_type<paracel::str_type, int> r;
+    auto comp = [](std::pair<paracel::str_type, int> a,
+    		std::pair<paracel::str_type, int> b) {
+      return std::get<1>(a) > std::get<1>(b);
+    };
+    paracel::list_type<std::pair<paracel::str_type, int> > s;
+    auto d = paracel_readall<int>();
+    paracel::list_type<std::pair<paracel::str_type, int> > tmp;
+    for(auto & kv : d) {
+      tmp.push_back(std::make_pair(kv.first, kv.second));
+    }
+    std::sort(tmp.begin(), tmp.end(), comp);
+    result.resize(0);
+    for(int i = 0; i < k; ++i) {
+      result.push_back(std::make_pair(std::get<0>(tmp[i]), std::get<1>(tmp[i])));
+    }
+  }
 
   template <class V>
   bool paracel_write(const paracel::str_type & key, const V & val, bool replica_flag = true) {
@@ -416,7 +446,7 @@ public:
   }
 
   bool is_cached(const paracel::str_type & key) {
-    return cache_para.find(key) != cache_para.end();
+    return cached_para.find(key) != cached_para.end();
   }
 
   template <class V>

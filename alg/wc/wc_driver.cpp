@@ -46,9 +46,8 @@ int main(int argc, char *argv[])
   int topk = pt.get<int>("topk");
   int limit_s = pt.get<int>("limit_s");
   
-  {
-    paracel::wc wc_solver(comm, FLAGS_server_info, input, output, topk);
-    wc_solver.solve();
-  }
+  paracel::word_count wc_solver(comm, FLAGS_server_info, input, output, topk);
+  wc_solver.solve();
+  wc_solver.print();
   return 0;
 }
