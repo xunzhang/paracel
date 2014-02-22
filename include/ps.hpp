@@ -415,13 +415,19 @@ public:
     return cached_para;
   }
 
+  bool is_cached(const paracel::str_type & key) {
+    return cache_para.find(key) != cache_para.end();
+  }
+
   template <class V>
   V get_cache(const paracel::str_type & key) {
-    return boost::any_cast<V>(cached_para[key]);
+    return boost::any_cast<V>(cached_para.at(key));
   }
   
-  // TODO
-  bool paracel_contains(const paracel::str_type & key) {}
+  bool paracel_contains(const paracel::str_type & key) {
+    auto indx = ps_obj->p_ring->get_server(key);
+    return (ps_obj->kvm[indx]).contains(key);
+  }
 
   template <class V>
   paracel::str_type dump_line_as_vector() {}
