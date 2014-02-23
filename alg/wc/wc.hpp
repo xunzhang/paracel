@@ -34,10 +34,11 @@ class word_count : public paracel::paralg {
 
 public:
   word_count(paracel::Comm comm, std::string hosts_dct_str, 
-  	std::string _input, std::string _output, 
-	int k, int limit_s = 3, bool ssp_switch = true) : 
+  	std::string _input, std::string _output, std::string method = "normal",
+	int k = 10, int limit_s = 3, bool ssp_switch = true) : 
 	paracel::paralg(hosts_dct_str, comm, _output, 1, limit_s, ssp_switch),
 	input(_input),
+	learning_method(method),
 	topk(k) {}
 
   virtual ~word_count() {}
@@ -52,12 +53,9 @@ public:
     }
     return rl;
   }
-
-  virtual void solve() {
-    //std::string delimiter = "[^-a-zA-Z0-9_]"; 
+  
+  void normal_learning(const std::vector<std::string> & lines) {
     paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/wc/update.so", "wc_updater");
-    auto lines = paracel_load(input);
-    sync();
     for(auto & line : lines) {
       auto word_lst = parser(line);
       for(auto & word : word_lst) {
@@ -71,9 +69,47 @@ public:
 	  }
 	}
       } // word_lst
+      iter_commit();
     } // lines
     sync();
     paracel_read_topk(topk, result);
+  }
+
+  void optimized_learning(const std::vector<std::string> & lines) {
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/wc/update.so", "wc_updater");
+    // init
+    for(auto & line : lines) {
+      auto word_lst = parser(line);
+      for(auto & word : word_lst) {
+        paracel_write(word, 0); 
+      } // word_lst
+    } // lines
+    sync();
+    for(auto & line : lines) {
+      auto word_lst = parser(line);
+      for(auto & word : word_lst) {
+        paracel_bupdate(word, 1);
+      }
+    }
+    iter_commit();
+    sync();
+    paracel_read_topk(topk, result);
+  }
+
+  virtual void solve() {
+    auto lines = paracel_load(input);
+    sync();
+    if(learning_method == "normal") {
+      set_total_iters(lines.size());
+      normal_learning(lines);
+    } else if(learning_method == "optimized") {
+      set_total_iters(1);
+      optimized_learning(lines);
+    } else {
+      std::cout << "learning method not supported." << std::endl;
+      return;
+    }
+    sync();
   }
 
   void print() {
@@ -88,6 +124,7 @@ private:
   int topk = 10;
   std::string input;
   std::vector<std::pair<std::string, int> > result;
+  std::string learning_method;
 };
 
 } // namespace paracel
