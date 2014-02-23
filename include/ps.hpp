@@ -380,6 +380,20 @@ public:
     paracel::str_type v = val;
     return paralg::paracel_write(key, v); 
   }
+
+  template <class V>
+  bool paracel_write_multi(const paracel::dict_type<paracel::str_type, V> & dct) {
+    if(ssp_switch) {
+      for(auto & kv : dct) {
+        cached_para[kv.first] = boost::any_cast<V>(kv.second);
+      }
+    }
+    bool r;
+    for(auto & kv : dct) {
+      r = ps_obj->kvm[ps_obj->p_ring->get_server(kv.first)].push(kv.first, kv.second); 
+    }
+    return r;
+  }
   
   template <class V>
   void paracel_update(const paracel::str_type & key, const V & delta, bool replica_flag = true) {

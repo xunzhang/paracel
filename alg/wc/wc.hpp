@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 #include <iostream>
+#include <unordered_map>
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/regex.hpp>
@@ -77,13 +78,24 @@ public:
 
   void optimized_learning(const std::vector<std::string> & lines) {
     paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/wc/update.so", "wc_updater");
-    // init
+    /*
+    // init para
     for(auto & line : lines) {
       auto word_lst = parser(line);
       for(auto & word : word_lst) {
         paracel_write(word, 0); 
       } // word_lst
     } // lines
+    */
+    // init para
+    std::unordered_map<std::string, int> tmp;
+    for(auto & line : lines) {
+      auto word_lst = parser(line);
+      for(auto & word : word_lst) {
+        tmp[word] = 0;
+      }
+    }
+    paracel_write_multi(tmp);
     sync();
     for(auto & line : lines) {
       auto word_lst = parser(line);
