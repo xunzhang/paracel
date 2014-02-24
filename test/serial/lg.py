@@ -1,3 +1,8 @@
+# !/usr/bin/env python
+#
+# Logistic regression
+#
+
 from math import e
 from array import array
 import numpy as np
