@@ -267,6 +267,10 @@ public:
     e_sz += 1; // suppose no repeat
     v_sz = std::max(adj.size(), reverse_adj.size());
   }
+  
+  paracel::dict_type<T, paracel::dict_type<T, double> > get_data() {
+    return adj;
+  }
 
   template <class F>
   void traverse(F & func) {  
