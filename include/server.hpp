@@ -91,6 +91,7 @@ void kv_update(const paracel::str_type & key,
 // thread entry for ssp 
 void thrd_exec_ssp(zmq::socket_t & sock) {
   paracel::packer<> pk;
+  paracel::ssp_tbl.set("server_clock", 0);
   while(1) {
     zmq::message_t s;
     sock.recv(&s);

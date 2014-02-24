@@ -306,6 +306,12 @@ public:
   template <class V>
   bool paracel_read(const paracel::str_type & key, V & val, int replica_id = -1) {
     if(ssp_switch) {
+    /*
+      std::cout << "--------------" << std::endl;
+      std::cout << get_worker_id() << "stale_cache:" << stale_cache << std::endl;
+      std::cout << get_worker_id() << "clock" << clock << std::endl;
+      std::cout << "--------------" << std::endl;
+    */  
       if(clock == 0 || clock == total_iters) { // check total_iters for last pull
         cached_para[key] = boost::any_cast<V>(ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key));
 	val = boost::any_cast<V>(cached_para[key]);
@@ -328,7 +334,9 @@ public:
   
   template <class V>
   V paracel_read(const paracel::str_type & key, int replica_id = -1) {
-    return ps_obj->kvm[ps_obj->p_ring->get_server(key)].pull<V>(key);
+    V val;
+    paracel_read(key, val, replica_id);
+    return val;
   }
 
   // TODO
@@ -381,6 +389,7 @@ public:
     return paralg::paracel_write(key, v); 
   }
 
+  // TODO: package
   template <class V>
   bool paracel_write_multi(const paracel::dict_type<paracel::str_type, V> & dct) {
     if(ssp_switch) {

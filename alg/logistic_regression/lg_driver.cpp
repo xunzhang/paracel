@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   }
   */
   {
-    paracel::logistic_regression lg_solver(comm, FLAGS_server_info, input, output, "slow_agd", rounds, alpha, beta, false, limit_s, true);
+    paracel::logistic_regression lg_solver(comm, FLAGS_server_info, input, output, "ipm", rounds, alpha, beta, false, limit_s, true);
     lg_solver.solve();
     //lg_solver.calc_loss();
     //lg_solver.dump_result();

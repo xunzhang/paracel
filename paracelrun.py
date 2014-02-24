@@ -82,13 +82,15 @@ if __name__ == '__main__':
     logger.info(start_parasrv_cmd)
     procs = subprocess.Popen(start_parasrv_cmd, shell = True, preexec_fn = os.setpgrp)
 
-    serverinfo = paracelrun_cpp_proxy(nsrv, initport)
-    
-    entry_cmd = ''
-    if args:
-        entry_cmd = ' '.join(args)
-    alg_cmd_lst = [starter, str(nworker), entry_cmd, '--server_info', serverinfo, '--cfg_file', options.config]
-    alg_cmd = ' '.join(alg_cmd_lst)
-    logger.info(alg_cmd)
-    os.system(alg_cmd)
-    os.killpg(procs.pid, 9)
+    try:
+        serverinfo = paracelrun_cpp_proxy(nsrv, initport)
+        entry_cmd = ''
+        if args:
+            entry_cmd = ' '.join(args)
+        alg_cmd_lst = [starter, str(nworker), entry_cmd, '--server_info', serverinfo, '--cfg_file', options.config]
+        alg_cmd = ' '.join(alg_cmd_lst)
+        logger.info(alg_cmd)
+        os.system(alg_cmd)
+        os.killpg(procs.pid, 9)
+    except:
+        os.killpg(procs.pid, 9)
