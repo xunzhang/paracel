@@ -137,9 +137,7 @@ public:
   }
 
   template <class T>
-  void paracel_load_as_graph(paracel::bigraph & grp,
-			paracel::dict_type<size_t, paracel::str_type> & row_map,
-			paracel::dict_type<size_t, paracel::str_type> & col_map,
+  void paracel_load_as_graph(paracel::bigraph<> & grp,
 			paracel::dict_type<size_t, int> & degree_map,
 			paracel::dict_type<size_t, int> & col_degree_map,
 			const T & fn, 
@@ -151,33 +149,17 @@ public:
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.load();
     // create graph 
-    ld.create_graph(lines, grp, row_map, col_map, degree_map, col_degree_map);
+    ld.create_graph(lines, grp, degree_map, col_degree_map);
   }
 
   template <class T>
-  void paracel_load_as_graph(paracel::bigraph & grp,
-  			paracel::dict_type<size_t, paracel::str_type> & row_map,
-			paracel::dict_type<size_t, paracel::str_type> & col_map,
+  void paracel_load_as_graph(paracel::bigraph<> & grp,
 			const T & fn, 
 			parser_type & parser,
 			const paracel::str_type & pattern = "fmap",
 			bool mix_flag = false) {
-    paracel::dict_type<size_t, int> degree_map, col_degree_map;
-    return paralg::paracel_load_as_graph(grp, 
-    					row_map, col_map, degree_map, col_degree_map, 
-					fn, parser, pattern, mix_flag);
-  }
-  
-  // simple interface
-  template <class T>
-  void paracel_load_as_graph(paracel::bigraph & grp,
-			const T & fn, 
-			parser_type & parser,
-			const paracel::str_type & pattern = "fmap",
-			bool mix_flag = false) {
-    return paralg::paracel_load_as_graph(grp, 
-    					rm, cm, dm, col_dm,
-					fn, parser, pattern, mix_flag);
+    return paralg::paracel_load_as_graph(grp, dm, col_dm,
+    					fn, parser, pattern, mix_flag);
   }
   
   template <class T>

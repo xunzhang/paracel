@@ -48,11 +48,14 @@ int main(int argc, char *argv[])
     }
 
     // graph test
-    paracel::bigraph grp;
-    ld.create_graph(linelst, grp, rm, cm);
-    auto local_f = [&] (std::tuple<size_t, size_t, double> tpl) {
-      if(rk == 0)
-        std::cout << std::get<0>(tpl) << " A " << std::get<1>(tpl) << " A " << std::get<2>(tpl) << std::endl;
+    paracel::bigraph<paracel::str_type> grp;
+    ld.create_graph(linelst, grp);
+    auto local_f = [&] (const paracel::str_type & a , 
+    			const paracel::str_type & b, 
+			double c) {
+      if(rk == 0) {
+        std::cout << a << " A " << b << " A " << c << std::endl;
+      }
     };
     grp.traverse(local_f);
     /*

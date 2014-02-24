@@ -220,7 +220,7 @@ private:
 };
 */
 
-template <class T>
+template <class T = paracel::str_type>
 class bigraph {
 
 public:
@@ -240,7 +240,8 @@ public:
 
   void construct_from_dict(const paracel::dict_type<T, paracel::dict_type<T, double> > & edge_info) {
     for(auto & edge : edge_info) {
-      add_edge(edge.first, (edge.second).first);
+      for(auto & kv : edge.second)
+      add_edge(edge.first, kv.first, kv.second);
     }
   }
 

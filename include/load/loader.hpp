@@ -130,11 +130,8 @@ public:
   }
   
   // fmap case
-  void create_graph(
-  		const paracel::list_type<paracel::str_type> & linelst,
-  		paracel::bigraph & grp,
-  		paracel::dict_type<size_t, paracel::str_type> & rm, 
-		paracel::dict_type<size_t, paracel::str_type> & cm,
+  void create_graph(const paracel::list_type<paracel::str_type> & linelst,
+  		paracel::bigraph<paracel::str_type> & grp,
 		paracel::dict_type<size_t, int> & dm,
 		paracel::dict_type<size_t, int> & col_dm) {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
@@ -148,19 +145,23 @@ public:
     m_comm.sync();
     // mapping inds to ids, get rmap, cmap, std_new...
     paracel::list_type<std::tuple<size_t, size_t, double> > stf_new;
+    paracel::dict_type<size_t, paracel::str_type> rm, cm;
     scheduler.index_mapping(stf, stf_new, rm, cm, dm, col_dm);
     std::cout << "procs " << m_comm.get_rank() << " index mapping" << std::endl;
-    grp.construct_from_triples(stf_new);
+    paracel::dict_type<paracel::str_type, 
+    		paracel::dict_type<paracel::str_type, double> > dct;
+    for(auto & tpl : stf_new) {
+      dct[rm[std::get<0>(tpl)]][cm[std::get<1>(tpl)]] = std::get<2>(tpl);  
+    }
+    grp.construct_from_dict(dct);
   }
 
   // simple fmap case, fsmap case
   void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-                paracel::bigraph & grp,
-  		paracel::dict_type<size_t, paracel::str_type> & rm,
-		paracel::dict_type<size_t, paracel::str_type> & cm) {
+                paracel::bigraph<paracel::str_type> & grp) {
     paracel::dict_type<size_t, int> dm;
     paracel::dict_type<size_t, int> col_dm;
-    create_graph(linelst, grp, rm, cm, dm, col_dm);
+    create_graph(linelst, grp, dm, col_dm);
   }
 
 private:
