@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
     tpls.emplace_back(std::make_tuple(2, 3, 1.));
     tpls.emplace_back(std::make_tuple(3, 1, 3.));
     tpls.emplace_back(std::make_tuple(3, 3, 1.));
-    paracel::bigraph grp(tpls);
-    paracel::bigraph grp2;
+    paracel::bigraph<size_t> grp(tpls);
+    paracel::bigraph<size_t> grp2;
     std::cout << "duck" << grp2.v() << std::endl;
     grp2.construct_from_triples(tpls);
     // traverse
@@ -32,15 +32,19 @@ int main(int argc, char *argv[])
     for(auto & w : grp.adjacent(0)) {
       std::cout << w.first << std::endl;
     }
-    auto f = [] (std::tuple<size_t, size_t, double> tpl) {
-      std::cout << std::get<0>(tpl) << " | " << std::get<1>(tpl) << " | " << std::get<2>(tpl) << std::endl;
+    auto f = [] (size_t a, size_t b, double c) {
+      std::cout << a << " | " << b << " | " << c << std::endl;
     };
     grp.traverse(f);
+    std::cout << "!!!" << std::endl;
     grp.traverse(1, f);
+    std::cout << "!!!" << std::endl;
     grp2.traverse(f);
+    std::cout << "!!!" << std::endl;
     grp2.traverse(1, f);
+    std::cout << "!!!" << std::endl;
     paracel::list_type<std::tuple<size_t, size_t, double> > local_tpls;
-    grp.dump_triples(local_tpls);
+    grp.dump2triples(local_tpls);
     std::cout << "test" << std::get<0>(local_tpls[0]) << " | " << std::get<1>(local_tpls[0]) << " | " << std::get<2>(local_tpls[0]) << std::endl;
   }
   { // test for undirected graph

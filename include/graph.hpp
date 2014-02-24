@@ -106,6 +106,7 @@ private:
   bag_type<bag_type<std::pair<size_t, double> > > adj;
 };
 
+/*
 // (size_t, size_t, double) type directed graph
 class bigraph {
 public:
@@ -216,6 +217,142 @@ private:
   size_t e_sz = 0;
   bag_type<bag_type<std::pair<size_t, double> > > adj;
   bag_type<bag_type<std::pair<size_t, double> > > reverse_adj;
+};
+*/
+
+template <class T>
+class bigraph {
+
+public:
+  bigraph() {}
+
+  bigraph(paracel::dict_type<T, paracel::dict_type<T, double> > edge_info) {
+    construct_from_dict(edge_info);
+  }
+  
+  bigraph(paracel::list_type<std::tuple<T, T> > tpls) {
+    construct_from_tuples(tpls);
+  }
+  
+  bigraph(paracel::list_type<std::tuple<T, T, double> > tpls) {
+    construct_from_triples(tpls);
+  }
+
+  void construct_from_dict(const paracel::dict_type<T, paracel::dict_type<T, double> > & edge_info) {
+    for(auto & edge : edge_info) {
+      add_edge(edge.first, (edge.second).first);
+    }
+  }
+
+  void construct_from_tuples(const paracel::list_type<std::tuple<T, T> > & tpls) {
+    for(auto & tpl : tpls) {
+      add_edge(std::get<0>(tpl), std::get<1>(tpl));
+    }
+  }
+  
+  void construct_from_triples(paracel::list_type<std::tuple<T, T, double> > & tpls) {
+    for(auto & tpl : tpls) {
+      add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
+    }
+  }
+  
+  void add_edge(const T & v, const T & w) {
+    add_egde(v, w, 1.);
+  }
+
+  void add_edge(const T & v, const T & w, double wgt) {  
+    adj[v][w] = wgt;
+    reverse_adj[w][v] = wgt;
+    e_sz += 1; // suppose no repeat
+    v_sz = std::max(adj.size(), reverse_adj.size());
+  }
+
+  template <class F>
+  void traverse(F & func) {  
+    for(auto & v : adj) {
+      for(auto & kv : v.second) {
+        func(v.first, kv.first, kv.second);
+      }
+    }
+  }
+
+  template <class F>
+  void traverse(const T & v, F & func) {
+    for(auto & kv : adj[v]) {
+      func(v, kv.first, kv.second);
+    }
+  }
+  
+  void dump2triples(paracel::list_type<std::tuple<T, T, double> > & tpls) {
+    tpls.resize(0);
+    for(auto & v : adj) {
+      for(auto & kv : v.second) {
+        tpls.push_back(std::make_tuple(v.first, kv.first, kv.second));
+      }
+    }
+  }
+
+  void dump2dict(paracel::dict_type<T, paracel::dict_type<T, double> > & dict) {
+    for(auto & v : adj) {
+      for(auto & kv : v.second) {
+        dict[v.first][kv.first] = kv.second;
+      }
+    }
+  }
+  
+  bigraph reverse() {
+    std::swap(adj, reverse_adj);
+  }
+
+  inline size_t v() { 
+    return v_sz; 
+  }
+  
+  inline size_t e() { 
+    return e_sz; 
+  }
+  
+  paracel::dict_type<T, double> 
+  adjacent(const T & v) {
+    return adj[v];
+  }
+
+  inline size_t outdegree(const T & v) { 
+    return adj[v].size(); 
+  }
+
+  inline size_t indegree(const T & vertex) {
+    int cnt = 0;
+    for(auto & v : adj) {
+      for(auto & kv : v.second) {
+        if(vertex == kv.first) {
+	  cnt += 1;
+	}
+      }
+    }
+    return cnt;
+  }
+  
+  inline double avg_degree() { 
+    return e_sz / v_sz; 
+  }
+  
+  inline int selfloops() {
+    int cnt = 0;
+    for(auto & v : adj) {
+      for(auto & kv : v.second) {
+        if(v.first == kv.first) {
+	  cnt += 1;
+	}
+      }
+    }
+  }
+
+private:
+  size_t v_sz = 0; 
+  size_t e_sz = 0;
+  paracel::dict_type<T, paracel::dict_type<T, double> > adj;
+  paracel::dict_type<T, paracel::dict_type<T, double> > reverse_adj;
 };
 
 } // namespace paracel
