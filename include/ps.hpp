@@ -116,6 +116,17 @@ public:
     }
   }
   
+  void set_decomp_info(const paracel::str_type & pattern) {
+    int np = worker_comm.get_size();
+    paracel::npfactx(np, npx, npy);
+    if(pattern == "fsmap") {
+      paracel::npfact2d(np, npx, npy);
+    }
+    if(pattern == "smap") {
+      paracel::npfacty(np, npx, npy); 
+    }
+  }
+
   template <class T>
   paracel::list_type<paracel::str_type> 
   paracel_load(const T & fn,
@@ -124,6 +135,7 @@ public:
 	bool mix_flag = false) {
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.load();
+    set_decomp_info(pattern);
     return lines;
   }
 
@@ -150,6 +162,7 @@ public:
     paracel::list_type<paracel::str_type> lines = ld.load();
     // create graph 
     ld.create_graph(lines, grp, degree_map, col_degree_map);
+    set_decomp_info(pattern);
   }
 
   template <class T>
@@ -178,6 +191,7 @@ public:
     paracel::list_type<paracel::str_type> lines = ld.load();
     // create sparse matrix
     ld.create_matrix(lines, blk_mtx, row_map, col_map, degree_map, col_degree_map);
+    set_decomp_info(pattern);
   }
   
   template <class T>
@@ -189,9 +203,9 @@ public:
 			const paracel::str_type & pattern = "fsmap",
 			bool mix_flag = false) {
     paracel::dict_type<size_t, int> degree_map, col_degree_map;
-    return paralg::paracel_load_as_matrix(blk_mtx, 
-    					row_map, col_map, degree_map, col_degree_map, 
-  					fn, parser, pattern, mix_flag);
+    paralg::paracel_load_as_matrix(blk_mtx, 
+    				row_map, col_map, degree_map, col_degree_map, 
+  				fn, parser, pattern, mix_flag);
   }
   
   // simple interface
@@ -220,6 +234,7 @@ public:
     paracel::list_type<paracel::str_type> lines = ld.load();
     // create sparse matrix
     ld.create_matrix(lines, blk_dense_mtx, row_map);
+    set_decomp_info(pattern);
   }
 
   // simple interface
@@ -229,7 +244,7 @@ public:
 			parser_type & parser,
 			const paracel::str_type & pattern = "fsmap",
 			bool mix_flag = false) {
-    return paralg::paracel_load_as_matrix(blk_dense_mtx, rm, fn, parser, pattern, mix_flag);	
+    paralg::paracel_load_as_matrix(blk_dense_mtx, rm, fn, parser, pattern, mix_flag);	
   }
 
   // put where you want to control iter with ssp
@@ -245,6 +260,11 @@ public:
     if(clock == total_iters) {
       ps_obj->kvm[clock_server].incr_int(paracel::str_type("worker_sz"), -1);
     }
+  }
+  
+  void get_decomp_info(int & x, int & y) {
+    x = npx;
+    y = npy;
   }
 
   bool paracel_register_update(const paracel::str_type & file_name, const paracel::str_type & func_name) {
@@ -543,6 +563,7 @@ private:
   int limit_s = 0;
   bool ssp_switch = false;
   paracel::update_result update_f;
+  int npx = 1, npy = 1;
 };
 
 } // namespace paracel
