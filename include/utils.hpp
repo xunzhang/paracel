@@ -101,16 +101,19 @@ std::string gen_init_port() {
   return std::to_string(p);
 }
 
-double random_double() {
-  std::random_device rd;
-  std::uniform_real_distribution<double> dis(0., 0.2);
-  return dis(rd);
+// return a uniform random double value in range(0, 1.)
+inline double random_double() {
+  auto v = random() / (double)RAND_MAX;
+  while(v == 0 || v == 1.) {
+    v = random() / (double)RAND_MAX;
+  }
+  return v;
 }
 
-paracel::list_type<double> random_double_list(int len) {
+paracel::list_type<double> random_double_list(size_t len, double range = 1.) {
   paracel::list_type<double> r;
   for(int i = 0; i < len; ++i) {
-    r.push_back(random_double());
+    r.push_back(range * random_double());
   }
   return r;
 }

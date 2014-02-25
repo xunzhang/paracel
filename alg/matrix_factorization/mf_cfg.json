@@ -1,0 +1,9 @@
+{
+  "input" : "/mfs/user/wuhong/paracel/test/serial/training.csv",
+  "output" : "/mfs/user/wuhong/paracel/data/tmp/",
+  "k" : 80,
+  "alpha" : 0.005,
+  "beta" : 0.02,
+  "rounds" : 5,
+  "limit_s" : 0 
+}

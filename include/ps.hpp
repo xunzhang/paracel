@@ -158,8 +158,8 @@ public:
 			parser_type & parser,
 			const paracel::str_type & pattern = "fmap",
 			bool mix_flag = false) {
-    return paralg::paracel_load_as_graph(grp, dm, col_dm,
-    					fn, parser, pattern, mix_flag);
+    paralg::paracel_load_as_graph(grp, dm, col_dm,
+    				fn, parser, pattern, mix_flag);
   }
   
   template <class T>

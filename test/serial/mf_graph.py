@@ -38,6 +38,7 @@ class mf():
 	    self.rating_sz += 1
 	    self.miu += rating
 	self.miu /= self.rating_sz
+	print self.miu
 	f.close()
         
     def estimate(self, i, j):
@@ -58,11 +59,11 @@ class mf():
 	self.usr_bias = {}
 	self.item_bias = {}
 	for uid in self.usr_dct:
-	    self.p[uid] = np.random.rand(self.k)
-	    self.usr_bias[uid] = np.random.rand()
+	    self.p[uid] = np.random.rand(self.k) * 0.1
+	    self.usr_bias[uid] = np.random.rand() * 0.1
 	for iid in self.item_dct:
-	    self.q[iid] = np.random.rand(self.k)
-	    self.item_bias[iid] = np.random.rand()
+	    self.q[iid] = np.random.rand(self.k) * 0.1
+	    self.item_bias[iid] = np.random.rand() * 0.1
 	# learning
 	for rd in xrange(self.rounds):
 	    #start = time.time()
@@ -72,16 +73,15 @@ class mf():
 		    # compute delta
 		    delta_p = self.alpha * (2 * e * self.q[i_indx] - self.beta * self.p[u_indx])
 		    delta_q = self.alpha * (2 * e * self.p[u_indx] - self.beta * self.q[i_indx])
-		    delta_ubias = self.alpha * (2 * e - self.beta * self.usr_bias[u_indx])
-		    delta_ibias = self.alpha * (2 * e - self.beta * self.item_bias[i_indx])
 		    # update with delta
 		    self.p[u_indx] += delta_p 
 		    self.q[i_indx] += delta_q
-		    self.usr_bias[u_indx] += delta_ubias
-		    self.item_bias[i_indx] += delta_ibias
+		    self.usr_bias[u_indx] += self.alpha * (2 * e - self.beta * self.usr_bias[u_indx]) 
+		    self.item_bias[i_indx] += self.alpha * (2 * e - self.beta * self.item_bias[i_indx])
     
     def solve(self):
         self.load()
+	print 'load done'
 	self.learning()
     
     def predict_rating(self):
@@ -97,7 +97,7 @@ class mf():
 	f2.close()
 
 if __name__ == '__main__':
-    mf_solver = mf(k = 80, rounds = 3, alpha = 0.005, beta = 0.02, train_fn = '/mfs/user/wuhong/paracel/test/serial/training.csv', pred_fn = '/mfs/alg/Rec_Competition/predict.csv', output = '/mfs/user/wuhong/paracel/test/serial/mf_result')
+    mf_solver = mf(k = 80, rounds = 1, alpha = 0.005, beta = 0.02, train_fn = '/mfs/user/wuhong/paracel/test/serial/training.csv', pred_fn = '/mfs/alg/Rec_Competition/predict.csv', output = '/mfs/user/wuhong/paracel/test/serial/mf_result')
     mf_solver.solve()
     print mf_solver.cal_rmse()
-    mf_solver.predict_rating()
+    #mf_solver.predict_rating()
