@@ -25,23 +25,23 @@
 #include "graph.hpp"
 
 using std::string;
-using std::vector<double>;
+using std::vector;
 
 namespace paracel {
 
 auto local_parser = [] (const std::string & line) {
   return paracel::str_split(line, ',');
-}
+};
 
-class matrix_factorization : public paracel::paralg {
+class matrix_factorization: public paracel::paralg {
 
 public:
   matrix_factorization(paracel::Comm comm, string hosts_dct_str,
   		string _input, string _output, string method = "normal",
 		int k = 80, int _rounds = 1, 
-		double alpha = 0.005, double beta = 0.01, bool _debug = false,
+		double _alpha = 0.005, double _beta = 0.01, bool _debug = false,
 		int limit_s = 3, bool ssp_switch = true) : 
-		paracel::paralg(host_dct_str, comm, _output, _rounds, limit_s, ssp_switch),
+		paracel::paralg(hosts_dct_str, comm, _output, _rounds, limit_s, ssp_switch),
 		input(_input),
 		output(_output), 
 		learning_method(method),
@@ -54,7 +54,7 @@ public:
   virtual ~matrix_factorization() {}
   
   inline double estimate(const std::string & uid, const std::string & iid) {
-    return miu + usr_bias[uid] + item_bias[iid] + paracel::dot_product(p[uid], q[iid]);
+    return miu + usr_bias[uid] + item_bias[iid] + paracel::dot_product(W[uid], H[iid]);
   }
 
   void init_parameters() {
@@ -84,24 +84,86 @@ public:
     
     // init push
     get_decomp_info(npx, npy);
-    auto id = get_worker_id();
-    for(int i = 0; i < usr_bag.size(); ++i) {
-      std::string key = "W[" + std::to_string(i) + ",:]_" + std::to_string(id / npy);
-      paracel_write(key, W[i]);
+    id = get_worker_id();
+    for(auto & kv : usr_bag) {
+      auto uid = kv.first;
+      std::string W_key = "W[" + uid + "]_" + std::to_string(id / npy);
+      std::string ub_key = "usr_bias[" + uid + "]_" + std::to_string(id / npy);
+      paracel_write(W_key, W[uid]);
+      paracel_write(ub_key, usr_bias[uid]);
     }
-    for(int i = 0; i < item_bag.size(); ++i) {
-      std::string key = "H[:," + std::to_string(i) + "]_" + std::to_string(id % npy);
-      paracel_write(key, H[i]);
+    for(auto & kv : item_bag) {
+      auto iid = kv.first;
+      std::string H_key = "H[" + iid + "]_" + std::to_string(id % npy);
+      std::string ib_key = "item_bias[" + iid + "]_" + std::to_string(id % npy);
+      paracel_write(H_key, H[iid]);
+      paracel_write(ib_key, item_bias[iid]);
     }
     sync();
 
     std::cout << "init done" << std::endl;
   }
+  
+  void read_mf_paras() {
+    for(auto & kv : usr_bag) {
+      auto uid = kv.first;
+      std::string W_key = "W[" + uid + "]_" + std::to_string(id / npy);
+      std::string ub_key = "usr_bias[" + uid + "]_" + std::to_string(id / npy);
+      W[uid] = paracel_read<vector<double> >(W_key);
+      usr_bias[uid] = paracel_read<double>(ub_key);
+    }
+    for(auto & kv : item_bag) {
+      auto iid = kv.first;
+      std::string H_key = "H[" + iid + "]_" + std::to_string(id % npy);
+      std::string ib_key = "item_bias[" + iid + "]_" + std::to_string(id % npy);
+      H[iid] = paracel_read<vector<double> >(H_key);
+      item_bias[iid] = paracel_read<double>(ib_key);
+    }
+  }
+
+  void update_mf_fac(std::unordered_map<string, vector<double> > & old_W,
+  		std::unordered_map<string, vector<double> > & old_H) {
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/matrix_factorization/update.so",
+    			"mf_fac_updater");
+    vector<double> delta_W(fac_dim), delta_H(fac_dim);
+    for(auto & kv : usr_bag) {
+      auto uid = kv.first;
+      std::string W_key = "W[" + uid + "]_" + std::to_string(id / npy);
+      for(int i = 0; i < fac_dim; ++i) {
+        delta_W[i] = W[uid][i] - old_W[uid][i];
+      }
+      paracel_bupdate(W_key, delta_W);
+    }
+    for(auto & kv : item_bag) {
+      auto iid = kv.first;
+      std::string H_key = "H[" + iid + "]_" + std::to_string(id % npy);
+      for(int i = 0; i < fac_dim; ++i) {
+        delta_H[i] = H[iid][i] - old_H[iid][i];
+      }
+      paracel_bupdate(H_key, delta_H);
+    }
+  }
+  
+  void update_mf_bias(std::unordered_map<string, double> & old_ubias, 
+  		std::unordered_map<string, double> & old_ibias) {
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/matrix_factorization/update.so",
+    			"mf_bias_updater");
+    for(auto & kv : usr_bag) {
+      auto uid = kv.first;
+      std::string ub_key = "usr_bias[" + uid + "]_" + std::to_string(id / npy);
+      paracel_bupdate(ub_key, usr_bias[uid] - old_ubias[uid]);
+    }
+    for(auto & kv : item_bag) {
+      auto iid = kv.first;
+      std::string ib_key = "item_bias[" + iid + "]_" + std::to_string(id % npy);
+      paracel_bupdate(ib_key, item_bias[iid] - old_ibias[iid]);
+    }
+  }
 
   void learning() {
-    init_parameters(); 
+    
     std::vector<double> delta_W(fac_dim), delta_H(fac_dim);
-    auto kernel = [&] (const std::string & uid,
+    auto kernel_lambda = [&] (const std::string & uid,
     			const std::string & iid,
 			double rating) {
       double e = rating - estimate(uid, iid);
@@ -111,28 +173,54 @@ public:
       }
       for(int i = 0; i < fac_dim; ++i) {
         W[uid][i] += delta_W[i];
-	H[id][i] += delta_H[i];
+	H[iid][i] += delta_H[i];
       }
       usr_bias[uid] += alpha * (2 * e - beta * usr_bias[uid]);
       item_bias[iid] += alpha * (2 * e - beta * item_bias[iid]);
     };
-    
+    std::unordered_map<string, vector<double> > old_W, old_H;
+    std::unordered_map<string, double> old_ubias, old_ibias;
+ 
     // main loop
     for(int rd = 0; rd < rounds; ++rd) {
-      std::cout << "rd:" << rd << " started" << std::endl;
-      rating_graph.traverse(kernel);
+      // read paras from servers
+      read_mf_paras();
+      // record locally
+      for(auto & kv : usr_bag) {
+        auto uid = kv.first;
+	for(int i = 0; i < fac_dim; ++i) {
+          old_W[uid][i] = W[uid][i];
+	}
+	old_ubias[uid] = usr_bias[uid];
+      }
+      for(auto & kv : item_bag) {
+        auto iid = kv.first;
+	for(int i = 0; i < fac_dim; ++i) {
+          old_H[iid][i] = H[iid][i];
+	}
+	old_ibias[iid] = item_bias[iid];
+      }
+      // update paras locally
+      rating_graph.traverse(kernel_lambda);
+      // update paras to servers
+      update_mf_fac(old_W, old_H);
+      update_mf_bias(old_ubias, old_ibias);
+      iter_commit();
     }
+    // last read
+    read_mf_paras();
   }
 
   virtual void solve() {
-    load();
+    init_parameters(); 
     sync();
+    set_total_iters(rounds);
     learning();
   }
 
 private:
   int fac_dim; // factor dim
-  int worker_id;
+  int id;
   int rounds;
   string input, output;
   double alpha, beta;
@@ -142,7 +230,7 @@ private:
   
   int npx = 0, npy = 0, rating_sz = 0;
   double miu = 0., rmse = 0.;
-  paralg::bigraph<std::string> rating_graph;
+  paracel::bigraph<std::string> rating_graph;
 
   std::unordered_map<string, char> usr_bag, item_bag;
   std::unordered_map<string, vector<double> > W, H;

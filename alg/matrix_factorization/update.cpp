@@ -20,10 +20,11 @@
 using std::vector;
 
 extern "C" {
-  extern paracel::update_result mf_theta_update;
+  extern paracel::update_result mf_fac_updater;
+  extern paracel::update_result mf_bias_updater;
 }
 
-vector<double> local_update(vector<double> a, vector<double> b) {
+vector<double> local_update_fac(vector<double> a, vector<double> b) {
   vector<double> r;
   for(int i = 0; i < (int)a.size(); ++i) {
     r.push_back(a[i] + b[i]);
@@ -31,4 +32,9 @@ vector<double> local_update(vector<double> a, vector<double> b) {
   return r;
 }
 
-paracel::update_result mf_theta_update = paracel::update_proxy(local_update);
+int local_update_bias(double a, double b) {
+  return a + b;
+}
+
+paracel::update_result mf_fac_updater = paracel::update_proxy(local_update_fac);
+paracel::update_result mf_bias_updater = paracel::update_proxy(local_update_bias);
