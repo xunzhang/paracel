@@ -4,6 +4,6 @@
   "k" : 80,
   "alpha" : 0.005,
   "beta" : 0.02,
-  "rounds" : 5,
+  "rounds" : 1,
   "limit_s" : 0 
 }

@@ -16,9 +16,11 @@
 #ifndef FILE_ce4b7e1a_e522_9f78_ee51_c53f717fb82e_HPP
 #define FILE_ce4b7e1a_e522_9f78_ee51_c53f717fb82e_HPP
 
+#include <cmath>
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <algorithm>
 
 #include "ps.hpp"
 #include "utils.hpp"
@@ -55,6 +57,23 @@ public:
   
   inline double estimate(const std::string & uid, const std::string & iid) {
     return miu + usr_bias[uid] + item_bias[iid] + paracel::dot_product(W[uid], H[iid]);
+  }
+
+  double cal_rmse() {
+    rmse = 0.;
+    auto rmse_lambda = [&] (const std::string & uid,
+    			const std::string & iid,
+			double rating) {
+      double e = rating - estimate(uid, iid);
+      rmse += e * e;
+    };
+    rating_graph.traverse(rmse_lambda);
+    auto worker_comm = get_comm();
+    double rmse_sum = rmse;
+    int sz_sum = rating_sz;
+    worker_comm.allreduce(rmse_sum);
+    worker_comm.allreduce(sz_sum);
+    return sqrt(rmse_sum / sz_sum);
   }
 
   void init_parameters() {
@@ -161,7 +180,7 @@ public:
   }
 
   void learning() {
-    
+    bool record_flag = true;
     std::vector<double> delta_W(fac_dim), delta_H(fac_dim);
     auto kernel_lambda = [&] (const std::string & uid,
     			const std::string & iid,
@@ -183,23 +202,34 @@ public:
  
     // main loop
     for(int rd = 0; rd < rounds; ++rd) {
+      std::cout << "read" << std::endl;
       // read paras from servers
       read_mf_paras();
+      std::cout << "read done" << std::endl;
       // record locally
       for(auto & kv : usr_bag) {
         auto uid = kv.first;
-	for(int i = 0; i < fac_dim; ++i) {
-          old_W[uid][i] = W[uid][i];
+	if(old_W[uid].size() != fac_dim) {
+	  old_W[uid].resize(fac_dim);
 	}
+	for(int i = 0; i < fac_dim; ++i) {
+	  old_W[uid][i] = W[uid][i];
+	}
+	//std::copy(W[uid].begin(), W[uid].end(), old_H[uid].begin());
 	old_ubias[uid] = usr_bias[uid];
       }
       for(auto & kv : item_bag) {
         auto iid = kv.first;
-	for(int i = 0; i < fac_dim; ++i) {
-          old_H[iid][i] = H[iid][i];
+	if(old_H[iid].size() != fac_dim) {
+	  old_H[iid].resize(fac_dim);
 	}
+	for(int i = 0; i < fac_dim; ++i) {
+	  old_H[iid][i] = H[iid][i];
+	}
+	//std::copy(H[iid].begin(), H[iid].end(), old_H[iid].begin());
 	old_ibias[iid] = item_bias[iid];
       }
+      std::cout << "record done" << std::endl;
       // update paras locally
       rating_graph.traverse(kernel_lambda);
       // update paras to servers
@@ -214,8 +244,10 @@ public:
   virtual void solve() {
     init_parameters(); 
     sync();
-    set_total_iters(rounds);
-    learning();
+    if(learning_method == "ipm") {
+      set_total_iters(rounds);
+      learning();
+    } else {}
   }
 
 private:

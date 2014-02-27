@@ -32,7 +32,7 @@ vector<double> local_update_fac(vector<double> a, vector<double> b) {
   return r;
 }
 
-int local_update_bias(double a, double b) {
+double local_update_bias(double a, double b) {
   return a + b;
 }
 

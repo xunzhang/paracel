@@ -22,7 +22,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#include "lg.hpp"
+#include "mf.hpp"
 #include "utils.hpp"
 
 using namespace boost::property_tree;
@@ -43,17 +43,14 @@ int main(int argc, char *argv[])
   json_parser::read_json(FLAGS_cfg_file, pt);
   std::string input = pt.get<std::string>("input");
   std::string output = pt.get<std::string>("output");
+  int k = pt.get<int>("k");
   double alpha = pt.get<double>("alpha");
   double beta = pt.get<double>("beta");
   int rounds = pt.get<int>("rounds");
   int limit_s = pt.get<int>("limit_s");
   
-  {
-    paracel::logistic_regression lg_solver(comm, FLAGS_server_info, input, output, "ipm", rounds, alpha, beta, false, limit_s, true);
-    lg_solver.solve();
-    //lg_solver.calc_loss();
-    //lg_solver.dump_result();
-    lg_solver.predict("/mfs/user/wuhong/paracel/data/classification/test_000.csv");
-  }
+  paracel::matrix_factorization mf_solver(comm, FLAGS_server_info, input, output, "ipm", k, rounds, alpha, beta, false, limit_s, true);
+  mf_solver.solve();
+  std::cout << mf_solver.cal_rmse() << std::endl;
   return 0;
 }
