@@ -211,8 +211,10 @@ public:
   paracel::Enable_if<paracel::is_comm_container<T>::value, vrequest>
   isend(const T & data, int dest, int tag) {
     int sz = (int)data.size();
-    send(sz, dest, tag); // send msg size
-    return isend(data, sz, dest, tag);
+    vrequest v_req = isend(sz, dest, tag); // send msg size
+    vrequest vreq = isend(data, sz, dest, tag);
+    v_req.append(vreq); 
+    return v_req;
   }
   
   // impl cont.
@@ -241,9 +243,8 @@ public:
 
   // impl of dict_type<size_t, int> isend
   vrequest isend(const paracel::dict_type<size_t, int> & dct, int dest, int tag) {
-    vrequest v_req;
     int sz = dct.size();
-    send(sz, dest, tag);
+    vrequest v_req = isend(sz, dest, tag);
     for(auto & kv : dct) {
       size_t key = kv.first;
       int val = kv.second;
@@ -257,8 +258,7 @@ public:
   // impl of list of triple isend
   vrequest isend(const paracel::list_type<paracel::triple_type> & triple_lst, int dest, int tag) {
     int sz = triple_lst.size(); // send container size
-    send(sz, dest, tag);
-    vrequest v_req;
+    vrequest v_req = isend(sz, dest, tag);
     for(int i = 0; i < triple_lst.size(); ++i) {
       auto vreq = isend(triple_lst[i], dest, tag);
       v_req.append(vreq);
@@ -270,8 +270,7 @@ public:
   // TODO: abstract 
   vrequest isend(const paracel::list_type<paracel::str_type> & strlst, int dest, int tag) {
     int sz = strlst.size(); // send container size
-    send(sz, dest, tag);
-    vrequest v_req;
+    vrequest v_req = isend(sz, dest, tag);
     for(int i = 0; i < strlst.size(); ++i) {
       vrequest vreq = isend(strlst[i], dest, tag);
       v_req.append(vreq);
