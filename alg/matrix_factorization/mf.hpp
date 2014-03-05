@@ -103,6 +103,8 @@ public:
     
     // init push
     get_decomp_info(npx, npy);
+    wgt_x = 1. / npy;
+    wgt_y = 1. / npx;
     id = get_worker_id();
     for(auto & kv : usr_bag) {
       auto uid = kv.first;
@@ -148,10 +150,7 @@ public:
       auto uid = kv.first;
       std::string W_key = "W[" + uid + "]_" + std::to_string(id / npy);
       for(int i = 0; i < fac_dim; ++i) {
-        delta_W[i] = W[uid][i] - old_W[uid][i];
-      }
-      if(delta_W.size() != 80) {
-        std::cout << "invalid" << std::endl;
+        delta_W[i] = wgt_x * (W[uid][i] - old_W[uid][i]);
       }
       paracel_bupdate(W_key, delta_W);
     }
@@ -159,10 +158,7 @@ public:
       auto iid = kv.first;
       std::string H_key = "H[" + iid + "]_" + std::to_string(id % npy);
       for(int i = 0; i < fac_dim; ++i) {
-        delta_H[i] = H[iid][i] - old_H[iid][i];
-      }
-      if(delta_H.size() != 80) {
-        std::cout << "invalid" << std::endl;
+        delta_H[i] = wgt_y * (H[iid][i] - old_H[iid][i]);
       }
       paracel_bupdate(H_key, delta_H);
     }
@@ -170,23 +166,21 @@ public:
   
   void update_mf_bias(std::unordered_map<string, double> & old_ubias, 
   		std::unordered_map<string, double> & old_ibias) {
-    /*
     paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/matrix_factorization/update.so",
     			"mf_bias_updater");
-    */
     paracel::str_type file_name = "/mfs/user/wuhong/paracel/alg/matrix_factorization/update.so";
     paracel::str_type func_name = "mf_bias_updater";
     for(auto & kv : usr_bag) {
       auto uid = kv.first;
       std::string ub_key = "usr_bias[" + uid + "]_" + std::to_string(id / npy);
-      paracel_bupdate(ub_key, usr_bias[uid] - old_ubias[uid], file_name, func_name);
-      //paracel_bupdate(ub_key, usr_bias[uid] - old_ubias[uid]);
+      //paracel_bupdate(ub_key, usr_bias[uid] - old_ubias[uid], file_name, func_name);
+      paracel_bupdate(ub_key, wgt_x * (usr_bias[uid] - old_ubias[uid]));
     }
     for(auto & kv : item_bag) {
       auto iid = kv.first;
       std::string ib_key = "item_bias[" + iid + "]_" + std::to_string(id % npy);
-      paracel_bupdate(ib_key, item_bias[iid] - old_ibias[iid], file_name, func_name);
-      //paracel_bupdate(ib_key, item_bias[iid] - old_ibias[iid]);
+      //paracel_bupdate(ib_key, item_bias[iid] - old_ibias[iid], file_name, func_name);
+      paracel_bupdate(ib_key, wgt_y * (item_bias[iid] - old_ibias[iid]));
     }
   }
 
@@ -246,8 +240,9 @@ public:
       std::cout << "traverse done" << std::endl;
       // update paras to servers
       update_mf_fac(old_W, old_H);
-      //sync(); // notice 
+      sync(); // notice 
       update_mf_bias(old_ubias, old_ibias);
+      sync();
       std::cout << "update done" << std::endl;
       iter_commit();
     }
@@ -276,6 +271,7 @@ private:
   
   int npx = 0, npy = 0, rating_sz = 0;
   double miu = 0., rmse = 0.;
+  double wgt_x = 0., wgt_y = 0.;
   paracel::bigraph<std::string> rating_graph;
 
   std::unordered_map<string, char> usr_bag, item_bag;
