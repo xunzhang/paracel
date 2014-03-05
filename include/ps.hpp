@@ -411,6 +411,7 @@ public:
     if(ssp_switch) {
       if(!update_f) {
         // load default updater
+	
 	load_update_f("/mfs/user/wuhong/paracel/lib/default.so", "default_incr_d");
       }
       V val = boost::any_cast<V>(cached_para[key]);
@@ -442,9 +443,28 @@ public:
 
   void paracel_bupdate(const paracel::str_type & key, const char* delta, bool replica_flag = true) {
     paracel::str_type d = delta;
-    paralg::paracel_bupdate(key, d);
+    paralg::paracel_bupdate(key, d, replica_flag);
   }
-
+  
+  template <class V>
+  void paracel_bupdate(const paracel::str_type & key, const V & delta,
+  		const paracel::str_type & file_name, const paracel::str_type & func_name,
+		bool replica_flag = true) {
+    int indx = ps_obj->p_ring->get_server(key);
+    ps_obj->kvm[indx].bupdate(key, delta, file_name, func_name);
+    if(ssp_switch) {
+      // update local cache
+      cached_para[key] = boost::any_cast<V>(ps_obj->kvm[indx].pull<V>(key));
+    }
+  }
+  
+  void paracel_bupdate(const paracel::str_type & key, const char* delta, 
+  		const paracel::str_type & file_name, const paracel::str_type & func_name,
+		bool replica_flag = true) {
+    paracel::str_type d = delta;
+    paralg::paracel_bupdate(key, d, file_name, func_name, replica_flag);
+  }
+  
   // set invoke cnts
   void set_total_iters(int n) {
     total_iters = n;

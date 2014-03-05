@@ -26,7 +26,7 @@ extern "C" {
 
 vector<double> local_update_fac(vector<double> a, vector<double> b) {
   vector<double> r;
-  for(int i = 0; i < (int)a.size(); ++i) {
+  for(size_t i = 0; i < a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
   return r;

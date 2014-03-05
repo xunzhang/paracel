@@ -16,7 +16,7 @@
 
 /**
  * a simple/ugly version, just for paracel usage
- * full/abstract version is implemented at Douban by Changsheng Jiang
+ * complete version is implemented at Douban by Changsheng Jiang
  *
  */
      
@@ -27,6 +27,7 @@
 #include <mpi.h>
 
 #include "paracel_types.hpp"
+#include "ext_utility.hpp"
 
 namespace paracel {
 
@@ -47,7 +48,6 @@ public:
 class vrequest {
   
 typedef paracel::list_type<MPI_Request> vreq_t; 
-
 public:
   vrequest() {}
 
@@ -73,6 +73,11 @@ public:
     for(auto it = vreq.begin(); it != vreq.end(); ++it) {
       MPI_Wait(&*it, MPI_STATUS_IGNORE);
     }
+    //MPI_Waitall(vreq.size(), &vreq[0], MPI_STATUS_IGNORE);
+  }
+
+  int size() {
+    return (int)vreq.size();
   }
 
   int test() {
@@ -107,6 +112,18 @@ public:
 
   void init(MPI_Comm comm);
   
+  void pt_enqueue(int *sz_pt) {
+    sz_pt_lst.push_back(sz_pt);
+  }
+
+  void pt_enqueue(size_t *key_pt) {
+    key_pt_lst.push_back(key_pt);
+  }
+  
+  void pt_enqueue(paracel::str_type *str_pt) {
+    str_pt_lst.push_back(str_pt);
+  }
+  
   inline size_t get_size() const { 
     return m_sz; 
   }
@@ -128,7 +145,15 @@ public:
   }
 
   Comm split(int color);
- 
+  
+  void wait(MPI_Request & req) {
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+  }
+  
+  void wait(vrequest & v_req) {
+    v_req.wait();
+  }
+
   // impl of is_comm_builtin send
   template <class T>
   paracel::Enable_if<paracel::is_comm_builtin<T>::value>
@@ -210,10 +235,13 @@ public:
   template <class T>
   paracel::Enable_if<paracel::is_comm_container<T>::value, vrequest>
   isend(const T & data, int dest, int tag) {
-    int sz = (int)data.size();
-    vrequest v_req = isend(sz, dest, tag); // send msg size
-    vrequest vreq = isend(data, sz, dest, tag);
-    v_req.append(vreq); 
+    vrequest v_req;
+    int *sz = new int(data.size());
+    pt_enqueue(sz);
+    auto sz_req = isend(*sz, dest, tag); // send msg size
+    v_req.append(sz_req);
+    auto data_req = isend(data, *sz, dest, tag);
+    v_req.append(data_req);
     return v_req;
   }
   
@@ -230,26 +258,29 @@ public:
 
   // impl of triple isend
   vrequest isend(const paracel::triple_type & triple, int dest, int tag) {
-    auto f = std::get<0>(triple);
-    auto s = std::get<1>(triple);
-    auto v = std::get<2>(triple);
-    vrequest fv_req = isend(f, dest, tag);
-    vrequest sv_req = isend(s, dest, tag);
-    fv_req.append(sv_req);
-    vrequest vv_req = isend(v, dest, tag);
-    fv_req.append(vv_req);
-    return fv_req;
+    // pack triple
+    paracel::str_type *str_pt = new paracel::str_type(
+    	std::get<0>(triple) + paracel::seperator_inner + 
+	std::get<1>(triple) + paracel::seperator_inner + 
+	std::to_string(std::get<2>(triple))
+	);
+    auto v_req = isend(*str_pt, dest, tag);
+    return v_req;
   }
 
   // impl of dict_type<size_t, int> isend
   vrequest isend(const paracel::dict_type<size_t, int> & dct, int dest, int tag) {
-    int sz = dct.size();
-    vrequest v_req = isend(sz, dest, tag);
+    int *sz = new int(dct.size());
+    pt_enqueue(sz);
+    vrequest v_req = isend(*sz, dest, tag);
     for(auto & kv : dct) {
-      size_t key = kv.first;
-      int val = kv.second;
-      isend(key, dest, tag);
-      vrequest vreq = isend(val, dest, tag);
+      size_t *key = new size_t(kv.first);
+      int *val = new int(kv.second);
+      pt_enqueue(key);
+      pt_enqueue(val);
+      auto kreq = isend(*key, dest, tag);
+      auto vreq = isend(*val, dest, tag);
+      v_req.append(kreq);
       v_req.append(vreq);
     }
     return v_req;
@@ -257,27 +288,49 @@ public:
 
   // impl of list of triple isend
   vrequest isend(const paracel::list_type<paracel::triple_type> & triple_lst, int dest, int tag) {
-    int sz = triple_lst.size(); // send container size
-    vrequest v_req = isend(sz, dest, tag);
-    for(int i = 0; i < triple_lst.size(); ++i) {
-      auto vreq = isend(triple_lst[i], dest, tag);
-      v_req.append(vreq);
+    vrequest v_req;
+    int *sz = new int(triple_lst.size());
+    pt_enqueue(sz);
+    auto sz_req = isend(*sz, dest, tag);
+    v_req.append(sz_req);
+    
+    // pack list of triples
+    auto lambda_local_pack = [](const paracel::triple_type & tpl) {
+      paracel::str_type r;
+      r = std::get<0>(tpl) + paracel::seperator_inner + 
+      	std::get<1>(tpl) + paracel::seperator_inner + 
+	std::to_string(std::get<2>(tpl));
+      return r;
+    };
+    paracel::str_type *str_pt = new paracel::str_type;
+    pt_enqueue(str_pt);
+    for(size_t i = 0; i < triple_lst.size() - 1; ++i) {
+      *str_pt += lambda_local_pack(triple_lst[i]) + paracel::seperator;
     }
+    *str_pt += lambda_local_pack(triple_lst[triple_lst.size() - 1]);
+    
+    auto vreq = isend(*str_pt, dest, tag);
+    v_req.append(vreq);
     return v_req;
   }
 
   // impl of list of string isend
   // TODO: abstract 
   vrequest isend(const paracel::list_type<paracel::str_type> & strlst, int dest, int tag) {
-    int sz = strlst.size(); // send container size
-    vrequest v_req = isend(sz, dest, tag);
-    for(int i = 0; i < strlst.size(); ++i) {
-      vrequest vreq = isend(strlst[i], dest, tag);
-      v_req.append(vreq);
+    int *sz = new int(strlst.size()); // send container size
+    pt_enqueue(sz);
+    vrequest v_req = isend(*sz, dest, tag);
+    paracel::str_type *str_pt = new paracel::str_type;
+    pt_enqueue(str_pt);
+    for(size_t i = 0; i < strlst.size() - 1; ++i) {
+      *str_pt += strlst[i] + paracel::seperator;
     }
+    *str_pt += strlst[strlst.size() - 1];
+    auto vreq = isend(*str_pt, dest, tag);
+    v_req.append(vreq);
     return v_req;
   }
-  
+
   // impl of is_comm_builtin recv
   // design tip: 
   //   if return recv data, no template var in parameter
@@ -296,7 +349,9 @@ public:
   recv(T & data, int src, int tag) {
     int sz;
     recv(sz, src, tag); // get msg size
-    if(sz) data.resize(sz);
+    if(sz) {
+      data.resize(sz);
+    }
     return recv(data, sz, src, tag);
   }
 
@@ -312,9 +367,13 @@ public:
 
   // impl of triple recv
   MPI_Status recv(paracel::triple_type & triple, int src, int tag) {
-    recv(std::get<0>(triple), src, tag);
-    recv(std::get<1>(triple), src, tag);
-    MPI_Status stat = recv(std::get<2>(triple), src, tag);
+    paracel::str_type triple_str;
+    MPI_Status stat = recv(triple_str, src, tag);
+    // unpack triple
+    auto sl = paracel::str_split_by_word(triple_str, paracel::seperator_inner);
+    std::get<0>(triple) = sl[0];
+    std::get<1>(triple) = sl[1];
+    std::get<2>(triple) = std::stod(sl[2]);
     return stat;
   }
   
@@ -339,9 +398,15 @@ public:
     if(sz) {
       triple_lst.resize(sz);
     }
-    MPI_Status stat;
-    for(int i = 0; i < sz; ++i) {
-      stat = recv(triple_lst[i], src, tag);
+    paracel::str_type triple_lst_str;
+    MPI_Status stat = recv(triple_lst_str, src, tag);
+    // unpack list of triples
+    auto tpl_lst = paracel::str_split_by_word(triple_lst_str, paracel::seperator);
+    for(size_t i = 0; i < tpl_lst.size(); ++i) {
+      auto tpl = paracel::str_split_by_word(tpl_lst[i], paracel::seperator_inner);
+      std::get<0>(triple_lst[i]) = tpl[0];
+      std::get<1>(triple_lst[i]) = tpl[1];
+      std::get<2>(triple_lst[i]) = std::stod(tpl[2]);
     }
     return stat;
   }
@@ -354,19 +419,13 @@ public:
     if(sz) {
       strlst.resize(sz);
     }
-    MPI_Status stat;
-    for(int i = 0; i < sz; ++i) {
-      stat = recv(strlst[i], src, tag);
+    paracel::str_type str_lst_str;
+    MPI_Status stat = recv(str_lst_str, src, tag);
+    auto str_lst = paracel::str_split_by_word(str_lst_str, paracel::seperator);
+    for(size_t i = 0; i < str_lst.size(); ++i) {
+      strlst[i] = str_lst[i]; 
     }
     return stat;
-  }
-
-  void wait(MPI_Request & req) {
-    MPI_Wait(&req, MPI_STATUS_IGNORE);
-  }
-  
-  void wait(vrequest & v_req) {
-    v_req.wait();
   }
 
   // impl of sendrecv
@@ -375,10 +434,10 @@ public:
     vrequest v_req = isend(sdata, sto, stag);
     recv(rdata, rfrom, rtag);
     wait(v_req);
-    /* 
+    /*
     send(sdata, sto, stag);
     recv(rdata, rfrom, rtag);
-    */
+    */ 
   }
 
   // impl of is_comm_builtin bcast
@@ -514,6 +573,9 @@ public:
 private:
   MPI_Comm m_comm;
   int m_rk, m_sz;
+  paracel::list_type<int *> sz_pt_lst;
+  paracel::list_type<size_t *> key_pt_lst;
+  paracel::list_type<paracel::str_type *> str_pt_lst;
 };
 
 } // namespace paracel

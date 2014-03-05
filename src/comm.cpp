@@ -39,6 +39,15 @@ Comm::Comm(Comm &&r) {
 
 Comm::~Comm() {
   MPI_Comm_free(&m_comm);
+  for(size_t i = 0; i < sz_pt_lst.size(); ++i) {
+    delete sz_pt_lst[i];
+  }
+  for(size_t i = 0; i < str_pt_lst.size(); ++i) {
+    delete str_pt_lst[i];
+  }
+  for(size_t i = 0; i < key_pt_lst.size(); ++i) {
+    delete key_pt_lst[i];
+  }
 }
 
 Comm& Comm::operator=(const Comm &r) {

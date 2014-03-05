@@ -137,12 +137,15 @@ public:
     
     paracel::set_type<paracel::str_type> new_rows, new_cols;
     auto union_func1 = [&] (paracel::list_type<paracel::str_type> tmp) {
-      for(auto & item : tmp) { new_rows.insert(item); }
+      for(auto & item : tmp) { 
+        new_rows.insert(item); 
+      }
     };
     auto union_func2 = [&] (paracel::list_type<paracel::str_type> tmp) {
-      for(auto & item : tmp) { new_cols.insert(item); }
+      for(auto & item : tmp) { 
+        new_cols.insert(item); 
+      }
     };
-
     row_comm.bcastring(rows, union_func1);
     col_comm.bcastring(cols, union_func2);
     

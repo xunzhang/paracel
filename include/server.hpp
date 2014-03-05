@@ -303,7 +303,6 @@ void thrd_exec(zmq::socket_t & sock) {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
       dlopen_update_lambda(file_name, func_name);
-      std::cout << "opened:" << func_name << std::endl;
       /*
       update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
       if(!update_handler) {
