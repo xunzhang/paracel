@@ -193,7 +193,6 @@ public:
   }
 
   void learning() {
-    bool record_flag = true;
     std::vector<double> delta_W(fac_dim), delta_H(fac_dim);
     auto kernel_lambda = [&] (const std::string & uid,
     			const std::string & iid,
@@ -222,7 +221,7 @@ public:
       // record locally
       for(auto & kv : usr_bag) {
         auto uid = kv.first;
-	if(old_W[uid].size() != fac_dim) {
+	if(old_W[uid].size() != (size_t)fac_dim) {
 	  old_W[uid].resize(fac_dim);
 	}
 	for(int i = 0; i < fac_dim; ++i) {
@@ -233,7 +232,7 @@ public:
       }
       for(auto & kv : item_bag) {
         auto iid = kv.first;
-	if(old_H[iid].size() != fac_dim) {
+	if(old_H[iid].size() != (size_t)fac_dim) {
 	  old_H[iid].resize(fac_dim);
 	}
 	for(int i = 0; i < fac_dim; ++i) {
@@ -264,18 +263,19 @@ public:
     if(learning_method == "ipm") {
       set_total_iters(rounds);
       learning();
-    } else {}
+    } else {
+    }
   }
 
 private:
-  int fac_dim; // factor dim
   int id;
-  int rounds;
   string input, output;
+  string learning_method;
+  int fac_dim; // factor dim
+  int rounds;
   double alpha, beta;
   bool debug;
   vector<double> loss_error;
-  string learning_method;
   
   int npx = 0, npy = 0, rating_sz = 0;
   double miu = 0., rmse = 0.;

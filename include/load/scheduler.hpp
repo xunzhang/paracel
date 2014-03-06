@@ -38,15 +38,7 @@ class scheduler {
 public:
   scheduler(paracel::Comm comm) : m_comm(comm) { dim_init(); } 
 
-  scheduler(paracel::Comm comm, int master) : leader(master), m_comm(comm) { dim_init(); }
-  
-  scheduler(paracel::Comm comm, std::string pt) : pattern(pt), m_comm(comm) { dim_init(); }
-  
-  scheduler(paracel::Comm comm, std::string pt, int master) : leader(master), pattern(pt), m_comm(comm) { dim_init(); }
-  
-  scheduler(paracel::Comm comm, std::string pt, bool flag) : mix(flag), pattern(pt), m_comm(comm) { dim_init(); }
-  
-  scheduler(paracel::Comm comm, std::string pt, bool flag, int master) : leader(master), mix(flag), pattern(pt), m_comm(comm) { dim_init(); }
+  scheduler(paracel::Comm comm, std::string pt = "fmap", bool flag = false) : mix(flag), pattern(pt), m_comm(comm) { dim_init(); }
   
   void dim_init();
    
@@ -82,7 +74,7 @@ public:
       } else if(mix) {
         // fset case
 	// ['a', 'b', 'c'] or ['a', 'b|0.2', 'c|0.4'], but ['a', '0.2', '0.4'] is not supported here
-        for(int i = 1; i < stf.size(); ++i) {
+        for(size_t i = 1; i < stf.size(); ++i) {
 	  auto item = stf[i];
 	  auto tmp = paracel::str_split(item, delimiter);
 	  if(tmp.size() == 1) {
@@ -216,10 +208,10 @@ private:
   void elect() { leader = randint(0, m_comm.get_size() - 1); }
 
 private:
-  paracel::Comm m_comm;
-  paracel::str_type pattern = "fmap"; 
-  bool mix = false;
   int leader = 0;
+  bool mix;
+  paracel::str_type pattern; 
+  paracel::Comm m_comm;
   int npx;
   int npy;
 };

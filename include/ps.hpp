@@ -269,7 +269,7 @@ public:
 
   bool paracel_register_update(const paracel::str_type & file_name, const paracel::str_type & func_name) {
     load_update_f(file_name, func_name);
-    auto rg = ps_obj->p_ring;
+    //auto rg = ps_obj->p_ring;
     bool r = true;
     for(int i = 0; i < ps_obj->srv_sz; ++i) {
       r = r && ps_obj->kvm[i].register_update(file_name, func_name);
@@ -279,7 +279,7 @@ public:
   
   bool paracel_register_bupdate(const paracel::str_type & file_name, const paracel::str_type & func_name) {
     //local_update_f(file_name, func_name);
-    auto rg = ps_obj->p_ring;
+    //auto rg = ps_obj->p_ring;
     bool r = true;
     for(int i = 0; i < ps_obj->srv_sz; ++i) {
       r = r && ps_obj->kvm[i].register_bupdate(file_name, func_name);
@@ -288,7 +288,7 @@ public:
   }
   
   bool paracel_register_read_special(const paracel::str_type & file_name, const paracel::str_type & func_name) {
-    auto rg = ps_obj->p_ring;
+    //auto rg = ps_obj->p_ring;
     bool r = true;
     for(int i = 0; i < ps_obj->srv_sz; ++i) {
       r = r && ps_obj->kvm[i].register_pullall_special(file_name, func_name);
@@ -297,7 +297,7 @@ public:
   }
   
   bool paracel_register_remove_special(const paracel::str_type & file_name, const paracel::str_type & func_name) {
-    auto rg = ps_obj->p_ring;
+    //auto rg = ps_obj->p_ring;
     bool r = true;
     for(int i = 0; i < ps_obj->srv_sz; ++i) {
       r = r && ps_obj->kvm[i].register_remove_special(file_name, func_name);
@@ -504,8 +504,12 @@ public:
     return (ps_obj->kvm[indx]).contains(key);
   }
 
+  // TODO
   template <class V>
-  paracel::str_type dump_line_as_vector() {}
+  paracel::str_type dump_line_as_vector() {
+    paracel::str_type s;
+    return s;
+  }
 
   template <class V>
   void dump_vector(const paracel::list_type<V> & data,
@@ -567,21 +571,21 @@ private:
   }; // nested class definition
 
 private:
-  int nworker = 1;
-  int rounds = 1;
   int stale_cache, clock, total_iters;
   int clock_server = 0;
   paracel::Comm worker_comm;
-  parasrv *ps_obj;
   paracel::str_type output;
+  int nworker = 1;
+  int rounds = 1;
+  int limit_s = 0;
+  bool ssp_switch = false;
+  parasrv *ps_obj;
   paracel::dict_type<size_t, paracel::str_type> rm;
   paracel::dict_type<size_t, paracel::str_type> cm;
   paracel::dict_type<size_t, int> dm;
   paracel::dict_type<size_t, int> col_dm;
   paracel::dict_type<paracel::str_type, paracel::str_type> keymap;
   paracel::dict_type<paracel::str_type, boost::any> cached_para;
-  int limit_s = 0;
-  bool ssp_switch = false;
   paracel::update_result update_f;
   int npx = 1, npy = 1;
 };

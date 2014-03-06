@@ -78,7 +78,9 @@ static inline size_t random_size_t(size_t s, size_t e) {
   return s + std::rand() % (e - s + 1);
 }
 
-static bool is_idle_port(size_t port) {}
+static bool is_idle_port(size_t port) {
+  return true;
+}
 
 static size_t gen_port() {
   size_t port = random_size_t(2014, 65535);
@@ -112,7 +114,7 @@ inline double random_double() {
 
 paracel::list_type<double> random_double_list(size_t len, double range = 1.) {
   paracel::list_type<double> r;
-  for(int i = 0; i < len; ++i) {
+  for(size_t i = 0; i < len; ++i) {
     r.push_back(range * random_double());
   }
   return r;

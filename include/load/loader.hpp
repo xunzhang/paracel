@@ -167,9 +167,9 @@ public:
 private:
   T filenames;
   paracel::Comm m_comm;
+  parser_type parserfunc;
   paracel::str_type pattern = "fmap";
   bool mix = false;
-  parser_type parserfunc;
 };
 
 } // namespace paracel

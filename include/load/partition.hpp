@@ -85,7 +85,7 @@ void files_load_lines_impl(paracel::coroutine<paracel::str_type>::caller_type & 
   int fst = 0;
   int fen = 0;
   int offset;
-  for(int i = 0; i < name_list.size(); ++i) {
+  for(size_t i = 0; i < name_list.size(); ++i) {
     if(st >= displs[i]) fst = i;
     if(en > displs[i + 1]) fen = i + 1;
   }
@@ -137,7 +137,7 @@ files_partition(paracel::list_type<paracel::str_type> & name_list,
   if(pattern == "linesplit" || pattern == "fvec") blk_sz = 1; 
   np = np * blk_sz;
   paracel::list_type<int> displs(name_list.size() + 1, 0);
-  for(int i = 0; i < displs.size(); ++i) {
+  for(size_t i = 0; i < displs.size(); ++i) {
     std::ifstream f(name_list[i], std::ios::binary | std::ios::ate);
     int tmp = f.tellg();
     displs[i + 1] = displs[i] + tmp;

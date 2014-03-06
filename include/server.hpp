@@ -16,6 +16,7 @@
 #define FILE_3abacbd9_27ff_b19b_e2a0_88e092dbc44b_HPP
 
 #include <dlfcn.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <thread>
 #include <mutex>
@@ -73,6 +74,10 @@ void kv_filter4remove(const paracel::dict_type<paracel::str_type, paracel::str_t
     paracel::str_type v;
     auto key = kv.first;
     auto exist = paracel::tbl_store.get(key, v);
+    if(!exist) {
+      std::cerr << "kv_filter4remove: " << key << " is not exist." << '\n';
+      abort();
+    }
     if(filter_func(key, v)) {
       paracel::tbl_store.del(key);
     }
@@ -84,6 +89,10 @@ void kv_update(const paracel::str_type & key,
 	update_result update_func) {
   paracel::str_type val;
   auto exist = paracel::tbl_store.get(key, val);
+  if(!exist) {
+    std::cerr << "kv_update: " << key << " is not exist." << '\n';
+    abort();
+  }
   auto new_val = update_func(val, delta);
   paracel::tbl_store.set(key, new_val); 
 }
@@ -138,8 +147,8 @@ void thrd_exec(zmq::socket_t & sock) {
 
   paracel::packer<> pk;
   //void *update_handler; 
-  void *pullall_special_handler;
-  void *remove_special_handler;
+  //void *pullall_special_handler;
+  //void *remove_special_handler;
   update_result update_f;
   filter_result pullall_special_f;
   filter_result remove_special_f;
@@ -148,13 +157,13 @@ void thrd_exec(zmq::socket_t & sock) {
     void *handler = dlopen(fn.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
     if(!handler) {
       std::cerr << "Cannot open library in dlopen_update_lambda: " << dlerror() << '\n';
-      return;
+      abort();
     }
     auto local = dlsym(handler, fcn.c_str());
     if(!local) {
       std::cerr << "Cannot load symbol in dlopen_update_lambda: " << dlerror() << '\n';
       dlclose(handler);
-      return;
+      abort();
     }
     update_f = *(std::function<paracel::str_type(paracel::str_type, paracel::str_type)>*) local;
     dlclose(handler);
@@ -164,13 +173,13 @@ void thrd_exec(zmq::socket_t & sock) {
     void *handler = dlopen(fn.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
     if(!handler) {
       std::cerr << "Cannot open library in dlopen_pullall_lambda: " << dlerror() << '\n';
-      return;
+      abort();
     }
     auto local = dlsym(handler, fcn.c_str());
     if(!local) {
       std::cerr << "Cannot load symbol in dlopen_pullall_lambda: " << dlerror() << '\n';
       dlclose(handler);
-      return;
+      abort();
     }
     pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) local;
     dlclose(handler);
@@ -180,13 +189,13 @@ void thrd_exec(zmq::socket_t & sock) {
     void *handler = dlopen(fn.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
     if(!handler) {
       std::cerr << "Cannot open library in dlopen_remove_lambda: " << dlerror() << '\n';
-      return;
+      abort();
     }
     auto local = dlsym(handler, fcn.c_str());
     if(!local) {
       std::cerr << "Cannot load symbol in dlopen_remove_lambda: " << dlerror() << '\n';
       dlclose(handler);
-      return;
+      abort();
     }
     remove_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) local;
     dlclose(handler);
@@ -209,6 +218,10 @@ void thrd_exec(zmq::socket_t & sock) {
       auto key = pk.unpack(msg[1]);
       paracel::str_type result;
       auto exist = paracel::tbl_store.get(key, result);
+      if(!exist) {
+        std::cerr << "while: " << key << " is not exist." << '\n';
+	abort();
+      }
       rep_send(sock, result);
       //auto result = paracel::tbl_store.get(key);
       //rep_send(sock, *result);
@@ -248,7 +261,7 @@ void thrd_exec(zmq::socket_t & sock) {
         // work with registered mode
         if(!pullall_special_f) {
           std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
-	  return;
+	  abort();
         }
 	//TODO
       }
@@ -343,7 +356,7 @@ void thrd_exec(zmq::socket_t & sock) {
       if(msg.size() > 3) {
         if(msg.size() != 5) {
 	  std::cerr << "Invalid invoke!!" << dlerror() << '\n';
-	  return;
+	  abort();
 	}
         // open request func
 	auto file_name = pk.unpack(msg[3]);
@@ -420,7 +433,7 @@ void thrd_exec(zmq::socket_t & sock) {
       } else {
         if(!remove_special_f) {
           std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
-	  return;
+	  abort();
         }
       }
       auto dct = paracel::tbl_store.getall();

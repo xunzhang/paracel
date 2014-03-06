@@ -351,6 +351,7 @@ public:
 	}
       }
     }
+    return cnt;
   }
 
 private:

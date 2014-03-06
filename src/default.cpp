@@ -44,6 +44,7 @@ paracel_incr_li(paracel::list_type<int> a,
   for(int i = 0; i < (int)a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
+  return r;
 }
 
 paracel::list_type<float> 
@@ -62,6 +63,7 @@ paracel_incr_ld(paracel::list_type<double> a,
   for(int i = 0; i < (int)a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
+  return r;
 }
 
 update_result default_incr_i = paracel::update_proxy(paracel_incr_i);

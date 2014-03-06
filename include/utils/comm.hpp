@@ -193,7 +193,7 @@ public:
   void send(const paracel::list_type<paracel::triple_type> & triple_lst, int dest, int tag) {
     int sz = triple_lst.size(); // send container size
     send(sz, dest, tag);
-    for(int i = 0; i < triple_lst.size(); ++i) {
+    for(size_t i = 0; i < triple_lst.size(); ++i) {
       send(triple_lst[i], dest, tag);
     }
   }
@@ -215,7 +215,7 @@ public:
   void send(const paracel::list_type<paracel::str_type> & strlst, int dest, int tag) {
     int sz = strlst.size(); // send container size
     send(sz, dest, tag);
-    for(int i = 0; i < strlst.size(); ++i) {
+    for(size_t i = 0; i < strlst.size(); ++i) {
       send(strlst[i], dest, tag);
     }
   }

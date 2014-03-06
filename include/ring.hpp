@@ -83,7 +83,7 @@ public:
     //std::hash<P> hfunc;
     paracel::hash_type<P> hfunc;
     auto key = hfunc(skey);
-    for(int i = 0; i < srv_hashring.size(); ++i) {
+    for(size_t i = 0; i < srv_hashring.size(); ++i) {
       auto server = srv_hashring[i];
       if(key <= server) {
         return srv_hashring_dct[server];
@@ -93,7 +93,7 @@ public:
   }
 
 private:
-  int replicas = 3;
+  int replicas = 6;
   paracel::list_type<paracel::hash_return_type> srv_hashring;
   paracel::dict_type<paracel::hash_return_type, T> srv_hashring_dct;
 };
