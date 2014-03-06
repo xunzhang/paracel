@@ -24,7 +24,7 @@ extern "C" {
   extern paracel::update_result mf_bias_updater;
 }
 
-vector<double> local_update_fac(vector<double> a, vector<double> b) {
+vector<double> local_update_fac(const vector<double> & a, const vector<double> & b) {
   vector<double> r;
   for(size_t i = 0; i < a.size(); ++i) {
     r.push_back(a[i] + b[i]);

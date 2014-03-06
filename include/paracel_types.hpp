@@ -208,6 +208,10 @@ using coroutine = boost::coroutines::coroutine<T()>;
 using update_result = std::function<std::string(std::string, std::string)>;
 using filter_result = std::function<bool(std::string, std::string)>;
 
+template<class T>
+using kernel_type = typename std::remove_cv<
+			typename std::remove_reference<T>::type
+			>::type;
 
 } // namespace paracel
 

@@ -54,6 +54,7 @@ paracel_incr_lf(paracel::list_type<float> a,
   for(int i = 0; i < (int)a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
+  return r;
 }
 
 paracel::list_type<double> 

@@ -1,10 +1,19 @@
 #include <assert.h>
 #include <iostream>
 #include <functional>
+#include <vector>
 #include "utils.hpp"
 
 double foo(double a, int b) {
   return a + (double)b;
+}
+
+std::vector<double> fooo(const std::vector<double> & a, const std::vector<double> & b) {
+  std::vector<double> r;
+  for(size_t i = 0; i < a.size(); ++i) {
+    r.push_back(a[i] + b[i]);
+  }
+  return r;
 }
 
 class A {
@@ -42,6 +51,13 @@ int main(int argc, char *argv[])
     static_assert(std::is_same<double, traits::result_type>::value, "err");
     static_assert(std::is_same<double, traits::args<0>::type>::value, "err");
     static_assert(std::is_same<int, traits::args<1>::type>::value, "err");
+  }
+  { // test for normal func 
+    using traits = paracel::f_traits<decltype(fooo)>;
+    assert(traits::arity == 2);
+    static_assert(std::is_same<std::vector<double>, traits::result_type>::value, "err");
+    static_assert(std::is_same<const std::vector<double>&, traits::args<0>::type>::value, "err");
+    static_assert(std::is_same<const std::vector<double>&, traits::args<1>::type>::value, "err");
   }
   {  // test for func pointer
     using traits = paracel::f_traits<decltype(&foo)>;
