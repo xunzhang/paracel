@@ -1,0 +1,5 @@
+{
+  "input" : "/mfs/user/wuhong/paracel/alg/word_count/wc.hpp",
+  "output" : "/mfs/user/wuhong/paracel/data/tmp/",
+  "topk" : 20
+}

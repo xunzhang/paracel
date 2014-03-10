@@ -21,6 +21,8 @@
 #include <string>
 
 #include <zmq.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include "utils/comm.hpp"
 #include "utils/hash.hpp"
@@ -119,6 +121,23 @@ paracel::list_type<double> random_double_list(size_t len, double range = 1.) {
   }
   return r;
 }
+
+struct json_parser{
+private:
+  boost::property_tree::ptree *pt;
+public:
+  json_parser(paracel::str_type fn) {
+    pt = new boost::property_tree::ptree;
+    boost::property_tree::json_parser::read_json(fn, *pt);
+  }
+  ~json_parser() {
+    delete pt;
+  }
+  template <class T>
+  T parse(const paracel::str_type & key) {
+    return pt->get<T>(key);
+  }
+};
 
 } // namespace paracel
 
