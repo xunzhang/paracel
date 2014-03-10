@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
   std::string input = pt.get<std::string>("input");
   std::string output = pt.get<std::string>("output");
   int topk = pt.get<int>("topk");
-  int limit_s = pt.get<int>("limit_s");
+  //int limit_s = pt.get<int>("limit_s");
   
   paracel::word_count wc_solver(comm, FLAGS_server_info, input, output, "optimized", topk);
   //paracel::word_count wc_solver(comm, FLAGS_server_info, input, output, "normal", topk);

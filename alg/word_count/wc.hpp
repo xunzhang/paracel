@@ -47,7 +47,7 @@ public:
   std::vector<std::string> parser(const std::string & line) {
     std::vector<std::string> wl, rl;
     boost::algorithm::split_regex(wl, line, boost::regex("[^-a-zA-Z0-9_]"));
-    for(int i = 0; i < wl.size(); ++i) {
+    for(size_t i = 0; i < wl.size(); ++i) {
       if(wl[i] != "") {
         rl.push_back(wl[i]);
       }
@@ -56,7 +56,7 @@ public:
   }
   
   void normal_learning(const std::vector<std::string> & lines) {
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/wc/update.so", "wc_updater");
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/libwc_update.so", "wc_updater");
     for(auto & line : lines) {
       auto word_lst = parser(line);
       for(auto & word : word_lst) {
@@ -77,7 +77,7 @@ public:
   }
 
   void optimized_learning(const std::vector<std::string> & lines) {
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/wc/update.so", "wc_updater");
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/libwc_update.so", "wc_updater");
     /*
     // init para
     for(auto & line : lines) {
@@ -133,10 +133,10 @@ public:
   }
 
 private:
-  int topk = 10;
   std::string input;
-  std::vector<std::pair<std::string, int> > result;
   std::string learning_method;
+  int topk = 10;
+  std::vector<std::pair<std::string, int> > result;
 };
 
 } // namespace paracel

@@ -52,13 +52,14 @@ include_directories(${MsgpackC_INCLUDE_DIR})
 find_package(ZeroMQ REQUIRED)
 include_directories(${ZermMQ_INCLUDE_DIR})
 
-link_libraries(${GFlags_LIBRARIES} ${MsgpackC_LIBRARIES} ${ZeroMQ_LIBRARIES} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
+set(COROUTINE_VAR "${BOOST_ROOT}/lib/libboost_coroutine.so")
+link_libraries(${COROUTINE_VAR} ${GFlags_LIBRARIES} ${MsgpackC_LIBRARIES} ${ZeroMQ_LIBRARIES} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
 ##############################--make-output--###################################
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
 set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/local")
 ############################--install-path--####################################
-install(PROGRAMS prun.sh DESTINATION ${PROJECT_SOURCE_DIR}/local)
+install(PROGRAMS prun.py DESTINATION ${PROJECT_SOURCE_DIR}/local)
 ################################################################################
 add_subdirectory(src)
 add_subdirectory(alg/word_count)

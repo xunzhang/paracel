@@ -1,5 +1,5 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/alg/wc/wc.hpp",
+  "input" : "/mfs/user/wuhong/paracel/alg/word_count/wc.hpp",
   "output" : "/mfs/user/wuhong/paracel/data/tmp/",
   "topk" : 20,
   "limit_s" : 0
