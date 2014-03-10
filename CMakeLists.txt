@@ -18,9 +18,9 @@ endif()
 project(paracel CXX C)
 ##############################--flags--#########################################
 if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "-Wall -std=c++11")
+  set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -O2")
   set(CMAKE_CXX_FLAGS_DEBUG "-Wall -std=c++11 -O0 -g -fno-inline")
-  set(CMAKE_CXX_FLAGS_RELEASE "-Wall -std=c++11 -O3 -march-native -ffast-math")
+  set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3 -march-native -ffast-math")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES RELEASE)
@@ -63,6 +63,6 @@ install(PROGRAMS prun.py DESTINATION ${PROJECT_SOURCE_DIR}/local)
 ################################################################################
 add_subdirectory(src)
 add_subdirectory(alg/word_count)
-#add_subdirectory(alg/logistic_regression)
-#add_subdirectory(alg/matrix_factorization)
+add_subdirectory(alg/logistic_regression)
+add_subdirectory(alg/matrix_factorization)
 ################################################################################

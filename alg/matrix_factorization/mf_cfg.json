@@ -1,9 +1,9 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/test/serial/training_test.csv",
+  "input" : "/mfs/user/wuhong/paracel/data/mf/book_interest.csv",
   "output" : "/mfs/user/wuhong/paracel/data/tmp/",
   "k" : 80,
   "alpha" : 0.005,
   "beta" : 0.02,
-  "rounds" : 5,
-  "limit_s" : 3 
+  "rounds" : 3,
+  "limit_s" : 1 
 }

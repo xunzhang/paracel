@@ -54,10 +54,10 @@ void logistic_regression::local_parser(const vector<string> & linelst, const cha
   labels.resize(0);
   for(auto & line : linelst) {
     vector<double> tmp;
-    double label;
+    //double label;
     auto linev = paracel::str_split(line, sep); 
     tmp.push_back(1.);
-    for(int i = 0; i < linev.size() - 1; ++i) {
+    for(size_t i = 0; i < linev.size() - 1; ++i) {
       tmp.push_back(std::stod(linev[i]));
     }
     samples.push_back(tmp);
@@ -175,7 +175,7 @@ void logistic_regression::agd_learning() {
     // traverse data
     cnt = 0;
     for(auto sample_id : idx) {
-      if( (cnt % read_batch == 0) || (cnt == idx.size() - 1) ) { 
+      if( (cnt % read_batch == 0) || (cnt == (int)idx.size() - 1) ) { 
         theta = paracel_read<vector<double> >("theta"); 
 	theta_old = theta;
       }
@@ -187,7 +187,7 @@ void logistic_regression::agd_learning() {
       if(debug) {
         loss_error.push_back(calc_loss());
       }
-      if( (cnt % update_batch == 0) || (cnt == idx.size() - 1) ) {
+      if( (cnt % update_batch == 0) || (cnt == (int)idx.size() - 1) ) {
         for(int i = 0; i < data_dim; ++i) {
           delta[i] = theta[i] - theta_old[i];
         }
@@ -265,7 +265,7 @@ void logistic_regression::solve() {
 
 double logistic_regression::calc_loss() {
   double loss = 0.;
-  for(int i = 0; i < samples.size(); ++i) {
+  for(size_t i = 0; i < samples.size(); ++i) {
     double j = lg_hypothesis(samples[i]);
     loss += j * j;
   }

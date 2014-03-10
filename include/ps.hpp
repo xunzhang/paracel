@@ -399,7 +399,7 @@ public:
         cached_para[kv.first] = boost::any_cast<V>(kv.second);
       }
     }
-    bool r;
+    bool r = false;
     for(auto & kv : dct) {
       r = ps_obj->kvm[ps_obj->p_ring->get_server(kv.first)].push(kv.first, kv.second); 
     }

@@ -144,10 +144,10 @@ public:
   void update_mf_fac(std::unordered_map<string, vector<double> > & old_W,
   		std::unordered_map<string, vector<double> > & old_H) {
     /*
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/matrix_factorization/update.so",
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/libmf_update.so",
     			"mf_fac_updater");
     */
-    paracel::str_type file_name = "/mfs/user/wuhong/paracel/alg/matrix_factorization/update.so";
+    paracel::str_type file_name = "/mfs/user/wuhong/paracel/build/lib/libmf_update.so";
     paracel::str_type func_name = "mf_fac_updater";
     vector<double> delta_W(fac_dim), delta_H(fac_dim);
     for(auto & kv : usr_bag) {
@@ -173,10 +173,10 @@ public:
   void update_mf_bias(std::unordered_map<string, double> & old_ubias, 
   		std::unordered_map<string, double> & old_ibias) {
     /*
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/matrix_factorization/update.so",
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/libmf_update.so",
     			"mf_bias_updater");
     */
-    paracel::str_type file_name = "/mfs/user/wuhong/paracel/alg/matrix_factorization/update.so";
+    paracel::str_type file_name = "/mfs/user/wuhong/paracel/build/lib/libmf_update.so";
     paracel::str_type func_name = "mf_bias_updater";
     for(auto & kv : usr_bag) {
       auto uid = kv.first;

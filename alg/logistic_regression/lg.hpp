@@ -47,17 +47,17 @@ public:
   void predict(const std::string &);
 
 private:
+  string input;
+  std::string learning_method;
   int worker_id;
   int rounds;
   double alpha;
   double beta;
-  string input;
+  bool debug = false;
   vector<vector<double> > samples;
   vector<double> labels;
   vector<double> theta;
-  bool debug = false;
   vector<double> loss_error;
-  std::string learning_method;
 }; 
 
 } // namespace paracel

@@ -135,7 +135,7 @@ void thrd_exec_ssp(zmq::socket_t & sock) {
     }
     if(indicator == "pull_int") {
       auto key = pk.unpack(msg[1]);
-      int result;
+      int result = 0;
       paracel::ssp_tbl.get(key, result);
       rep_pack_send(sock, result);
     }
