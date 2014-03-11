@@ -232,8 +232,8 @@ double logistic_regression::calc_loss() {
 
 void logistic_regression::dump_result() {
   if(get_worker_id() == 0) {
-    dump_vector(theta, "lg_theta_", "|");
-    dump_vector(loss_error, "lg_loss_error_", "\n");
+    paracel_dump_vector(theta, "lg_theta_", "|");
+    paracel_dump_vector(loss_error, "lg_loss_error_", "\n");
   }
 }
 

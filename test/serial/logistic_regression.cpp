@@ -123,8 +123,8 @@ public:
   }
 
   void dump_result() {
-    pt->dump_vector(theta, "lg_theta_", "|");
-    pt->dump_vector(loss_error, "lg_loss_error_", "\n");
+    pt->paracel_dump_vector(theta, "lg_theta_", "|");
+    pt->paracel_dump_vector(loss_error, "lg_loss_error_", "\n");
   }
 
   void predict() {

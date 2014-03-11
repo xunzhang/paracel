@@ -70,7 +70,6 @@ public:
   }
   
   void learning() {
-    
 	// for every item vector - iv
     for(auto & iv : item_vects) {
 	  // calc every other item vectos - jv
@@ -98,6 +97,7 @@ public:
 			item_sim_lst[iv.first].push_back(
 			  std::make_pair(jv.first, sim)
 			);
+			record_map[iv.first + "_" + jv.first] = sim;
 		  }
 		} 
 	  } // for jv
@@ -119,7 +119,7 @@ public:
   }
   
   void dump_result() {
-    pt->dump_dict(item_sim_lst);
+    pt->paracel_dump_dict(item_sim_lst);
   }
 
   void solve() {

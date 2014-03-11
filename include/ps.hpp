@@ -89,7 +89,7 @@ public:
   paralg(paracel::str_type hosts_dct_str, 
   	paracel::Comm comm,
 	paracel::str_type op_folder,
-	int o_rounds,
+	int o_rounds = 1,
 	int o_limit_s = 0,
 	bool _ssp_switch = false) :
 	worker_comm(comm),
@@ -377,7 +377,7 @@ public:
       result.push_back(std::make_pair(std::get<0>(tmp[i]), std::get<1>(tmp[i])));
     }
   }
-
+  
   template <class V>
   bool paracel_write(const paracel::str_type & key, const V & val, bool replica_flag = true) {
     auto indx = ps_obj->p_ring->get_server(key);
@@ -514,14 +514,14 @@ public:
 
   // TODO
   template <class V>
-  void dump_vector(const paracel::list_type<V> & data,
+  void paracel_dump_vector(const paracel::list_type<V> & data,
   		const paracel::dict_type<size_t, paracel::str_type> & id_map,
 		const paracel::str_type & filename = "result_",
   		const paracel::str_type & sep = ",",
 		bool merge = false) {}
 
   template <class V>
-  void dump_vector(const paracel::list_type<V> & data, 
+  void paracel_dump_vector(const paracel::list_type<V> & data, 
   		const paracel::str_type & filename = "result_",
   		const paracel::str_type & sep = ",", bool merge = false) {
     std::ofstream os;
@@ -533,7 +533,7 @@ public:
     os.close();
   }
  
-  void dump_dict(const paracel::dict_type<paracel::str_type, 
+  void paracel_dump_dict(const paracel::dict_type<paracel::str_type, 
   				paracel::list_type<
 					std::pair<paracel::str_type, double> > > & data, 
   		const paracel::str_type & filename = "result_",
