@@ -1,5 +1,5 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/alg/word_count/wc.hpp",
+  "input" : "/mfs/user/wuhong/paracel/data/similarity/demo.csv",
   "output" : "/mfs/user/wuhong/paracel/data/tmp/",
-  "topk" : 20
+  "topk" : 2
 }

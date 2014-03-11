@@ -64,7 +64,7 @@ public:
       double label;
       auto linev = str_split(line, sep);
       tmp.push_back(1.);
-      for(int i = 0; i < linev.size() - 1; ++i) {
+      for(size_t i = 0; i < linev.size() - 1; ++i) {
         tmp.push_back(std::stod(linev[i]));
       }
       samples.push_back(tmp);

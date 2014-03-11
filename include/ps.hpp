@@ -20,6 +20,7 @@
 #include <fstream>
 #include <algorithm>
 #include <functional>
+#include <utility>
 
 #include <boost/filesystem.hpp>
 #include <boost/any.hpp>
@@ -511,6 +512,7 @@ public:
     return s;
   }
 
+  // TODO
   template <class V>
   void dump_vector(const paracel::list_type<V> & data,
   		const paracel::dict_type<size_t, paracel::str_type> & id_map,
@@ -524,10 +526,29 @@ public:
   		const paracel::str_type & sep = ",", bool merge = false) {
     std::ofstream os;
     os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()));
-    for(int i = 0; i < (int)data.size() - 1; ++i) {
+    for(size_t i = 0; i < data.size() - 1; ++i) {
       os << std::to_string(data[i]) << sep;
     }
     os << std::to_string(data[data.size() - 1]) << '\n';
+    os.close();
+  }
+ 
+  void dump_dict(const paracel::dict_type<paracel::str_type, 
+  				paracel::list_type<
+					std::pair<paracel::str_type, double> > > & data, 
+  		const paracel::str_type & filename = "result_",
+		bool merge = false) {
+    std::ofstream os;
+    os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()));
+    for(auto & kv : data) {
+	  os << kv.first + '\t';
+	  for(size_t i = 0; i < kv.second.size() - 1; ++i) {
+	    os << kv.second[i].first << ':' << 
+		std::to_string(kv.second[i].second) << '|';
+	  }
+	  os << kv.second[kv.second.size() - 1].first << ":" << 
+	  kv.second[kv.second.size() - 1].second  << '\n';
+	}
     os.close();
   }
 
