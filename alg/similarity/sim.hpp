@@ -89,20 +89,22 @@ public:
 						"sim_updater");
     // calc local items firstly
     for(auto & iv : item_vects) {
-	  std::vector<std::pair<std::string, double> > tmp1, tmp2;
+	  std::vector<std::pair<std::string, double> > tmp1;
 	  for(auto & jv : item_vects) {
-	    if( (iv.first != jv.first) || 
+	    if( (iv.first != jv.first) && 
 			(cvt2num(iv.first) < cvt2num(jv.first)) ) {
+	      std::vector<std::pair<std::string, double> > tmp2;
+		  std::cout << iv.first << "|" << jv.first << std::endl;
 		  double sim = paracel::dot_product(iv.second, jv.second);
 		  tmp1.push_back(std::make_pair(jv.first, sim));
 		  tmp2.push_back(std::make_pair(iv.first, sim));
+	      auto k2 = jv.first + "_similarity";
+	      if(paracel_contains(k2)) {
+	        paracel_bupdate(k2, tmp2); 
+	      } else {
+	        paracel_write(k2, tmp2);
+	      }
 	    } 
-	    auto k2 = jv.first + "_similarity";
-	    if(paracel_contains(k2)) {
-	      paracel_bupdate(k2, tmp2); 
-	    } else {
-	      paracel_write(k2, tmp2);
-	    }
 	  } // for jv
 	  auto k1 = iv.first + "_similarity";
 	  if(paracel_contains(k1)) { // sth like setdefault in py
@@ -115,6 +117,7 @@ public:
 
 	// calc similarity with items in other proces 
 	for(int node_id = 0; node_id < (int)get_worker_size(); ++node_id) {
+	  if(node_id == get_worker_id()) break;
 	  auto id_bag = paracel_read<std::vector<std::string> >(
 					"item_bag_" + 
 					std::to_string(get_worker_id())
@@ -155,11 +158,8 @@ public:
 	for(auto & iv : item_vects) {
 	  auto key = iv.first + "_similarity";
 	  auto lst = paracel_read<std::vector<std::pair<std::string, double> > >(key);
-	  for(auto & debug : lst) {
-	    std::cout << debug.first << "kuang" << std::endl;
-	  }
 	  std::sort(lst.begin(), lst.end(), comp);
-	  assert((size_t)ktop < lst.size());
+	  assert((size_t)ktop <= lst.size());
 	  lst.resize(ktop);
 	  result[iv.first] = lst;
 	}
