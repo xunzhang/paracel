@@ -1,5 +1,5 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/data/similarity/demo2.csv",
+  "input" : "/mfs/user/wuhong/paracel/data/similarity/test_2.csv",
   "output" : "/mfs/user/wuhong/paracel/data/tmp/",
-  "topk" : 1
+  "topk" : 3
 }

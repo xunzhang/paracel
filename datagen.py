@@ -42,28 +42,47 @@ def gen_reg_data(output, sz, k = 100, sep = ','):
     x, y = datasets.make_regression(sz, k)
     dump_data(output, x, y, sep)
 
+def gen_sim_data(output, sz, k = 10, sep = ','):
+	import numpy as np
+	vl = np.random.rand(sz, k)
+	f = open(output, 'wb')
+	for i in vl:
+		iid = np.random.randint(10000000)
+		f.write(str(iid) + sep)
+		for val in i[:-1]:
+			f.write(str(val) + sep)
+		f.write(str(i[-1]) + '\n')
+	f.close()
+
 if __name__ == '__main__':
-    optpar = OptionParser()
-    optpar.add_option('-m', '--method', action = 'store', type = 'string', dest = 'method', help = 'classification | regression | ...')
-    optpar.add_option('-o', '--out', action = 'store', type = 'string', dest = 'output')
-    optpar.add_option('-s', '--sep', action = 'store', type = 'string', dest = 'sep')
-    optpar.add_option('-n', '--datasize', action = 'store', type = 'int', dest = 'size')
-    optpar.add_option('-k', '--nfeatures', action = 'store', type = 'int', dest = 'k')
-    options, args = optpar.parse_args()
+	optpar = OptionParser()
+	optpar.add_option('-m', '--method', action = 'store', type = 'string', dest = 'method', help = 'classification | regression | similarity | ...')
+	optpar.add_option('-o', '--out', action = 'store', type = 'string', dest = 'output')
+	optpar.add_option('-s', '--sep', action = 'store', type = 'string', dest = 'sep')
+	optpar.add_option('-n', '--datasize', action = 'store', type = 'int', dest = 'size')
+	optpar.add_option('-k', '--nfeatures', action = 'store', type = 'int', dest = 'k')
+	options, args = optpar.parse_args()
     
     # check input
 
-    if options.method == 'classification':
-        if options.k and options.sep:
-	    gen_cls_data(options.output, options.size, options.k, options.sep)
-	elif options.k:
-            gen_cls_data(options.output, options.size, options.k)
-	else:
-	    gen_cls_data(options.output, options.size)
-    if options.method == 'regression':
-        if options.k and options.sep:
-	    gen_reg_data(options.output, options.size, options.k, options.sep)
-	elif options.k:
-	    gen_reg_data(options.output, options.size, options.k)
-        else:
-            gen_reg_data(options.output, options.size)
+	if options.method == 'classification':
+		if options.k and options.sep:
+			gen_cls_data(options.output, options.size, options.k, options.sep)
+		elif options.k:
+			gen_cls_data(options.output, options.size, options.k)
+		else:
+			gen_cls_data(options.output, options.size)
+	if options.method == 'regression':
+		if options.k and options.sep:
+			gen_reg_data(options.output, options.size, options.k, options.sep)
+		elif options.k:
+			gen_reg_data(options.output, options.size, options.k)
+		else:
+			gen_reg_data(options.output, options.size)
+	if options.method == 'similarity':
+		if options.k and options.sep:
+			gen_sim_data(options.output, options.size, options.k, options.sep)
+		elif options.k:
+			gen_sim_data(options.output, options.size, options.k)
+		else:
+			gen_sim_data(options.output, options.size)

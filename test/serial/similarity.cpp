@@ -112,7 +112,7 @@ public:
 	      const std::pair<string, double> & b) -> int {
 	    return a.second > b.second;
 	  });
-	  assert(ktop >= (int)sim_lst.size()); // i am not sure = can be deleted here
+	  assert(ktop < (int)sim_lst.size()); // i am not sure = can be deleted here
 	  sim_lst.resize(ktop);
 	  item_sim_lst[item_id] = sim_lst;
 	} // ktop

@@ -94,7 +94,6 @@ public:
 	    if( (iv.first != jv.first) && 
 			(cvt2num(iv.first) < cvt2num(jv.first)) ) {
 	      std::vector<std::pair<std::string, double> > tmp2;
-		  std::cout << iv.first << "|" << jv.first << std::endl;
 		  double sim = paracel::dot_product(iv.second, jv.second);
 		  tmp1.push_back(std::make_pair(jv.first, sim));
 		  tmp2.push_back(std::make_pair(iv.first, sim));
@@ -113,11 +112,12 @@ public:
 	    paracel_write(k1, tmp1);
 	  }
     } // for iv
+	std::cout << "local calc done" << std::endl;
     sync();	
 
 	// calc similarity with items in other proces 
 	for(int node_id = 0; node_id < (int)get_worker_size(); ++node_id) {
-	  if(node_id == get_worker_id()) break;
+	  if(node_id == get_worker_id()) continue;
 	  auto id_bag = paracel_read<std::vector<std::string> >(
 					"item_bag_" + 
 					std::to_string(get_worker_id())
@@ -148,6 +148,7 @@ public:
 		} // id_bag
 	  } // for iv
 	} // bcast_ring 
+	std::cout << "local done" << std::endl;
 	sync();
     
 	auto comp = [] (std::pair<std::string, double> a,
@@ -163,6 +164,7 @@ public:
 	  lst.resize(ktop);
 	  result[iv.first] = lst;
 	}
+	std::cout << "sort done" << std::endl;
 	sync();
   }
 
@@ -173,8 +175,11 @@ public:
   virtual void solve() {
     auto lines = paracel_load(input);
 	local_parser(lines);
+	std::cout << "parser done" << std::endl;
 	normalize(); // normalize here to reduce calculation
+	std::cout << "normalize done" << std::endl;
 	init_paras();
+	std::cout << "init paras done" << std::endl;
 	sync();
 	learning();
   }
@@ -188,6 +193,6 @@ private:
   std::unordered_map<std::string, std::vector<std::pair<std::string, double> > >result;
 };
 
-}
+} // namespace paracel
 
 #endif

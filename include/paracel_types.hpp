@@ -35,7 +35,7 @@
 
 namespace paracel {
 
-const int BLK_SZ = 8;
+const int BLK_SZ = 16;
 
 const int threads_num = 5;
 

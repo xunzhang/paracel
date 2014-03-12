@@ -20,7 +20,7 @@ project(paracel CXX C)
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -O2")
   set(CMAKE_CXX_FLAGS_DEBUG "-Wall -std=c++11 -O0 -g -fno-inline")
-  set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3 -march-native -ffast-math")
+  set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3 -march=native -ffast-math")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES RELEASE)

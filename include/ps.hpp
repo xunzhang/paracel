@@ -15,6 +15,7 @@
 #ifndef FILE_50cbcab2_09cc_7016_42c0_609317d6df63_HPP
 #define FILE_50cbcab2_09cc_7016_42c0_609317d6df63_HPP
 
+#include <assert.h>
 #include <dlfcn.h>
 #include <set>
 #include <fstream>
@@ -137,6 +138,7 @@ public:
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.load();
     set_decomp_info(pattern);
+	assert(lines.size() != 0);
     return lines;
   }
 
