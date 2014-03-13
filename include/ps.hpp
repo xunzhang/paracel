@@ -129,6 +129,23 @@ public:
     }
   }
 
+  template<class T>
+  paracel::list_type<paracel::str_type>
+  paracel_loadall(const T & fn) {
+    auto fname_lst = paracel::expand(fn);
+    paracel::list_type<paracel::str_type> lines;
+	for(auto & fname : fname_lst) {
+	  std::ifstream f(fname, std::ios::binary);
+	  if(!f) { throw std::runtime_error("paracel error in files_load_lines_impl: loader reading failed."); }
+	  paracel::str_type l;
+	  while(std::getline(f, l)) {
+	    lines.push_back(l);
+	  }
+	  f.close();
+	}
+	return lines;
+  }
+
   template <class T>
   paracel::list_type<paracel::str_type> 
   paracel_load(const T & fn,
@@ -468,6 +485,15 @@ public:
     paralg::paracel_bupdate(key, d, file_name, func_name, replica_flag);
   }
   
+  template <class V>
+  void paracel_update_default(const paracel::str_type & key, const V & v_or_delta) {
+    if(paracel_contains(key)) {
+	  paracel_bupdate(key, v_or_delta);
+	} else {
+	  paracel_write(key, v_or_delta);
+	}
+  }
+
   // set invoke cnts
   void set_total_iters(int n) {
     total_iters = n;
