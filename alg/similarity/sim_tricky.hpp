@@ -78,6 +78,15 @@ private:
 	}
   }
   
+  void opt_init() {
+    for(auto & kv : item_vects) {
+	  std::vector<std::pair<std::string, double> > tmp;
+	  tmp.push_back(std::make_pair(kv.first, DBL_MIN));
+	  auto key = kv.first + "_similarity";
+	  paracel_write(key, tmp);
+	}
+  }
+
   void init_paras() {
     for(auto & kv : item_vects) {
 	  paracel_write(kv.first, kv.second); // push vector
@@ -97,25 +106,59 @@ private:
 	  return std::get<1>(a) > std::get<1>(b);
 	};
 	for(auto & iv : item_vects) {
-	  std::sort(result[iv.first].begin(), result[iv.first].end(), comp);
-	  assert((size_t)ktop <= result[iv.first].size());
-	  result[iv.first].resize(ktop);
+	  auto key = iv.first + "_similarity";
+	  auto lst = paracel_read<std::vector<std::pair<std::string, double> > >(key);
+	  std::sort(lst.begin(), lst.end(), comp);
+	  assert((size_t)ktop <= lst.size());
+	  lst.resize(ktop);
+	  result[iv.first] = lst;
 	}
   }
 
   void local_learning(const std::unordered_map<std::string, std::vector<double> > & var) {
 	for(auto & iv : item_vects) {
+	  std::vector<std::pair<std::string, double> > tmp;
 	  for(auto & jv : var) {
-	    if(iv.first != jv.first) {
+	    if( (iv.first != jv.first) && 
+			(cvt2num(iv.first) < cvt2num(jv.first)) ) {
+	      std::vector<std::pair<std::string, double> > tmp2;
 		  double sim = paracel::dot_product(iv.second, jv.second);
-		  result[iv.first].push_back(std::make_pair(jv.first, sim));
+		  tmp.push_back(std::make_pair(jv.first, sim));
+		  tmp2.push_back(std::make_pair(iv.first, sim));
+		  auto k2 = jv.first + "_similarity";
+		  paracel_update_default(k2, tmp2);
 		}
 	  } // for jv
+	  auto k1 = iv.first + "_similarity";
+	  paracel_update_default(k1, tmp);
+	} // for iv
+  }
+  
+  void opt_local_learning(const std::unordered_map<std::string, std::vector<double> > & var) {
+	for(auto & iv : item_vects) {
+	  std::vector<std::pair<std::string, double> > tmp;
+	  for(auto & jv : var) {
+	    if( (iv.first != jv.first) && 
+			(cvt2num(iv.first) < cvt2num(jv.first)) ) {
+	      std::vector<std::pair<std::string, double> > tmp2;
+		  double sim = paracel::dot_product(iv.second, jv.second);
+		  tmp.push_back(std::make_pair(jv.first, sim));
+		  tmp2.push_back(std::make_pair(iv.first, sim));
+		  auto k2 = jv.first + "_similarity";
+		  paracel_bupdate(k2, tmp2);
+		  //paracel_update_default(k2, tmp2);
+		}
+	  } // for jv
+	  auto k1 = iv.first + "_similarity";
+	  paracel_bupdate(k1, tmp);
+	  //paracel_update_default(k1, tmp);
 	} // for iv
   }
   
   void learning() {
-	local_learning(all_item_vects);
+	paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/similarity/update.so",
+						"sim_updater");
+	opt_local_learning(all_item_vects);
 	std::cout << "learing almost finished" << std::endl;
 	sync();
 	select_top();
@@ -125,6 +168,8 @@ private:
 
   void mls_learning() {
     
+	paracel_register_bupdate("/mfs/user/wuhong/paracel/alg/similarity/update.so",
+						"sim_updater");
 	// learn with local item vectors
 	local_learning(item_vects);
     sync();	
@@ -134,13 +179,22 @@ private:
 	  if(node_id == get_worker_id()) continue;
 	  auto id_bag = paracel_read<std::vector<std::string> >(
 					"item_bag_" + 
-					std::to_string(node_id)
+					std::to_string(get_worker_id())
 					);
       for(auto & iv : item_vects) {
+		std::vector<std::pair<std::string, double> > tmp;
 	    for(auto & iid : id_bag) {
-			auto jv = paracel_read<std::vector<double> >(iid);
+		  if(cvt2num(iv.first) < cvt2num(iid)) {
+		    std::vector<std::pair<std::string, double> > tmp2;
+		    auto jv = paracel_read<std::vector<double> >(iid);
 		    double sim = paracel::dot_product(iv.second, jv);
-			result[iv.first].push_back(std::make_pair(iid, sim));
+			tmp.push_back(std::make_pair(iv.first, sim));
+			tmp2.push_back(std::make_pair(iid, sim));
+			auto k2 = iid + "_similarity";
+			paracel_update_default(k2, tmp2);
+		  }
+		  auto k1 = iv.first + "_similarity";
+		  paracel_update_default(k1, tmp);
 		} // id_bag
 	  } // for iv
 	} // bcast_ring 
@@ -166,6 +220,8 @@ public:
 	  normalize(item_vects);
 	  normalize(all_item_vects);
 	  std::cout << "normalize done" << std::endl;
+	  opt_init();
+	  std::cout << "opt init done" << std::endl;
 	  sync();
 	  learning();
 	} else if(learning_method == "limit_storage") {
