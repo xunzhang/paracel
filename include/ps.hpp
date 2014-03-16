@@ -553,7 +553,7 @@ public:
   		const paracel::str_type & filename = "result_",
   		const paracel::str_type & sep = ",", bool merge = false) {
     std::ofstream os;
-    os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()));
+    os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()), std::ofstream::app);
     for(size_t i = 0; i < data.size() - 1; ++i) {
       os << std::to_string(data[i]) << sep;
     }
@@ -567,7 +567,7 @@ public:
   		const paracel::str_type & filename = "result_",
 		bool merge = false) {
     std::ofstream os;
-    os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()));
+    os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()), std::ofstream::app);
     for(auto & kv : data) {
 	  os << kv.first + '\t';
 	  for(size_t i = 0; i < kv.second.size() - 1; ++i) {

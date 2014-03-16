@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 def paracelrun_cpp_proxy(nsrv, initport):
     from subprocess import Popen, PIPE
-    cmd_lst = ['./bin/paracelrun_cpp_proxy --nsrv', str(nsrv), '--init_port', str(initport)]
+    cmd_lst = ['./build/bin/paracelrun_cpp_proxy --nsrv', str(nsrv), '--init_port', str(initport)]
     cmd = ' '.join(cmd_lst)
     logger.info(cmd)
     p = Popen(cmd.split(), stdin = PIPE, stdout = PIPE)
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     
     initport = random.randint(10000, 30000)
 
-    start_parasrv_cmd_lst = [starter, str(nsrv), './bin/start_server --start_host', socket.gethostname(), ' --init_port', str(initport)]
+    start_parasrv_cmd_lst = [starter, str(nsrv), './build/bin/start_server --start_host', socket.gethostname(), ' --init_port', str(initport)]
     start_parasrv_cmd = ' '.join(start_parasrv_cmd_lst)
     logger.info(start_parasrv_cmd)
     procs = subprocess.Popen(start_parasrv_cmd, shell = True, preexec_fn = os.setpgrp)

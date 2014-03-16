@@ -7,14 +7,12 @@
 find_path(GFlags_INCLUDE_DIR google/gflags.h
   NO_DEFAULT_PATH
   PATHS
-  "/mfs/user/wuhong/.local/include"
   "/usr/local/include"
   "/usr/include")
 
 find_library(GFlags_LIBRARY
   NAMES gflags libgflags
   HINTS 
-  "/mfs/user/wuhong/.local/lib"
   "/user/local/lib"
   "/usr/lib")
 

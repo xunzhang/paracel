@@ -15,7 +15,7 @@ find_path(ZeroMQ_INCLUDE_DIR zmq.hpp
 
 find_library(ZeroMQ_LIBRARY
   NAMES zmq libzmq
-  HINTS 
+  HINTS
   "/mfs/user/wuhong/.local/lib"
   "/user/local/lib"
   "/usr/lib")
