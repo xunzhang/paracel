@@ -70,11 +70,6 @@ private:
 	  }
 	  var[v[0]] = tmp;
     }
-	if(item_map.size() == 0) {
-	  for(auto & item : item_vects) {
-	    item_map[item.first] = '7';
-	  }
-	}
   }
 
   void normalize(std::unordered_map<std::string, std::vector<double> > & var) {
@@ -117,7 +112,7 @@ private:
 	return m - std;
   }
   
-  void local_learning(const std::unordered_map<std::string, std::vector<double> > & var) {
+  void local_learning(const std::unordered_map<std::string, std::vector<double> > & var, bool dump_flag = true) {
 	auto comp = [] (std::pair<std::string, double> a,
 	  			std::pair<std::string, double> b) {
 	  return std::get<1>(a) > std::get<1>(b);
@@ -127,54 +122,27 @@ private:
 	    if(iv.first != jv.first) {
 		  double sim = cal_sim(iv.second, jv.second);
 		  if (sim >= simbar) {
-		    if(item_map.find(iv.first) != item_map.end()) {
-			  result[iv.first].push_back(std::make_pair(jv.first, sim));
-		    }
+			result[iv.first].push_back(std::make_pair(jv.first, sim));
 		  }
 		}
 	  } // for jv
 	  std::sort(result[iv.first].begin(), result[iv.first].end(), comp);
 	  result[iv.first].resize(ktop);
-	  dump_result();
-	  result.clear();
+	  if(dump_flag) {
+	    dump_result();
+	    result.clear();
+	  }
 	} // for iv
   }
 
-  void learning_then_dump() {
-	auto comp = [] (std::pair<std::string, double> a,
-	  			std::pair<std::string, double> b) {
-	  return std::get<1>(a) > std::get<1>(b);
-	};
-	for(auto & iv : item_vects) {
-	  for(auto & jv : all_item_vects) {
-	    if(iv.first != jv.first) {
-		  double sim = cal_sim(iv.second, jv.second);
-		  if (sim >= simbar) {
-		    if(item_map.find(iv.first) != item_map.end()) {
-			  result[iv.first].push_back(std::make_pair(jv.first, sim));
-		    }
-		  }
-		}
-	  } // for jv
-	  std::sort(result[iv.first].begin(), result[iv.first].end(), comp);
-	  result[iv.first].resize(ktop);
-	  dump_result();
-	  result.clear();
-	} // for iv
-    sync();
-  }
-  
   void learning() {
 	local_learning(all_item_vects);
 	sync();
   }
 
   void mls_learning() {
-    
 	// learn with local item vectors
-	local_learning(item_vects);
-    sync();	
-
+	local_learning(item_vects, false);
 	auto comp = [] (std::pair<std::string, double> a,
 	  			std::pair<std::string, double> b) {
 	  return std::get<1>(a) > std::get<1>(b);
@@ -194,23 +162,19 @@ private:
 			result[iv.first].push_back(std::make_pair(iid, sim));
 		  }
 		} // id_bag
+	    std::sort(result[iv.first].begin(), result[iv.first].end(), comp);
+	    result[iv.first].resize(ktop);
 	  } // for iv
-	  std::sort(result[iv.first].begin(), result[iv.first].end(), comp);
-	  result[iv.first].resize(ktop);
-	  dump_result();
-	  result.clear();
-	} // bcast_ring 
+	} // bcast_ring
+	dump_result();
 	sync();
   }
   
 public:
-  
   virtual void solve() {
-    
 	auto lines = paracel_load(input);
 	local_parser(item_vects, lines);
 	std::cout << "parser done" << std::endl;
-
 	if(learning_method == "default") {
 	  auto all_lines = paracel_loadall(input);
 	  local_parser(all_item_vects, all_lines);
@@ -225,17 +189,7 @@ public:
 	  init_paras();
 	  sync();
 	  mls_learning();
-	} else if(learning_method == "learning_then_dump") {
-	  auto all_lines = paracel_loadall(input);
-	  local_parser(all_item_vects, all_lines);
-	  std::cout << "loadall done" << std::endl;
-	  normalize(item_vects);
-	  normalize(all_item_vects);
-	  std::cout << "normalize done" << std::endl;
-	  sync();
-	  learning_then_dump();
-	}
-  
+	} else {}
   }
   
   void dump_result() {
@@ -246,15 +200,14 @@ public:
 private:
   std::string input;
   std::string output;
-  double simbar = 0.0;
+  double simbar = 0.;
   int ktop = 20;
   int factor_dim = 100;
   int factor_num = 5;
-  bool with_confidence = 1;
+  bool with_confidence = true;
   std::string learning_method;
   std::unordered_map<std::string, std::vector<double> > item_vects;
   std::unordered_map<std::string, std::vector<double> > all_item_vects; // for default matmul usage
-  std::unordered_map<std::string, char> item_map;
   std::vector<std::string> item_bag;
   std::unordered_map<std::string, std::vector<std::pair<std::string, double> > >result;
 };

@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
   string input = jp.parse<string>("input");
   string output = jp.parse<string>("output");
   int ktop = jp.parse<int>("topk");
+  std::string method = jp.parse<string>("learning_method");
   
-  std::string method = "limit_storage";
   paracel::similarity sim_solver(comm, FLAGS_server_info, input, output, ktop, method);
   sim_solver.solve();
   sim_solver.dump_result();
