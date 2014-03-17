@@ -1,5 +1,6 @@
 {
   "input" : "/mfs/user/wuhong/paracel/data/similarity/test_2.csv",
   "output" : "/mfs/user/wuhong/paracel/data/tmp2/",
-  "topk" : 3
+  "topk" : 3,
+  "learning_method" : "learning_then_dump"
 }

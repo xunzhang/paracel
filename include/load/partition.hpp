@@ -29,8 +29,8 @@ namespace paracel {
 
 void file_load_lines_impl(paracel::coroutine<paracel::str_type>::caller_type & yield, 
                           const paracel::str_type & fname, 
-			  int st, 
-			  int en) {
+			  long st, 
+			  long en) {
   
   std::ifstream f(fname, std::ios::binary);
   if(!f) { throw std::runtime_error("paracel error in file_load_lines_impl: loader reading failed."); }
@@ -57,11 +57,11 @@ file_partition(const paracel::str_type & fname, int np) {
   
   paracel::deque_type< paracel::coroutine<paracel::str_type> > func_loaders;
   
-  int s, e;
+  long s, e;
   std::ifstream f(fname, std::ios::binary | std::ios::ate);
-  int sz = f.tellg();
+  long sz = f.tellg();
   int nbk = np;
-  int bk_sz = sz / nbk;
+  long bk_sz = sz / (long)nbk;
   for(int i = 0; i < nbk; ++i) {
     s = i * bk_sz;
     if(i == nbk - 1) { 
@@ -76,10 +76,10 @@ file_partition(const paracel::str_type & fname, int np) {
 }
 
 void files_load_lines_impl(paracel::coroutine<paracel::str_type>::caller_type & yield, 
-                           paracel::list_type<paracel::str_type> & name_list,
-			   paracel::list_type<int> & displs,
-			   int st, 
-			   int en) {
+                           const paracel::list_type<paracel::str_type> & name_list,
+			   const paracel::list_type<long> & displs,
+			   long st, 
+			   long en) {
   if(en < st) { throw std::runtime_error("paracel error in files_load_lines_impl: en < st"); }
   // to locate files index to load from
   int fst = 0;
@@ -111,43 +111,43 @@ void files_load_lines_impl(paracel::coroutine<paracel::str_type>::caller_type & 
     if(fi == fen) {
       while(offset + displs[fi] < en) {
         paracel::str_type l;
-	std::getline(f, l);
-	offset += l.size() + 1;
-	yield(l);
+	    std::getline(f, l);
+	    offset += l.size() + 1;
+	    yield(l);
       }
     } else {
       flag = true;
       while(1) {
         paracel::str_type l;
-	std::getline(f, l);
-	if(l.size() == 0) break;
-	yield(l);
+	    std::getline(f, l);
+	    if(l.size() == 0) break;
+	    yield(l);
       }
     }
+	f.close();
   } // end of for
 }
 
 paracel::deque_type< paracel::coroutine<paracel::str_type> > 
 files_partition(paracel::list_type<paracel::str_type> & name_list, 
-               int np,
-	       const paracel::str_type & pattern = "",
-	       int blk_sz = BLK_SZ) {
+				int np, const paracel::str_type & pattern = "",
+				int blk_sz = BLK_SZ) {
 
   paracel::deque_type< paracel::coroutine<paracel::str_type> > func_loaders;
   if(pattern == "linesplit" || pattern == "fvec") blk_sz = 1; 
   np = np * blk_sz;
-  paracel::list_type<int> displs(name_list.size() + 1, 0);
-  for(size_t i = 0; i < displs.size(); ++i) {
+  paracel::list_type<long> displs(name_list.size() + 1, 0);
+  for(size_t i = 0; i < displs.size() - 1; ++i) {
     std::ifstream f(name_list[i], std::ios::binary | std::ios::ate);
-    int tmp = f.tellg();
+    long tmp = f.tellg();
     displs[i + 1] = displs[i] + tmp;
   }
-  int sz = displs[displs.size() - 1];
+  long sz = displs[displs.size() - 1];
   int nbk = np;
-  int bk_sz = sz / nbk;
-  int e;
+  long bk_sz = sz / (long)nbk;
+  long e;
   for(int i = 0; i < nbk; ++i) {
-    auto s = i * bk_sz;
+    long s = (long)i * bk_sz;
     if(i == nbk -1) {
       e = sz;
     } else {
