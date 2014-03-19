@@ -19,8 +19,8 @@
 #include <functional>
 
 #include <boost/variant.hpp>
-#include <eigen/Eigen/Dense>
-#include <eigen/Eigen/Sparse>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 
 #include "paracel_types.hpp"
 #include "graph.hpp"

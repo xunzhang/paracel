@@ -9,14 +9,12 @@ include(CheckCXXSourceRuns)
 find_path(MsgpackC_INCLUDE_DIR msgpack.hpp
   NO_DEFAULT_PATH
   PATHS
-  "/mfs/user/wuhong/.local/include"
   "/usr/local/include"
   "/usr/include")
 
 find_library(MsgpackC_LIBRARY
   NAMES msgpack libmsgpack
   HINTS 
-  "/mfs/user/wuhong/.local/lib"
   "/user/local/lib"
   "/usr/lib")
 

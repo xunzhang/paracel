@@ -9,14 +9,12 @@ include(CheckCXXSourceRuns)
 find_path(ZeroMQ_INCLUDE_DIR zmq.hpp
   NO_DEFAULT_PATH
   PATHS
-  "/mfs/user/wuhong/.local/include"
   "/usr/local/include"
   "/usr/include")
 
 find_library(ZeroMQ_LIBRARY
   NAMES zmq libzmq
   HINTS
-  "/mfs/user/wuhong/.local/lib"
   "/user/local/lib"
   "/usr/lib")
 
