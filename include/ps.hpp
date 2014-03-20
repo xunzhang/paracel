@@ -26,8 +26,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/any.hpp>
 
-#include <eigen/Eigen/Sparse>
-#include <eigen/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/Dense>
 
 #include "paracel_types.hpp"
 #include "client.hpp"

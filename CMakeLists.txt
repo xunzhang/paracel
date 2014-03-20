@@ -34,8 +34,8 @@ include_directories(${MPI_CXX_INCLUDE_PATH})
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILER_FLAGS})
 set(CMAKE_LINK_FLAGS ${CMAKE_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
-#set(BOOST_ROOT "/usr")
-set(BOOST_ROOT "/mfs/user/wuhong/.local")
+set(BOOST_ROOT "/usr")
+#set(BOOST_ROOT "/mfs/user/wuhong/.local")
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost 1.55.0 COMPONENTS filesystem system)
@@ -58,13 +58,13 @@ link_libraries(${COROUTINE_VAR} ${GFlags_LIBRARIES} ${MsgpackC_LIBRARIES} ${Zero
 ##############################--make-output--###################################
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
-set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/local")
+set(CMAKE_INSTALL_PREFIX "/usr")
 ############################--install-path--####################################
-install(PROGRAMS prun.py DESTINATION ${PROJECT_SOURCE_DIR}/local)
+install(PROGRAMS prun.py DESTINATION "/usr/bin")
 ################################################################################
 add_subdirectory(src)
-#add_subdirectory(alg/word_count)
-#add_subdirectory(alg/logistic_regression)
-#add_subdirectory(alg/matrix_factorization)
+add_subdirectory(alg/word_count)
+add_subdirectory(alg/logistic_regression)
+add_subdirectory(alg/matrix_factorization)
 add_subdirectory(alg/similarity)
 ################################################################################

@@ -5,10 +5,9 @@
 
 include(CheckCXXSourceRuns)
 
-find_path(Eigen_INCLUDE_DIR eigen/Eigen/Dense
+find_path(Eigen_INCLUDE_DIR eigen3/Eigen/Dense
   NO_DEFAULT_PATH
   PATHS
-  "/mfs/user/wuhong/.local/include"
   "/usr/local/include"
   "/usr/include")
 
@@ -17,8 +16,8 @@ message(STATUS "Find Eigen include path: ${Eigen_INCLUDE_DIR}")
 set(CMAKE_REQUIRED_INCLUDES ${Eigen_INCLUDE_DIR})
 set(CMAKE_REQUIRED_FLAGS)
 check_cxx_source_runs("
-#include <eigen/Eigen/Dense>
-#include <eigen/Eigen/Sparse>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 int main(int argc, char *argv[])
 {
   Eigen::VectorXd tmp(7);
