@@ -129,7 +129,7 @@ public:
     }
   }
 
-  template<class T>
+  template <class T>
   paracel::list_type<paracel::str_type>
   paracel_loadall(const T & fn) {
     auto fname_lst = paracel::expand(fn);
@@ -144,6 +144,22 @@ public:
 	  f.close();
 	}
 	return lines;
+  }
+
+  template <class T, class F>
+  void paracel_sequential_loadall(const T & fn, F & func) {
+    auto fname_lst = paracel::expand(fn);
+    auto loads = paracel::files_partition(fname_lst, get_worker_size(), "linesplit");
+    // sequential_load
+    for(int i = 0; i < get_worker_size(); ++i) {
+      paracel::list_type<paracel::str_type> result;
+      while(loads[i]) {
+        auto lines = loads[i].get();
+		result.push_back(lines);
+		loads[i]();
+      }
+      func(result);
+    }
   }
 
   template <class T>
