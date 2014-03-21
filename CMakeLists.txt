@@ -67,4 +67,5 @@ add_subdirectory(alg/word_count)
 add_subdirectory(alg/logistic_regression)
 add_subdirectory(alg/matrix_factorization)
 add_subdirectory(alg/similarity)
+add_subdirectory(alg/hi)
 ################################################################################
