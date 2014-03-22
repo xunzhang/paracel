@@ -1,30 +1,28 @@
 # Paracel
 
-Paracel is a distributed computational framework designs for 
+Paracel is a distributed computational framework designed for 
 machine learning problems, graph algorithms and scientific computation in C++
 
 ## Motivation
 
- * Parameters can not be hold in memory of a single machine
- * Asynchrounous learning to speed up
+ * Parameters can not be hold in memory of one node
+ * Asynchrounous learning to speed up convergency
  * General framework
-  * Offer simple communication model(compared to MapReduce)
-  * Offer fault tolerance solution(compared to MPI)
+  * Simple communication model(compared to MapReduce)
+  * Fault tolerance solution(compared to MPI)
 
-Our basic idea is original triggered by Jeff Dean's [talk](http://infolab.stanford.edu/infoseminar/dean.pdf) @Stanford University in 2013.
-You can get more details in his paper: [Large Scale Distributed Deep Networks](http://static.googleusercontent.com/media/research.google.com/en//archive/large_deep_networks_nips2012.pdf).
+Our basic idea is original triggered by Jeff Dean's [talk](http://infolab.stanford.edu/infoseminar/dean.pdf) @Stanford University in 2013.\nYou can get more details in his paper: [Large Scale Distributed Deep Networks](http://static.googleusercontent.com/media/research.google.com/en//archive/large_deep_networks_nips2012.pdf).
 
 ## Goals
 
  * Split both massive dataset and massive parameter space
  * Solve "the last reducer problem" of iterative tasks
- * Easy to programming, painless from serial to parallel
+ * Easy to programming, painless from sequential to parallel
  * Good performance and fault tolerant
 
-## Getting it
+## Get it
 
 You can download the source code from http://code.dapps.douban.com/paracel:
-
 ```bash
 $ git clone http://code.dapps.douban.com/paracel.git
 ```
@@ -36,7 +34,7 @@ $ git clone http://code.dapps.douban.com/paracel.git
  You must firstly install some third-party libraries below: 
   * [Boost(>=1.54)](http://www.boost.org/)
   * Zeromq(>=3.2.4) and [a c++ binding](http://zeromq.org/bindings:cpp) of it
-  * [Msgpack-c-0.5.8](https://github.com/xunzhang/msgpack-c): a increment version
+  * Msgpack-c(v0.5.8): a increment [version](https://github.com/xunzhang/msgpack-c)
   * [Eigen(>=3.0)](http://eigen.tuxfamily.org/)
   * [GFlags](https://code.google.com/p/gflags/)
 
@@ -48,7 +46,7 @@ $ git clone http://code.dapps.douban.com/paracel.git
  * II. Build
 
   ```bash
-  $ mkdir build; cd build;
+  $ mkdir build; cd build
   $ cmake -DCMAKE_BUILD_TYPE=Release ..
   $ make -j 4
   $ make install
@@ -56,7 +54,7 @@ $ git clone http://code.dapps.douban.com/paracel.git
 
  If you use gentoo, you can just use ebuild files we provide
  
- Stuff @[Douban.Inc](douban.com) can just skip phaseI
+ Stuff @[Douban.Inc](http://www.douban.com/) can skip phase-I
 
 ## Get started
 
@@ -64,15 +62,16 @@ $ git clone http://code.dapps.douban.com/paracel.git
 
 ## Logo
 
-Draft version from xunzhang:
+Draft version by xunzhang:
 
 ``` bash
 (0.5,1) -> (0, 0.5) -> (1,0.5) -> (0.5, 1) -> (0.5, 0.25) -> (0.25, 0.25)
 ```
 
-Plus version from Yinzi:
+Plus version by Yinzi:
 
 ## Whisper
 
-If you are using paracel, let us know.
-Any bugs and related problems, feel free to ping us: <xunzhangthu@gmail.com>
+If you are using paracel, let me know.
+
+Any bugs and related problems, feel free to ping me: <wuhong@douban.com>, <xunzhangthu@gmail.com>
