@@ -55,6 +55,7 @@ $ git clone http://code.dapps.douban.com/paracel.git
   ```
 
  If you use gentoo, you can just use ebuild files we provide
+ 
  Stuff @[Douban.Inc](douban.com) can just skip phaseI
 
 ## Get started
