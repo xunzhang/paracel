@@ -3,7 +3,7 @@ Paracel Overview
 
 Paracel is a distributed computational framework designs for machine learning problems: Logistic Regression, SVD, Matrix Factorization(BFGS, sgd, als, cg), LDA, Lasso...
 
-Firstly, paracel split both massve dataset and massive parameter space. Unlink Mapreduce-Like Systems, paracel offer a simple communication model, which allows you to work with a global, distributed key-value storage called parameter server.
+Firstly, paracel split both massive dataset and massive parameter space. Unlink Mapreduce-Like Systems, paracel offer a simple communication model, which allows you to work with a global, distributed key-value storage called parameter server.
 
 In using paracel, you can build algorithms following the rule: 'pull parameters before learning | push local updates after learning'. It is rather a simple model(compared to MPI) and is almost painless transforming from serial to parallel.
 
@@ -18,12 +18,6 @@ Paracel is originally motivated by Jeff Dean's [talk](http://infolab.stanford.ed
 A 20-minutes-tutorial is [here](http://xunzhang.github.io/paracel)
 
 Be the first to get it, let's go!
-
-Installation
-------------
-
-Say hi 2 paracel
-----------------
 
 Logo
 ----
