@@ -15,20 +15,10 @@ Paracel can also be used for building graph algorithms and scientific computing.
 
 Paracel is originally motivated by Jeff Dean's [talk](http://infolab.stanford.edu/infoseminar/dean.pdf) @Stanford in 2013. You can get more details in his paper: "[Large Scale Distributed Deep Networks](http://static.googleusercontent.com/media/research.google.com/en//archive/large_deep_networks_nips2012.pdf)".
 
-A 20-minutes-tutorial is [here](http://xunzhang.github.io/paracel)
+More document can be found [here](http://xunzhang.github.io/paracel).
 
-Be the first to get it, let's go!
+Have fun!
 
-Logo
-----
-Logo for paracel is really cool, you can make it with only one stroke:
-
-``` bash
-  (0.5,1) -> (0, 0.5) -> (1,0.5) -> (0.5, 1) -> (0.5, 0.25) -> (0.25, 0.25)
-```
-
-Whisper
+License
 -------
-If you are using paracel, let me know.
-
-Any bugs and related problems, just feel free to ping me: <xunzhangthu@gmail.com>.
+Paracel is made available under the terms of the BSD License. See the LICENSE file that accompanies this distribution for the full text.
