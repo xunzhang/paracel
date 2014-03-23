@@ -14,7 +14,7 @@
 	<div class="title2">
 		<h2><font size="6" color="#990012">Programming</font></h2>
 		<p><font size="4" color="#3D3C3A">
-		<b>Paracel</b> offer a distributed, global key-value space which is called parameter server. Messages in <b>paracel</b> are also defined as parameters which have a key-value structure. When doing commnication, you need to talk to servers by <b>read/write/update</b> the messages.
+		<b>Paracel</b> offers a distributed, global key-value space which is called parameter server. Messages in <b>paracel</b> are also defined as parameters which have a key-value structure. When doing commnication, you need to talk to the servers by <b>read/write/update</b> messages.
 		</font></p>
 	</div>
 	<div class="title3">
@@ -24,7 +24,7 @@
 		&nbsp;&nbsp;&nbsp;
 		Let's start with a simple word count example with <b>paracel</b>.<br><br>
 		&nbsp;&nbsp;&nbsp;
-		Firstly, you must write a subclass which inherits the <b>paralg</b> baseclass:
+		Firstly, you must write a subclass inherits the <b>paralg</b> baseclass:
 		</font>
 <pre class="prettyprint">
 // wc.hpp
@@ -46,7 +46,7 @@ private:
 			</div>
 			<div><font size="4" color="#3D3C3A">
 			&nbsp;&nbsp;&nbsp;
-			Secondly, write a update function which will be called by parameter servers(something like a reduce function):
+			Secondly, write a update function which will be used by parameter servers(something like a reduce function):
 			</font>
 <pre class="prettyprint">
 // update.cpp
@@ -89,7 +89,7 @@ public:
 			</div>
 			<div><font size="4" color="#3D3C3A">
 			&nbsp;&nbsp;&nbsp;
-			Lastly, you need to create a driver to run your algorithm:
+			Lastly, you need to create a main program:
 			</font>
 <pre class="prettyprint">
 // main.cpp
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 			&nbsp;&nbsp;&nbsp;		
 			Yes, you are almost done!<br>
 			&nbsp;&nbsp;&nbsp;
-			The remaining thing you need to do is compiling your code, and run with <b>prun.py</b>.
+			The only thing you need to do now is compiling the code above, then run with <b>prun.py</b>.
 			</font>
 			</div>
 		</p>
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	<h2><font size="6" color="#990012">Second Version of Word Count</font></h2>
 		<p><font size="4" color="#3D3C3A">
 		&nbsp;&nbsp;&nbsp;		
-		In the former word count example above, we use <b>paracel_update_default</b> which is a little expensive. The reason of that is <b>paracel_update_default</b> will ask servers if a specified key is already existed. If it is, do update with user-defined updater. If it isn't, init the key with your value. So we can avoid this "asking" by using <b>is_caced</b> function. Now the code looks like this:
+		In the former word count example, we use <b>paracel_update_default</b> which is a little expensive. The reason of that is <b>paracel_update_default</b> will ask servers if a specified key is already existed. If it is, do updating with the user-defined updater. If it isn't, init the key with your value. So we can avoid this "asking" by using <b>is_cached</b>. Now the code looks like this:
 		</font></p>
 <pre class="prettyprint">
 // wc.hpp
@@ -159,7 +159,7 @@ private:
 	<h2><font size="6" color="#990012">Third Version of Word Count</font></h2>
 		<p><font size="4" color="#3D3C3A">
 		&nbsp;&nbsp;&nbsp;		
-		Since lines in each worker may contains lots of same words, we can reduce the asking by init once:
+		Since lines in each worker may contain lots of same words, we can reduce the "asking" by init only once:
 		</font></p>
 <pre class="prettyprint">
 // wc.hpp
@@ -188,7 +188,7 @@ private:
 </pre>
 	<p><font size="4" color="#3D3C3A">
 	&nbsp;&nbsp;&nbsp;		
-	What's more, you can still do some optimization according to your application. For example, do some local combine to minimize the commnunication. But we will stop here.
+	What's more, you can still do some optimization according to your application. For example, do some local combines to minimize the commnunication. But we will stop here.
 	</font></p>
 	</div>
 	<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=css&skin=sunburst"></script>
