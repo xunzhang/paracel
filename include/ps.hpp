@@ -75,12 +75,12 @@ private:
 public:
   // interface for direct usage
   paralg(paracel::Comm comm,
-  	paracel::str_type op_folder,
-  	int o_rounds) : 
+  	paracel::str_type _output,
+  	int _rounds) : 
 		worker_comm(comm), 
-		output(op_folder), 
-		rounds(o_rounds) {
-    init_output(op_folder);
+		output(_output), 
+		rounds(_rounds) {
+    init_output(_output);
     clock = 0;
     stale_cache = 0;
     clock_server = 0;
@@ -89,18 +89,18 @@ public:
   
   paralg(paracel::str_type hosts_dct_str, 
   	paracel::Comm comm,
-	paracel::str_type op_folder,
-	int o_rounds = 1,
-	int o_limit_s = 0,
+	paracel::str_type _output,
+	int _rounds = 1,
+	int _limit_s = 0,
 	bool _ssp_switch = false) :
 	worker_comm(comm),
-	output(op_folder),
+	output(_output),
 	nworker(comm.get_size()),
-	rounds(o_rounds),
-	limit_s(o_limit_s),
+	rounds(_rounds),
+	limit_s(_limit_s),
 	ssp_switch(_ssp_switch) {
     ps_obj = new parasrv(hosts_dct_str);
-    init_output(op_folder);
+    init_output(_output);
     clock = 0;
     stale_cache = 0;
     clock_server = 0;
