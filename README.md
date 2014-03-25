@@ -15,4 +15,4 @@ Paracel can also be used for scientific computing and building graph algorithms.
 
 Paracel is originally motivated by Jeff Dean's [talk](http://infolab.stanford.edu/infoseminar/dean.pdf) @Stanford in 2013. You can get more details in his paper: "[Large Scale Distributed Deep Networks](http://static.googleusercontent.com/media/research.google.com/en//archive/large_deep_networks_nips2012.pdf)".
 
-More documents can be found [here](http://xunzhang.github.io/paracel).
+More documents can be found [here](http://paracel.io).
