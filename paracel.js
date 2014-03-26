@@ -178,21 +178,27 @@ function build_search() {
 }
 
 function show_header(doc) {
-  $('head title').text(doc.title + '.h');
-
+  $('head title').text(doc.title + '.hpp');
   var p = $('#doccontent');
   p.empty();
   p.append(
       $('<a/>', {
-        name: 'hdr.' + doc.title + '.h'
+        name: 'hdr.' + doc.title + '.hpp'
       })
   );
+  if (doc.codename === 'prun.py') {
   p.append(
     $('<h1/>').text(
-      'phenom/' + doc.title + '.h'
+      doc.codename
     )
   );
-
+  } else {
+  p.append(
+    $('<h1/>').text(
+      'include/' + doc.codename + '.hpp'
+    )
+  );
+  }
   var code = $('<pre/>');
   code.append(
       $('<code/>').html(prettyPrintOne(doc.raw_content, 'c'))
@@ -207,7 +213,7 @@ function show_topic(topic_name) {
     return false;
   }
 
-  var m = topic_name.match(/^hdr\.(.*)\.h$/);
+  var m = topic_name.match(/^hdr\.(.*)\.hpp$/);
   if (m) {
     show_header(docs[m[1]]);
     return true;
@@ -388,8 +394,12 @@ function load_topic_nav() {
 
     if (d.raw_content) {
       var li = $('<li/>');
-      var a = $('<a/>', { href: '#hdr.' + d.name + '.h'});
-      a.text(d.name+'.h');
+      var a = $('<a/>', { href: '#hdr.' + d.name + '.hpp'});
+      if(d.codename === 'prun.py') {
+        a.text('prun.py');
+      } else{
+        a.text(d.codename+'.hpp');
+      }
       li.append(a);
       hnav.append(li);
     }
