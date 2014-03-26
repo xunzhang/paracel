@@ -27,7 +27,7 @@ void scheduler::dim_init() {
 }
 
 paracel::list_type<paracel::str_type> 
-scheduler::schedule_load(schedule_load_para_type & loads) {
+scheduler::schedule_load(load_para_type & loads) {
   paracel::list_type<paracel::str_type> result;
   int rk = m_comm.get_rank();
   int sz = m_comm.get_size();
@@ -87,6 +87,25 @@ scheduler::schedule_load(schedule_load_para_type & loads) {
       mutex.unlock();
     } // end of while
   } // end of if-else
+  return result;
+}
+
+paracel::list_type<paracel::str_type>
+scheduler::structure_load(load_para_type & loads) {
+  paracel::list_type<paracel::str_type> result;
+  int blk_sz = BLK_SZ;
+  if(pattern == "fvec" || pattern == "linesplit") {
+    blk_sz = 1;
+  }
+  int st = m_comm.get_rank() * blk_sz;
+  int en = (m_comm.get_rank() + 1) * blk_sz;
+  for(int i = st; i < en; ++i) {
+    while(loads[i]) {
+	  auto line = loads[i].get();
+	  result.push_back(line);
+	  loads[i]();
+	}
+  }
   return result;
 }
 

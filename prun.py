@@ -42,6 +42,30 @@ def paracelrun_cpp_proxy(nsrv, initport):
 	p = Popen(cmd.split(), stdin = PIPE, stdout = PIPE)
 	return p.stdout.readline()
 
+
+def get_free_port():
+	import os
+	import random 
+	def is_avaliable(port):
+		import os
+		cmd = 'netstat -tuln | grep LISTEN | cut -f 2 -d :'
+		tmp = os.popen(cmd)
+		content = tmp.read()
+		content = content.strip('\n').split('0.0.0.0')
+		plst = [item.strip('\n').strip(' ') for item in content]
+		while '' in plst:
+			plst.remove('')
+		plst = [int(item) for item in plst]
+		tmp.close()
+		if port in plst:
+			return False
+		else:
+			return True
+	port = random.randint(10000, 65535)
+	while not is_avaliable(port):
+		port = random.randint(10000, 65535)
+	return port
+
 if __name__ == '__main__':
 	optpar = OptionParser()
 	optpar.add_option('-p', '--snum', default = 1,
@@ -83,7 +107,9 @@ if __name__ == '__main__':
 	else:
 		starter = 'mpirun -n'
     
-	initport = random.randint(30000, 65000)
+	#initport = random.randint(30000, 65000)
+	#initport = get_free_port()
+	initport = 11117
 
 	start_parasrv_cmd_lst = [starter, str(nsrv), './local/bin/start_server --start_host', socket.gethostname(), ' --init_port', str(initport)]
 	start_parasrv_cmd = ' '.join(start_parasrv_cmd_lst)

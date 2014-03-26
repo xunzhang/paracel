@@ -40,7 +40,7 @@ public:
     ports_lst = paracel::str_split(ports, ',');
     conn_prefix = "tcp://" + host + ":";
   }
-  
+
   template <class K>
   bool contains(const K & key) {
     if(p_contains_sock == nullptr) {

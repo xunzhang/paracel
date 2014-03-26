@@ -56,7 +56,7 @@ public:
   }
   
   void normal_learning(const std::vector<std::string> & lines) {
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/libwc_update.so", "wc_updater");
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libwc_update.so", "wc_updater");
     for(auto & line : lines) {
       auto word_lst = parser(line);
       for(auto & word : word_lst) {
@@ -77,7 +77,7 @@ public:
   }
 
   void optimized_learning(const std::vector<std::string> & lines) {
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/libwc_update.so", "wc_updater");
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libwc_update.so", "wc_updater");
     /*
     // init para
     for(auto & line : lines) {

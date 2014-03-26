@@ -169,7 +169,7 @@ public:
 	const paracel::str_type & pattern = "linesplit",
 	bool mix_flag = false) {
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
-    paracel::list_type<paracel::str_type> lines = ld.load();
+    paracel::list_type<paracel::str_type> lines = ld.fixload();
     set_decomp_info(pattern);
 	assert(lines.size() != 0);
     return lines;

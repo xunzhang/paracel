@@ -61,6 +61,20 @@ public:
     m_comm.sync();
 	return linelst;
   }
+  
+  paracel::list_type<paracel::str_type> 
+  fixload() {
+    paracel::scheduler scheduler(m_comm, pattern, mix);
+    auto fname_lst = paracel::expand(filenames);
+    // generate loads
+    auto loads = paracel::files_partition(fname_lst, m_comm.get_size(), pattern);
+	std::cout << "procs " << m_comm.get_rank() << " loads finished" << std::endl;
+    // parallel loading lines
+    auto linelst = scheduler.structure_load(loads);
+    std::cout << "procs " << m_comm.get_rank() << " lines got" << std::endl;
+    m_comm.sync();
+	return linelst;
+  }
 
   // fmap case
   void create_matrix(const paracel::list_type<paracel::str_type> & linelst,

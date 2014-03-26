@@ -511,6 +511,7 @@ void init_thrds(const paracel::str_type & init_host, const paracel::str_type & i
   for(auto & thrd : threads) {
     thrd.join();
   }
+  zmq_ctx_destroy(context);
 }
 
 } // namespace paracel

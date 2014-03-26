@@ -27,7 +27,7 @@ namespace paracel {
 
 std::mutex mutex;
 
-typedef paracel::deque_type<paracel::coroutine<paracel::str_type> > schedule_load_para_type;
+typedef paracel::deque_type<paracel::coroutine<paracel::str_type> > load_para_type;
 typedef paracel::list_type<paracel::triple_type> lt_type;
 typedef paracel::list_type<paracel::list_type<paracel::triple_type> > llt_type;
 
@@ -42,7 +42,9 @@ public:
   
   void dim_init();
    
-  paracel::list_type<paracel::str_type> schedule_load(schedule_load_para_type & loads);
+  paracel::list_type<paracel::str_type> schedule_load(load_para_type & loads);
+  
+  paracel::list_type<paracel::str_type> structure_load(load_para_type & loads);
 
   template <class A, class B>
   inline size_t h(A & i, B & j, int & nx, int & ny) { 
