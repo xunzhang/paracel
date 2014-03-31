@@ -26,27 +26,27 @@ namespace paracel {
 
 class logistic_regression {
 
-public:  
+ public:  
   logistic_regression(Comm comm,
-  	std::string _input, 
-  	std::string _output, 
-	size_t _rounds = 1, 
-	double _alpha = 0.002, 
-	double _beta = 0.1,
-	bool _debug = false) : 
-		input(_input), 
-		output(_output), 
-		rounds(_rounds), 
-		alpha(_alpha), 
-		beta(_beta),
-		debug(_debug) {
-    pt = new paralg(comm, output, rounds);
-  }
-  
+                      std::string _input, 
+                      std::string _output, 
+                      size_t _rounds = 1, 
+                      double _alpha = 0.002, 
+                      double _beta = 0.1,
+                      bool _debug = false) : 
+      input(_input), 
+      output(_output), 
+      rounds(_rounds), 
+      alpha(_alpha), 
+      beta(_beta),
+      debug(_debug) {
+        pt = new paralg(comm, output, rounds);
+      }
+
   ~logistic_regression() {
     delete pt;
   }
- 
+
   // logistic regression hypothesis function
   // e ** (v .dot theta) / (1 + e ** (v. dot theta))
   double lg_hypothesis(const vector<double> & v) {
@@ -89,12 +89,12 @@ public:
       for(auto id : idx) {
         for(int i = 0; i < data_dim; ++i) {
           double opt1 = alpha * (labels[id] - lg_hypothesis(samples[id]));
-	  double t = opt1 * samples[id][i] - opt2 * theta[i];
-	  theta[i] += t;
+          double t = opt1 * samples[id][i] - opt2 * theta[i];
+          theta[i] += t;
         }
-	if(debug) {
-	  loss_error.push_back(calc_loss());
-	}
+        if(debug) {
+          loss_error.push_back(calc_loss());
+        }
       } // end traverse
     } // end rounds
   }
@@ -105,7 +105,7 @@ public:
     learning();
     //dump_result();
   }
-  
+
   void print(const vector<double> & vl) {
     for(auto & v : vl) {
       std::cout << v << "|";
@@ -134,8 +134,8 @@ public:
     local_parser(lines);
     std::cout << "mean loss" << calc_loss() / samples.size() << std::endl;
   }
-   
-private:
+
+ private:
   size_t rounds;
   double alpha, beta;
   string input, output;
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 {
   paracel::main_env comm_main_env(argc, argv);
   paracel::Comm comm(MPI_COMM_WORLD);
-  
+
   google::SetUsageMessage("[options]\n\t--cfg_file\n");
   google::ParseCommandLineFlags(&argc, &argv, true);
 

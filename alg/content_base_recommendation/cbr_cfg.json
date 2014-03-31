@@ -1,0 +1,9 @@
+{
+  "input_rating":, "",
+  "input_item_factor": "",
+  "output": "",
+  "alpha": 0.001,
+  "beta": 0.01,
+  "rounds": 10,
+  "limit_s": 0
+}

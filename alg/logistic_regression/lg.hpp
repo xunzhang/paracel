@@ -27,26 +27,26 @@ namespace paracel {
 
 class logistic_regression: public paracel::paralg {
 
-public:
+ public:
   logistic_regression(paracel::Comm, string, string, string, string = "ipm", int = 1, double = 0.002, double = 0.1, bool = false, int = 0, bool = false);
   virtual ~logistic_regression();
-  
+
   double lg_hypothesis(const vector<double> &);
   void local_parser(const vector<string> &, const char);
-  
+
   void dgd_learning(); // distributed gradient descent learning
   void ipm_learning(); // iterative parameter mixtures learning
   void agd_learning(); // asynchronous gradient descent learning
   void slow_agd_learning(); // slow asynchronous gradient descent learning
 
   virtual void solve();
-  
+
   double calc_loss();
   void dump_result();
   void print(const vector<double> &);
   void predict(const std::string &);
 
-private:
+ private:
   string input;
   std::string learning_method;
   int worker_id;

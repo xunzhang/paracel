@@ -27,17 +27,17 @@ using std::string;
 namespace paracel {
 
 logistic_regression::logistic_regression(paracel::Comm comm, string hosts_dct_str, 
-					string _input, string output, string method,
-					int _rounds, double _alpha, double _beta, bool _debug,
-					int limit_s, bool ssp_switch) :
-	paracel::paralg(hosts_dct_str, comm, output, _rounds),
-	input(_input),
-	learning_method(method),
-	worker_id(comm.get_rank()),
-	rounds(_rounds), 
-	alpha(_alpha),
-	beta(_beta),
-	debug(_debug) {}
+                                         string _input, string output, string method,
+                                         int _rounds, double _alpha, double _beta, bool _debug,
+                                         int limit_s, bool ssp_switch) :
+    paracel::paralg(hosts_dct_str, comm, output, _rounds),
+    input(_input),
+    learning_method(method),
+    worker_id(comm.get_rank()),
+    rounds(_rounds), 
+    alpha(_alpha),
+    beta(_beta),
+    debug(_debug) {}
 
 logistic_regression::~logistic_regression() {}
 
@@ -63,12 +63,12 @@ void logistic_regression::local_parser(const vector<string> & linelst, const cha
     samples.push_back(tmp);
     labels.push_back(std::stod(linev[linev.size() - 1]));
   }
-/*
-  for(auto & v : samples[0]) {
-    std::cout << "dim: " << v << std::endl;
-  }
-  std::cout << "label: " << labels[0] << std::endl;
-*/
+  /*
+     for(auto & v : samples[0]) {
+     std::cout << "dim: " << v << std::endl;
+     }
+     std::cout << "label: " << labels[0] << std::endl;
+     */
 } 
 
 void logistic_regression::dgd_learning() {
@@ -80,7 +80,7 @@ void logistic_regression::dgd_learning() {
     idx.push_back(i);
   }
   paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/liblg_update.so", 
-  			"lg_theta_update");
+                           "lg_theta_update");
   double coff2 = 2. * beta * alpha;
   vector<double> delta(data_dim); 
   // main loop
@@ -96,7 +96,7 @@ void logistic_regression::dgd_learning() {
       double coff1 = alpha * grad;
       for(int i = 0; i < data_dim; ++i) {
         double t = coff1 * samples[sample_id][i] - coff2 * theta[i];
-	delta[i] += t;
+        delta[i] += t;
       }
       if(debug) {
         loss_error.push_back(calc_loss());
@@ -119,7 +119,7 @@ void logistic_regression::ipm_learning() {
     idx.push_back(i);
   }
   paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/liblg_update.so", 
-  			"lg_theta_update");
+                           "lg_theta_update");
   double coff2 = 2. * beta * alpha;
   double wgt = 1. / get_worker_size();
   vector<double> delta(data_dim);
@@ -133,7 +133,7 @@ void logistic_regression::ipm_learning() {
       for(int i = 0; i < data_dim; ++i) {
         double coff1 = alpha * (labels[sample_id] - lg_hypothesis(samples[sample_id])); 
         double t = coff1 * samples[sample_id][i] - coff2 * theta[i];
-	theta[i] += t;
+        theta[i] += t;
       }
       if(debug) {
         loss_error.push_back(calc_loss());
@@ -162,7 +162,7 @@ void logistic_regression::agd_learning() {
     idx.push_back(i);
   }
   paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/liblg_update.so", 
-  			"lg_theta_update");
+                           "lg_theta_update");
   double coff2 = 2. * beta * alpha;
   vector<double> delta(data_dim);
   // main loop
@@ -175,12 +175,12 @@ void logistic_regression::agd_learning() {
     for(auto sample_id : idx) {
       if( (cnt % read_batch == 0) || (cnt == (int)idx.size() - 1) ) { 
         theta = paracel_read<vector<double> >("theta"); 
-	theta_old = theta;
+        theta_old = theta;
       }
       for(int i = 0; i < data_dim; ++i) {
         double coff1 = alpha * (labels[sample_id] - lg_hypothesis(samples[sample_id])); 
         double t = coff1 * samples[sample_id][i] - coff2 * theta[i];
-	theta[i] += t;
+        theta[i] += t;
       }
       if(debug) {
         loss_error.push_back(calc_loss());
@@ -189,7 +189,7 @@ void logistic_regression::agd_learning() {
         for(int i = 0; i < data_dim; ++i) {
           delta[i] = theta[i] - theta_old[i];
         }
-	paracel_bupdate("theta", delta);
+        paracel_bupdate("theta", delta);
       }
       cnt += 1;
     } // traverse
