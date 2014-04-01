@@ -74,7 +74,8 @@ public:
     for(auto & kv : item_factor) {
       paracel_write(kv.first + "_ifactor", kv.second);
     }
-    // theta.resize(fac_dim);
+    // resize theta here if no ufac specified
+    // TODO
 
     // load bigraph
     auto rating_parser = paracel::gen_parser(local_rating_parser);
@@ -107,7 +108,7 @@ public:
 
   void learning_1d() {
     init("fmap");
-    // main loop
+    // learning
     for(int rd = 0; rd < rounds; ++rd) {
       // every user 
       for(auto & meta : usr_rating_lst) {

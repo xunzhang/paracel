@@ -129,9 +129,8 @@ class paralg {
     }
   }
 
-  template <class T>
-paracel::list_type<paracel::str_type>
-paracel_loadall(const T & fn) {
+template <class T>
+paracel::list_type<paracel::str_type> paracel_loadall(const T & fn) {
   auto fname_lst = paracel::expand(fn);
   paracel::list_type<paracel::str_type> lines;
   for(auto & fname : fname_lst) {
@@ -574,6 +573,17 @@ void paracel_dump_vector(const paracel::list_type<V> & data,
     os << std::to_string(data[i]) << sep;
   }
   os << std::to_string(data[data.size() - 1]) << '\n';
+  os.close();
+}
+
+void paracel_dump_dict(const paracel::dict_type<paracel::str_type, double> & data,
+                       const paracel::str_type & filename = "result_",
+                       bool merge = false) {
+  std::ofstream os;
+  os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()), std::ofstream::app);
+  for(auto & kv : data) {
+    os << kv.first << '\t' << kv.second << '\n';
+  }
   os.close();
 }
 

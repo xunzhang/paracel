@@ -267,6 +267,13 @@ class matrix_factorization: public paracel::paralg {
     }
   }
 
+  void dump_result() {
+    paracel_dump_dict(W, "W_", false);
+    paracel_dump_dict(H, "H_", false);
+    paracel_dump_dict(usr_bias, "ubias_", false);
+    paracel_dump_dict(item_bias, "ibias_", false);
+  }
+
  private:
   int id;
   string input, output;
