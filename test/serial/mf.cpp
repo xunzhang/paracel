@@ -28,24 +28,24 @@ auto local_parser = [] (const std::string & line) {
 
 class matrix_factorization {
 
-public:
+ public:
   matrix_factorization (Comm comm, 
-  std::string _input, 
-  std::string _output,
-  int _k = 100,
-  size_t _rounds = 1,
-  double _alpha = 0.005,
-  double _beta = 0.01,
-  bool _debug = false) : 
-  	input(_input),
-	output(_output),
-	k(_k),
-	rounds(_rounds),
-	alpha(_alpha),
-	beta(_beta),
-	debug(_debug) {
-    pt = new paralg(comm, output, rounds);
-  }
+                        std::string _input, 
+                        std::string _output,
+                        int _k = 100,
+                        size_t _rounds = 1,
+                        double _alpha = 0.005,
+                        double _beta = 0.01,
+                        bool _debug = false) : 
+      input(_input),
+      output(_output),
+      k(_k),
+      rounds(_rounds),
+      alpha(_alpha),
+      beta(_beta),
+      debug(_debug) {
+        pt = new paralg(comm, output, rounds);
+      }
 
   ~matrix_factorization() {
     delete pt;
@@ -58,8 +58,8 @@ public:
     std::cout << "load done" << std::endl;
     rating_sz = rating_graph.e();
     auto init_lambda = [&] (const std::string & a, 
-    			const std::string & b, 
-			double c) { 
+                            const std::string & b, 
+                            double c) { 
       usr_dct[a] = a;
       item_dct[b] = b;
       miu += c;
@@ -76,14 +76,14 @@ public:
   double cal_rmse() {
     rmse = 0.;
     auto rmse_lambda = [&] (const std::string & uid,
-    			const std::string & iid,
-			double rating) {
+                            const std::string & iid,
+                            double rating) {
       double e = rating - estimate(uid, iid);
       rmse += e * e;
     };
     rating_graph.traverse(rmse_lambda);
     return sqrt(rmse / rating_sz);
- }
+  }
 
   void learning() {
     std::vector<double> delta_p(k), delta_q(k);
@@ -96,39 +96,39 @@ public:
       item_bias[kv.second] = 0.1 * random_double();
     }
     std::cout << "init done" << std::endl;
-    
+
     auto learning_lambda = [&] (const std::string & uid,
-    			const std::string & iid,
-			double rating) {
+                                const std::string & iid,
+                                double rating) {
       double e = rating - estimate(uid, iid);
       // compute delta
       for(int i = 0; i < k; ++i) {
         delta_p[i] = alpha * (2 * e * q[iid][i] - beta * p[uid][i]);
-	delta_q[i] = alpha * (2 * e * p[uid][i] - beta * q[iid][i]);
+        delta_q[i] = alpha * (2 * e * p[uid][i] - beta * q[iid][i]);
       }
       // update with delta
       for(int i = 0; i < k; ++i) {
         p[uid][i] += delta_p[i];
-	q[iid][i] += delta_q[i];
+        q[iid][i] += delta_q[i];
       }
       // update bias
       usr_bias[uid] += alpha * (2 * e - beta * usr_bias[uid]);
       item_bias[iid] += alpha * (2 * e - beta * item_bias[iid]);
     };
-    
+
     // learning
     for(int rd = 0; rd < rounds; ++rd) {
       std::cout << "rd:" << rd << " started" << std::endl;
       rating_graph.traverse(learning_lambda);
     } // end for
   }
-  
+
   void solve() {
     load();
     learning();
   }
 
-private:
+ private:
   paralg *pt;
   size_t rounds;
   bool debug;
@@ -136,11 +136,11 @@ private:
   double alpha, beta;
   std::string input, output;
   std::vector<double> loss_error;
-  
+
   int rating_sz = 0;
   double miu = 0., rmse = 0.;
   paracel::bigraph<std::string> rating_graph;
-  
+
   std::unordered_map<std::string, std::string> usr_dct, item_dct;
   std::unordered_map<std::string, std::vector<double> > p, q;
   std::unordered_map<std::string, double> usr_bias, item_bias;
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 
   google::SetUsageMessage("[options]\n\t--cfg_file\n");
   google::ParseCommandLineFlags(&argc, &argv, true);
-  
+
   ptree pt;
   json_parser::read_json(FLAGS_cfg_file, pt);
   std::string input = pt.get<std::string>("input");

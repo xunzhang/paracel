@@ -1,6 +1,7 @@
 {
   "input_rating":, "",
-  "input_item_factor": "",
+  "input_ifac": "",
+  "input_ufac": "",
   "output": "",
   "alpha": 0.001,
   "beta": 0.01,

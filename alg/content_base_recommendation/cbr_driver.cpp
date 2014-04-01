@@ -33,14 +33,18 @@ int main(int argc, char *argv[])
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   paracel::json_parser jp(FLAGS_cfg_file);
-  string input = jp.parse<string>("input");
+  string input_rating = jp.parse<string>("input_rating");
+  string input_ifac = jp.parse<string>("input_ifac");
+  string input_ufac = jp.parse<string>("input_ufac");
   string output = jp.parse<string>("output");
-  double alpha = pt.get<double>("alpha");
-  double beta = pt.get<double>("beta");
-  int rounds = pt.get<int>("rounds");
-  int limit_s = pt.get<int>("limit_s");
+  double alpha = jp.parse<double>("alpha");
+  double beta = jp.parse<double>("beta");
+  int rounds = jp.parse<int>("rounds");
+  int limit_s = jp.parse<int>("limit_s");
 
-  paracel::content_base_recommendation cbr_solver(comm, FLAGS_server_info, input, output);
+  paracel::content_base_recommendation cbr_solver(comm, FLAGS_server_info, 
+                                                  input_rating, input_ifac, input_ufac, output, 
+                                                  rounds, alpha, beta);
   cbr_solver.solve();
 
   return 0;
