@@ -68,5 +68,5 @@ add_subdirectory(alg/logistic_regression)
 add_subdirectory(alg/matrix_factorization)
 add_subdirectory(alg/similarity)
 add_subdirectory(alg/hi)
-add_subdirectory(alg/content_base_recommendation)
+add_subdirectory(alg/cbr)
 ################################################################################
