@@ -268,10 +268,26 @@ class matrix_factorization: public paracel::paralg {
   }
 
   void dump_result() {
-    paracel_dump_dict(W, "W_", false);
-    paracel_dump_dict(H, "H_", false);
-    paracel_dump_dict(usr_bias, "ubias_", false);
-    paracel_dump_dict(item_bias, "ibias_", false);
+    auto dump_lambda = [&] () {
+      paracel_dump_dict(W, "W_", false);
+      paracel_dump_dict(usr_bias, "ubias_", false);
+      paracel_dump_dict(H, "H_", false);
+      paracel_dump_dict(item_bias, "ibias_", false);
+    };
+    if(id % npx == 0 && id % npy == 0) {
+      dump_lambda();
+    }
+    if(npx > npy) {
+      if(id % npy == 0 && (id >= npy * npy)) {
+        dump_lambda();
+      }
+      std::cout << "Can never happen in paracel" << std::endl;
+    } else {
+      // npx < npy
+      if(id % npx == 0 && (id >= npx * npx)) {
+        dump_lambda();
+      }
+    }
   }
 
  private:

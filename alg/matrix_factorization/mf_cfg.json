@@ -1,6 +1,6 @@
 {
   "input" : "/mfs/user/wuhong/paracel/data/mf/book_interest.csv",
-  "output" : "/mfs/user/wuhong/paracel/data/mf_book_interest_result/",
+  "output" : "/mfs/user/wuhong/paracel/data/mf_result/",
   "k" : 80,
   "alpha" : 0.002,
   "beta" : 0.01,

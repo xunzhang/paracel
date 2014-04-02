@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
   
   paracel::matrix_factorization mf_solver(comm, FLAGS_server_info, input, output, "ipm", k, rounds, alpha, beta, false, limit_s, true);
   mf_solver.solve();
+  mf_solver.dump_result();
   std::cout << mf_solver.cal_rmse() << std::endl;
   return 0;
 }
