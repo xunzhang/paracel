@@ -268,25 +268,39 @@ class matrix_factorization: public paracel::paralg {
   }
 
   void dump_result() {
-    auto dump_lambda = [&] () {
-      paracel_dump_dict(W, "W_", false);
-      paracel_dump_dict(usr_bias, "ubias_", false);
-      paracel_dump_dict(H, "H_", false);
-      paracel_dump_dict(item_bias, "ibias_", false);
+    if(id == 0) {
+      std::unordered_map<string, double> tmp_dct;
+      tmp_dct["miu"] = miu;
+      tmp_dct["rating_sz"] = (double)rating_sz;
+      paracel_dump_dict(tmp_dct, "miu_");
+    }
+    auto dump_lambda_all = [&] () {
+      paracel_dump_dict(W, "W_");
+      paracel_dump_dict(usr_bias, "ubias_");
+      paracel_dump_dict(H, "H_");
+      paracel_dump_dict(item_bias, "ibias_");
+    };
+    auto dump_lambda_left = [&] () {
+      paracel_dump_dict(W, "W_");
+      paracel_dump_dict(usr_bias, "ubias_");
+    };
+    auto dump_lambda_top = [&] () {
+      paracel_dump_dict(H, "H_");
+      paracel_dump_dict(item_bias, "ibias_");
     };
     if(id % npx == 0 && id % npy == 0) {
-      dump_lambda();
+      dump_lambda_all();
     }
     if(npx > npy) {
-      if(id % npy == 0 && (id >= npy * npy)) {
-        dump_lambda();
-      }
       std::cout << "Can never happen in paracel" << std::endl;
-    } else {
-      // npx < npy
-      if(id % npx == 0 && (id >= npx * npx)) {
-        dump_lambda();
-      }
+    }
+    // npx < npy
+    auto r = id % npy;
+    if(r > npx - 1) {
+      dump_lambda_top();
+    }
+    if(r == npx) {
+      dump_lambda_left();
     }
   }
 

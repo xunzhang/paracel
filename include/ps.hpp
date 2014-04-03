@@ -550,9 +550,25 @@ bool paracel_contains(const paracel::str_type & key) {
 
 // TODO
 template <class V>
-paracel::str_type dump_line_as_vector() {
-  paracel::str_type s;
-  return s;
+void dump_line_as_vector() {}
+
+// buggy
+template <class T>
+void files_merge(const T & fn, 
+                 const paracel::str_type & prefix = "result_") {
+  auto fname_lst = paracel::expand(fn);
+  std::ofstream os;
+  os.open(paracel::todir(output) + prefix + "merge", std::ofstream::app);
+  for(auto & fname : fname_lst) {
+    std::ifstream f(fname, std::ios::binary);
+    if(!f) { throw std::runtime_error("paracel error in files_merge: open reading failed."); }
+    paracel::str_type l;
+    while(std::getline(f, l)) {
+      os << l << '\n';
+    }
+    f.close();
+  }
+  os.close();
 }
 
 // TODO
@@ -574,6 +590,11 @@ void paracel_dump_vector(const paracel::list_type<V> & data,
   }
   os << std::to_string(data[data.size() - 1]) << '\n';
   os.close();
+  if(merge) {
+    sync();
+    paracel::str_type output_regx = output + filename + "*";
+    files_merge(output_regx, filename);
+  }
 }
 
 void paracel_dump_dict(const paracel::dict_type<paracel::str_type, double> & data,
@@ -585,6 +606,11 @@ void paracel_dump_dict(const paracel::dict_type<paracel::str_type, double> & dat
     os << kv.first << '\t' << kv.second << '\n';
   }
   os.close();
+  if(merge) {
+    sync();
+    paracel::str_type output_regx = output + filename + "*";
+    files_merge(output_regx, filename);
+  }
 }
 
 void paracel_dump_dict(const paracel::dict_type<
@@ -601,6 +627,11 @@ void paracel_dump_dict(const paracel::dict_type<
     os << kv.second[kv.second.size() - 1] << '\n';
   }
   os.close();
+  if(merge) {
+    sync();
+    paracel::str_type output_regx = output + filename + "*";
+    files_merge(output_regx, filename);
+  }
 }
 
 void paracel_dump_dict(const paracel::dict_type<paracel::str_type, 
@@ -620,6 +651,11 @@ void paracel_dump_dict(const paracel::dict_type<paracel::str_type,
         kv.second[kv.second.size() - 1].second  << '\n';
   }
   os.close();
+  if(merge) {
+    sync();
+    paracel::str_type output_regx = output + filename + "*";
+    files_merge(output_regx, filename);
+  }
 }
 
 virtual void solve() {}
