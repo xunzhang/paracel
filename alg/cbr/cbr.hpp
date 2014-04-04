@@ -34,22 +34,31 @@ auto local_rating_parser = [] (const std::string & line) {
 
 class content_base_recommendation: public paracel::paralg {
 
-public:
+ public:
   content_base_recommendation(paracel::Comm comm, string hosts_dct_str,
-                              string _input_rating, string _input_ifac, string _input_ufac, string _output, 
+                              string _input_rating,
+                              string _input_miu,
+                              string _input_ubias,
+                              string _input_ibias,
+                              string _input_ufac,
+                              string _input_ifac,
+                              string _output, 
                               int _rounds = 1, double _alpha = 0.005, double _beta = 0.01,
                               int limit_s = 3, bool ssp_switch = true) :
       paracel::paralg(hosts_dct_str, comm, _output, _rounds, limit_s, ssp_switch),
       input_rating(_input_rating),
-      input_ifac(_input_ifac),
+      input_miu(_input_miu),
+      input_ubias(_input_ubias),
+      input_ibias(_input_ibias),
       input_ufac(_input_ufac),
+      input_ifac(_input_ifac),
       output(_output),
       rounds(_rounds),
       alpha(_alpha),
       beta(_beta) {}
-  
+
   virtual ~content_base_recommendation() {}
-  
+
   void local_factor_parser(std::unordered_map<string, vector<double> > & var,
                            const vector<string> & linelst, const char sep = ',') {
     // init fac_dim
@@ -66,30 +75,52 @@ public:
     }
   }
 
+  void local_bias_parser(std::unordered_map<string, double> & var,
+                         const vector<string> & linelst, const char sep = '\t') {
+    for(auto & line : linelst) {
+      auto v = paracel::str_split(line, sep);
+      ibias[v[0]] = std::stod(v[1]);
+    }
+  }
+
   void init(const string & pattern) {
+    // load miu
+    auto lines = paracel_loadall(input_miu);
+    auto temp = paracel::str_split(lines[0], '\t');
+    miu = std::stod(temp[1]);
+
+    // load item bias
+    lines = paracel_loadall(input_ibias); 
+    local_bias_parser(ibias, lines);
+
     // load item factor
-    auto lines = paracel_load(input_ifac);
+    lines = paracel_load(input_ifac);
     local_factor_parser(item_factor, lines);
     // write item_factor to parameter servers
     for(auto & kv : item_factor) {
       paracel_write(kv.first + "_ifactor", kv.second);
     }
-    // resize theta here if no ufac specified
-    // TODO
-
+    
     // load bigraph
     auto rating_parser = paracel::gen_parser(local_rating_parser);
     paracel_load_as_graph(rating_graph, input_rating, rating_parser, pattern);
     // split bigraph into user rating list
     auto split_lambda = [&] (const std::string & a,
-                       const std::string & b,
-                       double c) {
+                             const std::string & b,
+                             double c) {
       // default fmap: first dim is uid
       usr_rating_lst[a].push_back(std::make_pair(b, c));
     };
     rating_graph.traverse(split_lambda);
 
-    // init theta
+    // resize ufactor, ubias here if no ufac specified
+    for(auto & kv : usr_rating_lst) {
+      ufactor[kv.first] = paracel::random_double_list(fac_dim, 0.1);
+      ubias[kv.first] = 0.1 * paracel::random_double();
+    }
+
+    /*
+    // init ufactor with specified ufac 
     auto select_lambda = [&] (const vector<string> & linelst) {
       vector<double> tmp(0.001);
       for(auto & line : linelst) {
@@ -98,12 +129,28 @@ public:
           tmp.push_back(std::stod(v[i]));
         }
         if(usr_rating_lst.find(v[0]) != usr_rating_lst.end()) {
-          theta[v[0]] = tmp;
+          ufactor[v[0]] = tmp;
         }
       }
     }; // select_lambda
     // load started user factor
     paracel_sequential_loadall(input_ufac, select_lambda);
+
+    // init ubias with specified ubias
+    auto filter_lambda = [&] (const vector<string> & linelst) {
+      for(auto & line : linelst) {
+        auto v = paracel::str_split(line, '\t');
+        string uid = v[0];
+        double wgt = std::stod(v[1]);
+        if(usr_rating_lst.find(uid) != usr_rating_lst.end()) {
+          ubias[uid] = wgt;
+        }
+      }
+    };
+    // load started user bias
+    paracel_sequential_loadall(input_ubias, filter_lambda);
+    */
+    
   }
 
   void learning_1d() {
@@ -113,40 +160,36 @@ public:
       // every user 
       for(auto & meta : usr_rating_lst) {
         auto uid = meta.first;
-        // traverse factor
-        for(int k = 0; k < fac_dim; ++k) {
-          double delta = 0.;
-          double reg_delta = beta * theta[uid][k];
-          if(k == 0) {
-            for(auto & kv : meta.second) {
-              auto iid = kv.first;
-              auto wgt = kv.second;
-              if(item_factor.find(iid) == item_factor.end()) {
-                auto ifactor = paracel_read<vector<double> >(iid + "ifactor");
-                item_factor[iid] = ifactor;
-              }
-              delta += (wgt - paracel::dot_product(theta[uid], item_factor[iid])) * item_factor[iid][k];
-            }
-          } else {
-            for(auto & kv : meta.second) {
-              auto iid = kv.first;
-              auto wgt = kv.second;
-              if(item_factor.find(iid) == item_factor.end()) {
-                auto ifactor = paracel_read<vector<double> >(iid + "ifactor");
-                item_factor[iid] = ifactor;
-              }
-              delta += (wgt - paracel::dot_product(theta[uid], item_factor[iid])) * item_factor[iid][k] + reg_delta;
-            }
+        // traverse rating
+        for(auto & kv : meta.second) {
+          auto iid = kv.first;
+          auto wgt = kv.second;
+          if(item_factor.find(iid) == item_factor.end()) {
+            auto ifactor = paracel_read<vector<double> >(iid + "_ifactor");
+            item_factor[iid] = ifactor;
           }
-          delta *= alpha;
-          theta[uid][k] += delta;
+          double e = wgt - miu - ibias[iid] - ubias[uid] - paracel::dot_product(ufactor[uid], item_factor[iid]);
+          double delta = 0.;
+          // for k = 0
+          delta = alpha * (e * item_factor[iid][0]);
+          ufactor[uid][0] += delta;
+          // for k != 0
+          for(int k = 1; k < fac_dim; ++k) {
+            delta = 0.;
+            double reg_delta = beta * ufactor[uid][k];
+            delta = alpha * (e * item_factor[iid][k] - reg_delta); 
+            ufactor[uid][k] += delta;
+          }
+          // ubias
+          ubias[uid] += alpha * (e - beta * ubias[uid]);
         }
       }
     }
   }
-  
+
   void dump_result() {
-    paracel_dump_dict(theta);
+    paracel_dump_dict(ufactor);
+    paracel_dump_dict(ubias);
   }
 
   void learning_2d() {
@@ -159,10 +202,13 @@ public:
     // learning_2d();
   }
 
-private:
+ private:
   string input_rating;
-  string input_ifac;
+  string input_miu;
+  string input_ubias;
+  string input_ibias;
   string input_ufac;
+  string input_ifac;
   string output;
   int fac_dim;
   int rounds;
@@ -171,7 +217,10 @@ private:
   paracel::bigraph<string> rating_graph;  
   std::unordered_map<string, vector<double> > item_factor;
   std::unordered_map<string, vector<std::pair<string, double> > > usr_rating_lst;
-  std::unordered_map<string, vector<double> > theta;
+  double miu;
+  std::unordered_map<string, double> ibias;
+  std::unordered_map<string, double> ubias;
+  std::unordered_map<string, vector<double> > ufactor;
 };
 
 } // namespace paracel

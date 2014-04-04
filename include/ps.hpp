@@ -590,7 +590,7 @@ void paracel_dump_vector(const paracel::list_type<V> & data,
   }
   os << std::to_string(data[data.size() - 1]) << '\n';
   os.close();
-  if(merge) {
+  if(merge && get_worker_id() == 0) {
     sync();
     paracel::str_type output_regx = output + filename + "*";
     files_merge(output_regx, filename);
@@ -606,7 +606,7 @@ void paracel_dump_dict(const paracel::dict_type<paracel::str_type, double> & dat
     os << kv.first << '\t' << kv.second << '\n';
   }
   os.close();
-  if(merge) {
+  if(merge && get_worker_id() == 0) {
     sync();
     paracel::str_type output_regx = output + filename + "*";
     files_merge(output_regx, filename);
@@ -627,7 +627,7 @@ void paracel_dump_dict(const paracel::dict_type<
     os << kv.second[kv.second.size() - 1] << '\n';
   }
   os.close();
-  if(merge) {
+  if(merge && get_worker_id() == 0) {
     sync();
     paracel::str_type output_regx = output + filename + "*";
     files_merge(output_regx, filename);
@@ -651,7 +651,7 @@ void paracel_dump_dict(const paracel::dict_type<paracel::str_type,
         kv.second[kv.second.size() - 1].second  << '\n';
   }
   os.close();
-  if(merge) {
+  if(merge && get_worker_id() == 0) {
     sync();
     paracel::str_type output_regx = output + filename + "*";
     files_merge(output_regx, filename);

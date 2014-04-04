@@ -34,8 +34,11 @@ int main(int argc, char *argv[])
 
   paracel::json_parser jp(FLAGS_cfg_file);
   string input_rating = jp.parse<string>("input_rating");
-  string input_ifac = jp.parse<string>("input_ifac");
+  string input_miu = jp.parse<string>("input_miu");
+  string input_ubias = jp.parse<string>("input_ubias");
+  string input_ibias = jp.parse<string>("input_ibias");
   string input_ufac = jp.parse<string>("input_ufac");
+  string input_ifac = jp.parse<string>("input_ifac");
   string output = jp.parse<string>("output");
   double alpha = jp.parse<double>("alpha");
   double beta = jp.parse<double>("beta");
@@ -43,9 +46,17 @@ int main(int argc, char *argv[])
   int limit_s = jp.parse<int>("limit_s");
 
   paracel::content_base_recommendation cbr_solver(comm, FLAGS_server_info, 
-                                                  input_rating, input_ifac, input_ufac, output, 
-                                                  rounds, alpha, beta);
+                                                  input_rating, 
+                                                  input_miu, 
+                                                  input_ubias, 
+                                                  input_ibias, 
+                                                  input_ufac, 
+                                                  input_ifac, 
+                                                  output, 
+                                                  rounds, 
+                                                  alpha, 
+                                                  beta);
   cbr_solver.solve();
-
+  cbr_solver.dump_result();
   return 0;
 }

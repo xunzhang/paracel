@@ -1,10 +1,13 @@
 {
-  "input_rating":, "",
-  "input_ifac": "",
-  "input_ufac": "",
-  "output": "",
+  "input_rating":, "/mfs/user/wuhong/paracel/data/netflix/train/train_split2",
+  "input_miu": "/mfs/user/wuhong/paracel/data/netflix_result/miu_0",
+  "input_ubias": "/mfs/user/wuhong/paracel/data/netflix_result/ubias_*",
+  "input_ibias": "/mfs/user/wuhong/paracel/data/netflix_result/ibias_*",
+  "input_ufac": "/mfs/user/wuhong/paracel/netflix_result/W_*",
+  "input_ifac": "/mfs/user/wuhong/paracel/netflix_result/H_*",
+  "output": "/mfs/user/wuhong/paracel/data/cbr_result/",
   "alpha": 0.001,
   "beta": 0.01,
-  "rounds": 10,
+  "rounds": 1,
   "limit_s": 0
 }

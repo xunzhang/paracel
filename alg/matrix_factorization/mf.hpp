@@ -268,6 +268,8 @@ class matrix_factorization: public paracel::paralg {
   }
 
   void dump_result() {
+    int mod1 = id % npx;
+    int mod2 = id % npy;
     if(id == 0) {
       std::unordered_map<string, double> tmp_dct;
       tmp_dct["miu"] = miu;
@@ -288,19 +290,15 @@ class matrix_factorization: public paracel::paralg {
       paracel_dump_dict(H, "H_");
       paracel_dump_dict(item_bias, "ibias_");
     };
-    if(id % npx == 0 && id % npy == 0) {
+    if((id / npy) == mod2) {
       dump_lambda_all();
     }
     if(npx > npy) {
       std::cout << "Can never happen in paracel" << std::endl;
     }
     // npx < npy
-    auto r = id % npy;
-    if(r > npx - 1) {
+    if((mod2 > npx - 1) && ((id / npy) == 0)) {
       dump_lambda_top();
-    }
-    if(r == npx) {
-      dump_lambda_left();
     }
   }
 
