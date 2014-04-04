@@ -9,7 +9,7 @@
  * Downloading
  *   git clone http://code.dapps.douban.com/paracel.git
  *
- * Authors: Hong Wu <xunzhangthu@gmail.com>
+ * Authors: Jason Zhao<jasonzhao@douban.com>
  *
  * For fset fmt usage
  */

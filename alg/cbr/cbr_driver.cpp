@@ -55,7 +55,8 @@ int main(int argc, char *argv[])
                                                   output, 
                                                   rounds, 
                                                   alpha, 
-                                                  beta);
+                                                  beta,
+                                                  limit_s);
   cbr_solver.solve();
   cbr_solver.dump_result();
   return 0;
