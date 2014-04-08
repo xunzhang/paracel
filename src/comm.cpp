@@ -42,11 +42,17 @@ Comm::~Comm() {
   for(size_t i = 0; i < sz_pt_lst.size(); ++i) {
     delete sz_pt_lst[i];
   }
+  for(size_t i = 0; i < db_pt_lst.size(); ++i) {
+    delete db_pt_lst[i];
+  }
   for(size_t i = 0; i < str_pt_lst.size(); ++i) {
     delete str_pt_lst[i];
   }
   for(size_t i = 0; i < key_pt_lst.size(); ++i) {
     delete key_pt_lst[i];
+  }
+  for(size_t i = 0; i < lld_pt_lst.size(); ++i) {
+    delete lld_pt_lst[i];
   }
 }
 

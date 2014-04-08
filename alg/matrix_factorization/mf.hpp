@@ -255,6 +255,8 @@ class matrix_factorization: public paracel::paralg {
     }
     // last read
     read_mf_paras();
+    usr_bag.clear();
+    item_bag.clear();
   }
 
   virtual void solve() {
@@ -268,14 +270,9 @@ class matrix_factorization: public paracel::paralg {
   }
 
   void dump_result() {
-    int mod1 = id % npx;
-    int mod2 = id % npy;
-    if(id == 0) {
-      std::unordered_map<string, double> tmp_dct;
-      tmp_dct["miu"] = miu;
-      tmp_dct["rating_sz"] = (double)rating_sz;
-      paracel_dump_dict(tmp_dct, "miu_");
-    }
+    int mod = id % npy;
+    int res = id / npy;
+
     auto dump_lambda_all = [&] () {
       paracel_dump_dict(W, "W_");
       paracel_dump_dict(usr_bias, "ubias_");
@@ -290,15 +287,47 @@ class matrix_factorization: public paracel::paralg {
       paracel_dump_dict(H, "H_");
       paracel_dump_dict(item_bias, "ibias_");
     };
-    if((id / npy) == mod2) {
+
+    auto bias_reduce_lambda = [] (const std::unordered_map<string, double> & recvbuf, 
+                                  std::unordered_map<string, double> & sendbuf) {
+      for(auto & kv : recvbuf) {
+        if(sendbuf.count(kv.first) == 0) {
+          sendbuf[kv.first] = kv.second;
+        }
+      }
+    };
+    // sadly: no template supported
+    auto fac_reduce_lambda = [] (const std::unordered_map<string, vector<double> > & recvbuf,
+                                 std::unordered_map<string, vector<double> > & sendbuf) {
+      for(auto & kv : recvbuf) {
+        if(sendbuf.count(kv.first) == 0) {
+          sendbuf[kv.first] = kv.second;
+        }
+      }
+    };
+
+    if(id == 0) {
+      std::unordered_map<string, double> tmp_dct;
+      tmp_dct["miu"] = miu;
+      tmp_dct["rating_sz"] = static_cast<double>(rating_sz);
+      paracel_dump_dict(tmp_dct, "miu_");
+      // dump W, H, ubias, ibias
+      usr_bias = data_merge(usr_bias, bias_reduce_lambda, id);
+      item_bias = data_merge(item_bias, bias_reduce_lambda, id);
+      W = data_merge(W, fac_reduce_lambda, id);
+      H = data_merge(H, fac_reduce_lambda, id);
       dump_lambda_all();
-    }
-    if(npx > npy) {
-      std::cout << "Can never happen in paracel" << std::endl;
-    }
-    // npx < npy
-    if((mod2 > npx - 1) && ((id / npy) == 0)) {
-      dump_lambda_top();
+    } else { // id != 0
+      if(mod == 0) {
+        usr_bias = data_merge(usr_bias, bias_reduce_lambda, id);
+        W = data_merge(W, fac_reduce_lambda, id);
+        dump_lambda_left();
+      }
+      if(res == 0) {
+        item_bias = data_merge(item_bias, bias_reduce_lambda, id);
+        H = data_merge(H, fac_reduce_lambda, id);
+        dump_lambda_top();
+      }
     }
   }
 

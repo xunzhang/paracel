@@ -124,6 +124,14 @@ public:
     str_pt_lst.push_back(str_pt);
   }
   
+  void pt_enqueue(double *pt) {
+    db_pt_lst.push_back(pt);
+  }
+
+  void pt_enqueue(paracel::list_type<double> *pt) {
+    lld_pt_lst.push_back(pt);
+  }
+  
   inline size_t get_size() const { 
     return m_sz; 
   }
@@ -268,14 +276,15 @@ public:
     return v_req;
   }
 
-  // impl of dict_type<size_t, int> isend
-  vrequest isend(const paracel::dict_type<size_t, int> & dct, int dest, int tag) {
+  // impl of dict_type<K, V>: <size_t, int>, <string, double>, <string, vector<double> > supported
+  template <class K, class V>
+  vrequest isend(const paracel::dict_type<K, V> & dct, int dest, int tag) {
     int *sz = new int(dct.size());
     pt_enqueue(sz);
     vrequest v_req = isend(*sz, dest, tag);
     for(auto & kv : dct) {
-      size_t *key = new size_t(kv.first);
-      int *val = new int(kv.second);
+      K *key = new K(kv.first);
+      V *val = new V(kv.second);
       pt_enqueue(key);
       pt_enqueue(val);
       auto kreq = isend(*key, dest, tag);
@@ -298,8 +307,8 @@ public:
     auto lambda_local_pack = [](const paracel::triple_type & tpl) {
       paracel::str_type r;
       r = std::get<0>(tpl) + paracel::seperator_inner + 
-      	std::get<1>(tpl) + paracel::seperator_inner + 
-	std::to_string(std::get<2>(tpl));
+          std::get<1>(tpl) + paracel::seperator_inner + 
+          std::to_string(std::get<2>(tpl));
       return r;
     };
     paracel::str_type *str_pt = new paracel::str_type;
@@ -377,10 +386,12 @@ public:
     return stat;
   }
   
-  // impl for dict_type<size_t, int> recv
-  MPI_Status recv(paracel::dict_type<size_t, int> & dct, int src, int tag) {
+  // impl of dict_type<K, V>: <size_t, int>, <string, double>, <string, vector<double> > supported
+  template <class K, class V>
+  MPI_Status recv(paracel::dict_type<K, V> & dct, int src, int tag) {
     int sz;
-    size_t tmp_key; int tmp_val;
+    K tmp_key;
+    V tmp_val;
     MPI_Status stat;
     recv(sz, src, tag);
     for(int i = 0; i < sz; ++i) {
@@ -570,12 +581,62 @@ public:
     } 
   }
 
+  /* 
+   * tree reduce to specified rank
+   *
+   * void func(const vector<double> & recvbuf, 
+   *          vector<double> & sendbuf) {
+   *   for(size_t i = 0; i < recvbuf.size(); ++i) {
+   *     sendbuf[i] += recvbuf[i];
+   *   }
+   * }
+   *
+   * */
+  
+  template <class T, class F>
+  T treereduce(T data, F & func, int rank = 0) {
+    int rk = m_rk, num = m_sz;
+    int is_odd = 0, depth = 1;
+    while(num > 1) {
+      if(rk < num) {
+        is_odd = num % 2;
+        // odd send to (odd - 1)
+        if(rk % 2 != 0) {
+          isend(data, (rk - 1) * depth, 2014);
+          rk *= num;
+          break; // one procs only send once
+        } else {
+          if(rk != (num - 1)) {
+            T recvbuf;
+            recv(recvbuf, (rk + 1) * depth, 2014);
+            func(recvbuf, data);
+          }
+          rk /= 2;
+        }
+        depth *= 2;
+      }
+      num = num / 2 + is_odd;
+    }
+    T r;
+    // last reduce at rk 0
+    if(rk == 0) {
+      r = data;
+    }
+    // return specified rank
+    if(rank != 0) {
+      sendrecv(data, r, rank, 2014, 0, 2014);
+    }
+    return r;
+  }
+
 private:
   MPI_Comm m_comm;
   int m_rk, m_sz;
   paracel::list_type<int *> sz_pt_lst;
+  paracel::list_type<double *> db_pt_lst;
   paracel::list_type<size_t *> key_pt_lst;
   paracel::list_type<paracel::str_type *> str_pt_lst;
+  paracel::list_type<paracel::list_type<double> *> lld_pt_lst;
 };
 
 } // namespace paracel
