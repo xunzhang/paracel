@@ -90,8 +90,13 @@ class matrix_factorization: public paracel::paralg {
       miu += c;
     };
     rating_graph.traverse(init_lambda);
-    miu /= rating_sz;
-
+    sync();
+    auto worker_comm = get_comm();
+    worker_comm.allreduce(miu);
+    long rating_sz_tmp = rating_sz;
+    worker_comm.allreduce(rating_sz_tmp);
+    miu /= rating_sz_tmp;
+    
     for(auto & kv : usr_bag) {
       W[kv.first] = paracel::random_double_list(fac_dim, 0.1);
       usr_bias[kv.first] = 0.1 * paracel::random_double();
@@ -306,29 +311,37 @@ class matrix_factorization: public paracel::paralg {
       }
     };
 
+    auto worker_comm = get_comm();
+    int row_color = id / npy;
+    int col_color = id % npy;
+    auto x_comm = worker_comm.split(row_color);
+    auto y_comm = worker_comm.split(col_color);
+
     if(id == 0) {
       std::unordered_map<string, double> tmp_dct;
       tmp_dct["miu"] = miu;
       tmp_dct["rating_sz"] = static_cast<double>(rating_sz);
       paracel_dump_dict(tmp_dct, "miu_");
+
       // dump W, H, ubias, ibias
-      usr_bias = data_merge(usr_bias, bias_reduce_lambda, id);
-      item_bias = data_merge(item_bias, bias_reduce_lambda, id);
-      W = data_merge(W, fac_reduce_lambda, id);
-      H = data_merge(H, fac_reduce_lambda, id);
+      usr_bias = data_merge(usr_bias, bias_reduce_lambda, x_comm);
+      item_bias = data_merge(item_bias, bias_reduce_lambda, y_comm);
+      W = data_merge(W, fac_reduce_lambda, x_comm);
+      H = data_merge(H, fac_reduce_lambda, y_comm);
       dump_lambda_all();
     } else { // id != 0
       if(mod == 0) {
-        usr_bias = data_merge(usr_bias, bias_reduce_lambda, id);
-        W = data_merge(W, fac_reduce_lambda, id);
+        usr_bias = data_merge(usr_bias, bias_reduce_lambda, x_comm);
+        W = data_merge(W, fac_reduce_lambda, x_comm);
         dump_lambda_left();
       }
       if(res == 0) {
-        item_bias = data_merge(item_bias, bias_reduce_lambda, id);
-        H = data_merge(H, fac_reduce_lambda, id);
+        item_bias = data_merge(item_bias, bias_reduce_lambda, y_comm);
+        H = data_merge(H, fac_reduce_lambda, y_comm);
         dump_lambda_top();
       }
     }
+    std::cout << "adumping" << std::endl;
   }
 
  private:
@@ -341,7 +354,8 @@ class matrix_factorization: public paracel::paralg {
   bool debug;
   vector<double> loss_error;
 
-  int npx = 0, npy = 0, rating_sz = 0;
+  int npx = 0, npy = 0;
+  size_t rating_sz = 0;
   double miu = 0., rmse = 0.;
   double wgt_x = 0., wgt_y = 0.;
   paracel::bigraph<std::string> rating_graph;

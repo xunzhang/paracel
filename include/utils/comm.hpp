@@ -582,6 +582,7 @@ public:
   }
 
   /* 
+   * warning: SPMD function 
    * tree reduce to specified rank
    *
    * void func(const vector<double> & recvbuf, 
@@ -592,7 +593,6 @@ public:
    * }
    *
    * */
-  
   template <class T, class F>
   T treereduce(T data, F & func, int rank = 0) {
     int rk = m_rk, num = m_sz;
@@ -619,12 +619,17 @@ public:
     }
     T r;
     // last reduce at rk 0
-    if(rk == 0) {
+    if(m_rk == 0) {
       r = data;
     }
     // return specified rank
     if(rank != 0) {
-      sendrecv(data, r, rank, 2014, 0, 2014);
+      if(m_rk == 0) {
+        isend(data, rank, 2014);
+      }
+      if(m_rk == rank) {
+        recv(r, 0, 2014);
+      }
     }
     return r;
   }

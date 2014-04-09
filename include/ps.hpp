@@ -662,8 +662,8 @@ class paralg {
   }
 
   template <class T, class F>
-  T data_merge(T & data, F & func, int rank = 0) {
-    return worker_comm.treereduce(data, func, rank);
+  T data_merge(T & data, F & func, paracel::Comm & local_comm, int rank = 0) {
+    return local_comm.treereduce(data, func, rank);
   }
 
   virtual void solve() {}

@@ -103,7 +103,7 @@ public:
     m_comm.alltoall(line_slot_lst, recv_lsl);
     for(auto & lst : recv_lsl) {
       for(auto & tpl : lst) {
-	stf.push_back(tpl);
+        stf.push_back(tpl);
       }
     }
     return stf;
