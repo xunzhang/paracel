@@ -47,9 +47,7 @@ filter_result filter_proxy(F && func) {
 template <class F>
 filter_with_key_result filter_with_key_proxy(F && func) {
   filter_with_key_result filter_lambda = [&] (paracel::str_type s_key) {
-    paracel::packer<> pk;
-    auto key = pk.unpack(s_key);
-    return func(key);
+    return func(s_key);
   };
   return filter_lambda;
 }
