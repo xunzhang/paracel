@@ -275,6 +275,19 @@ class matrix_factorization: public paracel::paralg {
   }
 
   void dump_result() {
+    if(id == 0) {
+      usr_bias = paracel_read_special<double>("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
+                                              "mf_ubias_filter");
+      item_bias = paracel_read_special<double>("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
+                                               "mf_ibias_filter");
+      W = paracel_read_special<vector<double> >("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
+                                                "mf_W_filter");
+      H = paracel_read_special<vector<double> >("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
+                                                "mf_H_filter");
+    }
+  }
+
+  void dump_result_rigid() {
     int mod = id % npy;
     int res = id / npy;
 
@@ -312,36 +325,36 @@ class matrix_factorization: public paracel::paralg {
     };
 
     auto worker_comm = get_comm();
+    
     int row_color = id / npy;
     int col_color = id % npy;
+    
     auto x_comm = worker_comm.split(row_color);
     auto y_comm = worker_comm.split(col_color);
+    
+    long rating_sz_tmp = rating_sz;
+    worker_comm.allreduce(rating_sz_tmp);
+    
+    usr_bias = data_merge(usr_bias, bias_reduce_lambda, x_comm);
+    item_bias = data_merge(item_bias, bias_reduce_lambda, y_comm);
+    //W = data_merge(W, fac_reduce_lambda, x_comm);
+    //H = data_merge(H, fac_reduce_lambda, y_comm);
 
     if(id == 0) {
       std::unordered_map<string, double> tmp_dct;
       tmp_dct["miu"] = miu;
-      tmp_dct["rating_sz"] = static_cast<double>(rating_sz);
+      tmp_dct["rating_sz"] = static_cast<double>(rating_sz_tmp);
       paracel_dump_dict(tmp_dct, "miu_");
-
       // dump W, H, ubias, ibias
-      usr_bias = data_merge(usr_bias, bias_reduce_lambda, x_comm);
-      item_bias = data_merge(item_bias, bias_reduce_lambda, y_comm);
-      W = data_merge(W, fac_reduce_lambda, x_comm);
-      H = data_merge(H, fac_reduce_lambda, y_comm);
       dump_lambda_all();
     } else { // id != 0
       if(mod == 0) {
-        usr_bias = data_merge(usr_bias, bias_reduce_lambda, x_comm);
-        W = data_merge(W, fac_reduce_lambda, x_comm);
         dump_lambda_left();
       }
       if(res == 0) {
-        item_bias = data_merge(item_bias, bias_reduce_lambda, y_comm);
-        H = data_merge(H, fac_reduce_lambda, y_comm);
         dump_lambda_top();
       }
     }
-    std::cout << "adumping" << std::endl;
   }
 
  private:

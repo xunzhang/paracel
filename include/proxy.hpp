@@ -26,6 +26,7 @@ namespace paracel {
 
 using update_result = std::function<paracel::str_type(paracel::str_type, paracel::str_type)>;
 using filter_result = std::function<bool(paracel::str_type, paracel::str_type)>;
+using filter_with_key_result = std::function<bool(paracel::str_type)>;
 
 template <class F>
 filter_result filter_proxy(F && func) {
@@ -39,6 +40,16 @@ filter_result filter_proxy(F && func) {
     paracel::packer<paracel::kernel_type<typename traits::template args<1>::type> > pk2;
     auto p2 = pk2.unpack(s_val);
     return func(s_key, p2); // bool
+  };
+  return filter_lambda;
+}
+
+template <class F>
+filter_with_key_result filter_with_key_proxy(F && func) {
+  filter_with_key_result filter_lambda = [&] (paracel::str_type s_key) {
+    paracel::packer<> pk;
+    auto key = pk.unpack(s_key);
+    return func(key);
   };
   return filter_lambda;
 }

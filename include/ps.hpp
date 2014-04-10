@@ -193,6 +193,7 @@ class paralg {
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.load();
+    sync();
     // create graph 
     ld.create_graph(lines, grp, degree_map, col_degree_map);
     set_decomp_info(pattern);
@@ -222,6 +223,7 @@ class paralg {
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.load();
+    sync();
     // create sparse matrix
     ld.create_matrix(lines, blk_mtx, row_map, col_map, degree_map, col_degree_map);
     set_decomp_info(pattern);
@@ -265,6 +267,7 @@ class paralg {
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.load();
+    sync();
     // create sparse matrix
     ld.create_matrix(lines, blk_dense_mtx, row_map);
     set_decomp_info(pattern);
@@ -386,9 +389,46 @@ class paralg {
     }
     return d;
   }
+  
+  template<class V, class F>
+  void paracel_readall_handle(F & func) {
+    for(int indx = 0; indx < ps_obj->srv_sz; ++indx) {
+      paracel::dict_type<paracel::str_type, V> d;
+      auto tmp = ps_obj->kvm[indx].pullall<V>();
+      for(auto & kv : tmp) {
+        d[kv.first] = kv.second;
+      }
+      func(d);
+    }
+  }
 
-  template<class V>
-  V paracel_read_special() {}
+  template <class V>
+  paracel::dict_type<paracel::str_type, V>
+  paracel_read_special(const paracel::str_type & file_name,
+                       const paracel::str_type & func_name) {
+    paracel::dict_type<paracel::str_type, V> d;
+    for(int indx = 0; indx < ps_obj->srv_sz; ++indx) {
+      auto tmp = ps_obj->kvm[indx].pullall_special<V>(file_name, func_name);
+      for(auto & kv : tmp) {
+        d[kv.first] = kv.second;
+      }
+    }
+    return d;
+  }
+
+  template <class V, class F>
+  void paracel_read_special_handle(const paracel::str_type & file_name,
+                              const paracel::str_type & func_name,
+                              F & func) {
+    for(int indx = 0; indx < ps_obj->srv_sz; ++indx) {
+      paracel::dict_type<paracel::str_type, V> d;
+      auto tmp = ps_obj->kvm[indx].pullall_special<V>(file_name, func_name);
+      for(auto & kv : tmp) {
+        d[kv.first] = kv.second;
+      }
+      func(d);
+    }
+  }
 
   void paracel_read_topk(int k, paracel::list_type<
                               std::pair<paracel::str_type, int> 

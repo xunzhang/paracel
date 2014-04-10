@@ -582,7 +582,7 @@ public:
   }
 
   /* 
-   * warning: SPMD function 
+   * warning: SPMD function, to be called by all workers, memory problem 
    * tree reduce to specified rank
    *
    * void func(const vector<double> & recvbuf, 
@@ -594,7 +594,7 @@ public:
    *
    * */
   template <class T, class F>
-  T treereduce(T data, F & func, int rank = 0) {
+  T treereduce(T & data, F & func, int rank = 0) {
     int rk = m_rk, num = m_sz;
     int is_odd = 0, depth = 1;
     while(num > 1) {
