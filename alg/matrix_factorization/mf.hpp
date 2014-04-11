@@ -276,18 +276,17 @@ class matrix_factorization: public paracel::paralg {
   }
 
   void dump_result() {
-    
-    // dump miu
-    auto worker_comm = get_comm();
-    long rating_sz_tmp = rating_sz;
-    worker_comm.allreduce(rating_sz_tmp);
-    std::unordered_map<string, double> dump_miu;
-    dump_miu["miu"] = miu;
-    dump_miu["rating_sz"] = static_cast<double>(rating_sz_tmp);
-    paracel_dump_dict(dump_miu, "miu_");
 
-    // dump ubias, ibias, W, H
     if(id == 0) {
+    
+      auto worker_comm = get_comm();
+      long rating_sz_tmp = rating_sz;
+      worker_comm.allreduce(rating_sz_tmp);
+      std::unordered_map<string, double> dump_miu;
+      dump_miu["miu"] = miu;
+      dump_miu["rating_sz"] = static_cast<double>(rating_sz_tmp);
+      paracel_dump_dict(dump_miu, "miu_");
+      
       auto tmp_usr_bias = paracel_read_special<double>(
           "/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
           "mf_ubias_filter"
