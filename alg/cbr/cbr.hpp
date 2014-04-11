@@ -60,16 +60,20 @@ class content_base_recommendation: public paracel::paralg {
   virtual ~content_base_recommendation() {}
 
   void local_factor_parser(std::unordered_map<string, vector<double> > & var,
-                           const vector<string> & linelst, const char sep = ',') {
+                           const vector<string> & linelst, 
+                           const char sep1 = '\t',
+                           const char sep2 = '|') {
     // init fac_dim
-    auto tmp = paracel::str_split(linelst[0], sep);
-    fac_dim = tmp.size(); // tmp.size() -1 + 1
+    auto tmp1 = paracel::str_split(linelst[0], sep1);
+    auto tmp2 = paracel::str_split(tmp1[1], sep2);
+    fac_dim = tmp2.size() + 1;
 
     for(auto & line : linelst) {
       vector<double> tmp(1.);
-      auto v = paracel::str_split(line, sep);
-      for(size_t i = 1; i < v.size(); ++i) {
-        tmp.push_back(std::stod(v[i]));
+      auto v = paracel::str_split(line, sep1);
+      auto vv = paracel::str_split(v[1], sep2);
+      for(size_t i = 0; i < vv.size(); ++i) {
+        tmp.push_back(std::stod(vv[i]));
       }
       var[v[0]] = tmp;
     }
@@ -88,7 +92,7 @@ class content_base_recommendation: public paracel::paralg {
     auto lines = paracel_loadall(input_miu);
     auto temp = paracel::str_split(lines[0], '\t');
     miu = std::stod(temp[1]);
-
+    
     // load item bias
     lines = paracel_loadall(input_ibias); 
     local_bias_parser(ibias, lines);
@@ -98,7 +102,7 @@ class content_base_recommendation: public paracel::paralg {
     local_factor_parser(item_factor, lines);
     // write item_factor to parameter servers
     for(auto & kv : item_factor) {
-      paracel_write(kv.first + "_ifactor", kv.second);
+      paracel_write(kv.first + "_ifactor", kv.second); // "iid_ifactor"
     }
     
     // load bigraph
@@ -150,11 +154,11 @@ class content_base_recommendation: public paracel::paralg {
     // load started user bias
     paracel_sequential_loadall(input_ubias, filter_lambda);
     */
-    
   }
 
   void learning_1d() {
     init("fmap");
+    sync();
     // learning
     for(int rd = 0; rd < rounds; ++rd) {
       // every user 
@@ -188,8 +192,8 @@ class content_base_recommendation: public paracel::paralg {
   }
 
   void dump_result() {
-    paracel_dump_dict(ufactor);
-    paracel_dump_dict(ubias);
+    paracel_dump_dict(ufactor, "W_");
+    paracel_dump_dict(ubias, "ubias_");
   }
 
   void learning_2d() {
