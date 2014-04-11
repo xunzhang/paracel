@@ -151,7 +151,7 @@ class matrix_factorization: public paracel::paralg {
     /*
        paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/libmf_update.so",
        "mf_fac_updater");
-       */
+     */
     paracel::str_type file_name = "/mfs/user/wuhong/paracel/build/lib/libmf_update.so";
     paracel::str_type func_name = "mf_fac_updater";
     vector<double> delta_W(fac_dim), delta_H(fac_dim);
@@ -272,18 +272,73 @@ class matrix_factorization: public paracel::paralg {
       learning();
     } else {
     }
+    sync();
   }
 
   void dump_result() {
+    
+    // dump miu
+    auto worker_comm = get_comm();
+    long rating_sz_tmp = rating_sz;
+    worker_comm.allreduce(rating_sz_tmp);
+    std::unordered_map<string, double> dump_miu;
+    dump_miu["miu"] = miu;
+    dump_miu["rating_sz"] = static_cast<double>(rating_sz_tmp);
+    paracel_dump_dict(dump_miu, "miu_");
+
+    // dump ubias, ibias, W, H
     if(id == 0) {
-      usr_bias = paracel_read_special<double>("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
-                                              "mf_ubias_filter");
-      item_bias = paracel_read_special<double>("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
-                                               "mf_ibias_filter");
-      W = paracel_read_special<vector<double> >("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
-                                                "mf_W_filter");
-      H = paracel_read_special<vector<double> >("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
-                                                "mf_H_filter");
+      auto tmp_usr_bias = paracel_read_special<double>(
+          "/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
+          "mf_ubias_filter"
+          );
+      auto tmp_item_bias = paracel_read_special<double>(
+          "/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
+          "mf_ibias_filter"
+          );
+      auto tmp_W = paracel_read_special<vector<double> >(
+          "/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
+          "mf_W_filter"
+          );
+      auto tmp_H = paracel_read_special<vector<double> >(
+          "/mfs/user/wuhong/paracel/local/lib/libmf_filter.so", 
+          "mf_H_filter"
+          );
+      
+      std::unordered_map<string, double> dump_usr_bias, dump_item_bias;
+      std::unordered_map<string, vector<double> > dump_W, dump_H;
+      
+      auto tear_lambda = [] (const string & str) {
+        auto pos1 = str.find('[') + 1;
+        auto pos2 = str.find(']');
+        string s = str.substr(pos1, pos2 - pos1);
+        return s;
+      };
+
+      for(auto & kv : tmp_usr_bias) {
+        string temp = tear_lambda(kv.first);
+        dump_usr_bias[temp] = kv.second;
+      }
+      for(auto & kv : tmp_item_bias) {
+        string temp = tear_lambda(kv.first);
+        dump_item_bias[temp] = kv.second;
+      }
+      for(auto & kv : tmp_W) {
+        string temp = tear_lambda(kv.first);
+        dump_W[temp] = kv.second;
+      }
+      for(auto & kv : tmp_H) {
+        string temp = tear_lambda(kv.first);
+        dump_H[temp] = kv.second;
+      }
+      
+      auto dump_lambda = [&] () {
+        paracel_dump_dict(dump_W, "W_");
+        paracel_dump_dict(dump_usr_bias, "ubias_");
+        paracel_dump_dict(dump_H, "H_");
+        paracel_dump_dict(dump_item_bias, "ibias_");
+      };
+      dump_lambda();
     }
   }
 

@@ -60,6 +60,6 @@ bool filter_H(const std::string & key) {
 }
 
 paracel::filter_with_key_result mf_ubias_filter = paracel::filter_with_key_proxy(filter_ubias);
-paracel::filter_with_key_result mf_ibias_filter = paracel::filter_with_key_proxy(filter_ubias);
+paracel::filter_with_key_result mf_ibias_filter = paracel::filter_with_key_proxy(filter_ibias);
 paracel::filter_with_key_result mf_W_filter = paracel::filter_with_key_proxy(filter_W);
 paracel::filter_with_key_result mf_H_filter = paracel::filter_with_key_proxy(filter_H);
