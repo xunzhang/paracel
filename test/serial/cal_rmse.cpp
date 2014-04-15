@@ -149,7 +149,7 @@ double cal_rmse_mix(string & in_miu,
     string uid = tmp[0];
     string iid = tmp[1];
     double rating = stod(tmp[3]);
-    double err = rating - (estimate1(uid, iid) + estimate2(uid, iid)) / 2;
+    double err = rating - (estimate1(uid, iid) * 0.7 + estimate2(uid, iid) * 0.3);
     rmse += err * err;
     rating_sz += 1;
   }

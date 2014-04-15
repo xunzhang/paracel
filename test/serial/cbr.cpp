@@ -53,10 +53,9 @@ class cbr {
     auto local_ifac_parser = [&] (const vector<string> & linelst) {
       auto tmp1 = paracel::str_split(linelst[0], '\t');
       auto tmp2 = paracel::str_split(tmp1[1], '|');
-      fac_dim = tmp2.size() + 1;
+      fac_dim = tmp2.size();
       for(auto & line : linelst) {
         vector<double> tmp;
-        tmp.push_back(1.);
         auto v = paracel::str_split(line, '\t');
         auto vv = paracel::str_split(v[1], '|');
         for(size_t i = 0; i < vv.size(); ++i) {
@@ -108,8 +107,7 @@ class cbr {
             std::cout << "bug" << std::endl;
           }
           double e = wgt - miu - ibias[iid] - ubias[uid] - dot_product(ufactor[uid], ifactor[iid]);
-          ufactor[uid][0] += alpha * (e * ifactor[iid][0]);
-          for(int k = 1; k < fac_dim; ++k) {
+          for(int k = 0; k < fac_dim; ++k) {
             double reg_delta = beta * ufactor[uid][k];
             ufactor[uid][k] += alpha * (e * ifactor[iid][k] - reg_delta);
           }
