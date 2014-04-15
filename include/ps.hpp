@@ -84,6 +84,7 @@ class paralg {
     stale_cache = 0;
     clock_server = 0;
     total_iters = rounds;
+    ps_obj = NULL;
   }
 
   paralg(paracel::str_type hosts_dct_str, 
@@ -112,6 +113,7 @@ class paralg {
 
   virtual ~paralg() {
     if(ps_obj) {
+      std::cout << "debugggg" << std::endl;
       delete ps_obj;
     }
   }

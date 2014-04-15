@@ -69,7 +69,8 @@ class content_base_recommendation: public paracel::paralg {
     fac_dim = tmp2.size() + 1;
 
     for(auto & line : linelst) {
-      vector<double> tmp(1.);
+      vector<double> tmp;
+      tmp.push_back(1.);
       auto v = paracel::str_split(line, sep1);
       auto vv = paracel::str_split(v[1], sep2);
       for(size_t i = 0; i < vv.size(); ++i) {
