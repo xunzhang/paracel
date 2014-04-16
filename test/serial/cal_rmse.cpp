@@ -149,7 +149,7 @@ double cal_rmse_mix(string & in_miu,
     string uid = tmp[0];
     string iid = tmp[1];
     double rating = stod(tmp[3]);
-    double err = rating - (estimate1(uid, iid) * 0.7 + estimate2(uid, iid) * 0.3);
+    double err = rating - (estimate1(uid, iid) * 0.3 + estimate2(uid, iid) * 0.7);
     rmse += err * err;
     rating_sz += 1;
   }
@@ -164,12 +164,15 @@ int main(int argc, char *argv[])
   string ifac = "/mfs/user/wuhong/paracel/data/netflix_result7/H_0";
   string ubias = "/mfs/user/wuhong/paracel/data/netflix_result7/ubias_0";
   string ufac = "/mfs/user/wuhong/paracel/data/netflix_result7/W_0";
-  string cbr_ubias = "/mfs/user/wuhong/paracel/data/cbr_result/ubias_0";
-  string cbr_ufac = "/mfs/user/wuhong/paracel/data/cbr_result/W_0";
+  string cbr_ubias = "/mfs/user/wuhong/paracel/data/cbr_result4/ubias_0";
+  string cbr_ufac = "/mfs/user/wuhong/paracel/data/cbr_result4/W_0";
+  string mix_ubias = "/mfs/user/wuhong/paracel/test/serial/mix_ubias_netflix";
+  string mix_ufac = "/mfs/user/wuhong/paracel/test/serial/mix_ufactor_netflix";
   string test = "/mfs/user/wuhong/paracel/data/netflix/test/test";
   //string test = "/mfs/user/wuhong/paracel/data/netflix/train/train";
   //std::cout << cal_rmse(miu, ibias, ifac, ubias, ufac, test) << std::endl;
-  //std::cout << cal_rmse(miu, ibias, ifac, cbr_ubias, cbr_ufac, test) << std::endl;
-  std::cout << cal_rmse_mix(miu, ibias, ifac, ubias, ufac, cbr_ubias, cbr_ufac, test) << std::endl;
+  std::cout << cal_rmse(miu, ibias, ifac, cbr_ubias, cbr_ufac, test) << std::endl;
+  //std::cout << cal_rmse(miu, ibias, ifac, mix_ubias, mix_ufac, test) << std::endl;
+  //std::cout << cal_rmse_mix(miu, ibias, ifac, ubias, ufac, cbr_ubias, cbr_ufac, test) << std::endl;
   return 0;
 }

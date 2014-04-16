@@ -86,11 +86,43 @@ class cbr {
     rating_graph->traverse(split_lambda);
     delete rating_graph;
 
-    // init ubias, ufactor
+    // init ubias, ufactor with specified value
+    string s1 = "/mfs/user/wuhong/paracel/data/netflix_result7/ubias_0";
+    lines = pt->paracel_load(s1);
+    auto local_ubias_parser = [&] (const vector<string> & linelst) {
+      for(auto & line : linelst) {
+        auto v = str_split(line, '\t');
+        ubias[v[0]] = std::stod(v[1]);
+      }
+    };
+    local_ubias_parser(lines);
+
+    string s2 = "/mfs/user/wuhong/paracel/data/netflix_result7/W_0";
+    lines = pt->paracel_load(s2);
+    auto local_ufac_parser = [&] (const vector<string> & linelst) {
+      auto tmp1 = paracel::str_split(linelst[0], '\t');
+      auto tmp2 = paracel::str_split(tmp1[1], '|');
+      fac_dim = tmp2.size();
+      for(auto & line : linelst) {
+        vector<double> tmp;
+        auto v = paracel::str_split(line, '\t');
+        auto vv = paracel::str_split(v[1], '|');
+        for(size_t i = 0; i < vv.size(); ++i) {
+          tmp.push_back(std::stod(vv[i]));
+        }
+        ufactor[v[0]] = tmp;
+      }
+    };
+    local_ufac_parser(lines);
+    lines.resize(0);
+
+    /*
+    // init ubias, ufactor with random value
     for(auto & kv : usr_rating_lst) {
       ufactor[kv.first] = random_double_list(fac_dim, 0.0001);
       ubias[kv.first] = 0.;//0.01 * random_double();
     }
+    */
   }
 
   void learning() {
