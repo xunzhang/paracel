@@ -82,6 +82,7 @@ class content_base_recommendation: public paracel::paralg {
     local_ibias_parser(lines, '\t');
     lines.resize(0);
 
+/*
     // load some of ifactor
     lines = paracel_load(input_ifac);
     auto local_ifac_parser = [&] (const vector<string> & linelst,
@@ -104,6 +105,7 @@ class content_base_recommendation: public paracel::paralg {
     };
     local_ifac_parser(lines, '\t', '|');
     lines.resize(0);
+*/
 
     // init global ifactor
     if(get_worker_id() == 0) {
@@ -123,6 +125,7 @@ class content_base_recommendation: public paracel::paralg {
       paracel_sequential_loadall(input_ifac, handler_lambda);
       ifactor_global.clear();
     }
+    sync();
     
     // load bigraph
     auto local_rating_parser = [] (const std::string & line) {
@@ -143,6 +146,7 @@ class content_base_recommendation: public paracel::paralg {
           );
     };
     rating_graph.traverse(split_lambda);
+    std::cout << "traverse done" << std::endl;
 
     /*
     // resize ufactor/ubias here, if no ufac specified
@@ -154,11 +158,16 @@ class content_base_recommendation: public paracel::paralg {
 
     // init ufactor with specified ufac 
     auto select_lambda = [&] (const vector<string> & linelst) {
-      vector<double> tmp;
+      auto tmp1 = paracel::str_split(linelst[0], '\t');
+      auto tmp2 = paracel::str_split(tmp1[1], '|');
+      // init fac_dim
+      fac_dim = tmp2.size();
       for(auto & line : linelst) {
-        auto v = paracel::str_split(line, ',');
-        for(size_t i = 0; i < v.size(); ++i) {
-          tmp.push_back(std::stod(v[i]));
+        vector<double> tmp;
+        auto v = paracel::str_split(line, '\t');
+        auto vv = paracel::str_split(v[1], '|');
+        for(size_t i = 0; i < vv.size(); ++i) {
+          tmp.push_back(std::stod(vv[i]));
         }
         if(usr_rating_lst.count(v[0]) != 0) {
           ufactor[v[0]] = tmp;
@@ -167,6 +176,7 @@ class content_base_recommendation: public paracel::paralg {
     }; // select_lambda
     // load started user factor
     paracel_sequential_loadall(input_ufac, select_lambda);
+    std::cout << "load ufactor done" << std::endl;
 
     // init ubias with specified ubias
     auto filter_lambda = [&] (const vector<string> & linelst) {
@@ -181,12 +191,14 @@ class content_base_recommendation: public paracel::paralg {
     };
     // load started user bias
     paracel_sequential_loadall(input_ubias, filter_lambda);
+    std::cout << "load ubias done" << std::endl;
   }
 
   void learning_1d() {
     
     init("fmap");
     sync();
+    std::cout << "init done" << std::endl;
 
     // learning
     for(int rd = 0; rd < rounds; ++rd) {
