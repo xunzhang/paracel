@@ -45,18 +45,20 @@ int main(int argc, char *argv[])
   int rounds = jp.parse<int>("rounds");
   int limit_s = jp.parse<int>("limit_s");
 
-  paracel::content_base_recommendation cbr_solver(comm, FLAGS_server_info, 
-                                                  input_rating, 
-                                                  input_miu, 
-                                                  input_ubias, 
-                                                  input_ibias, 
-                                                  input_ufac, 
-                                                  input_ifac, 
-                                                  output, 
-                                                  rounds, 
-                                                  alpha, 
-                                                  beta,
-                                                  limit_s);
+  paracel::content_base_recommendation 
+      cbr_solver(comm, 
+                 FLAGS_server_info, 
+                 input_rating, 
+                 input_miu, 
+                 input_ubias, 
+                 input_ibias, 
+                 input_ufac, 
+                 input_ifac, 
+                 output, 
+                 rounds, 
+                 alpha, 
+                 beta,
+                 limit_s);
   cbr_solver.solve();
   cbr_solver.dump_result();
   return 0;

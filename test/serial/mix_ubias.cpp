@@ -58,8 +58,8 @@ void dump(const unordered_map<string, double> & ubias,
 
 int main(int argc, char *argv[])
 {
-  string ubn1 = "/mfs/user/wuhong/paracel/data/netflix_result7/ubias_0";
-  string ubn2 = "/mfs/user/wuhong/paracel/data/cbr_result3/ubias_0";
+  string ubn1 = "/mfs/user/wuhong/paracel/data/netflix_result8/ubias_0";
+  string ubn2 = "/mfs/user/wuhong/paracel/data/cbr_result88/ubias_0";
   string output = "/mfs/user/wuhong/paracel/test/serial/mix_ubias_netflix";
   auto mix_ubias = bias_mix(ubn1, ubn2);
   dump(mix_ubias, output);
