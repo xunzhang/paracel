@@ -6,58 +6,70 @@
 
 using namespace std;
 
+template <class T>
 void load_ifactor(unordered_map<
             string, vector<double> 
             > & var, 
-            string & fn) {
-  ifstream f(fn);
+            const T & fn) {
   string line_buf;
-  while(getline(f, line_buf)) {
-    auto tmp = paracel::str_split(line_buf, "\t");
-    auto tmp2 = paracel::str_split(tmp[1], "|");
-    vector<double> temp;
-    temp.push_back(1.);
-    for(auto & fac : tmp2) {
-      temp.push_back(std::stod(fac));
+  auto fn_lst = paracel::expand(fn);
+  for(auto & fn : fn_lst) {
+    ifstream f(fn);
+    while(getline(f, line_buf)) {
+      auto tmp = paracel::str_split(line_buf, "\t");
+      auto tmp2 = paracel::str_split(tmp[1], "|");
+      vector<double> temp;
+      temp.push_back(1.);
+      for(auto & fac : tmp2) {
+        temp.push_back(std::stod(fac));
+      }
+      var[tmp[0]] = temp;
     }
-    var[tmp[0]] = temp;
+    f.close();
   }
-  f.close();
 }
 
+template <class T>
 void load_ufactor(unordered_map<
             string, vector<double> 
             > & var, 
-            string & fn) {
-  ifstream f(fn);
+            const T & fn) {
   string line_buf;
-  while(getline(f, line_buf)) {
-    auto tmp = paracel::str_split(line_buf, "\t");
-    auto tmp2 = paracel::str_split(tmp[1], "|");
-    vector<double> temp;
-    for(auto & fac : tmp2) {
-      temp.push_back(stod(fac));
+  auto fn_lst = paracel::expand(fn);
+  for(auto & fn : fn_lst) {
+    ifstream f(fn);
+    while(getline(f, line_buf)) {
+      auto tmp = paracel::str_split(line_buf, "\t");
+      auto tmp2 = paracel::str_split(tmp[1], "|");
+      vector<double> temp;
+      for(auto & fac : tmp2) {
+        temp.push_back(stod(fac));
+      }
+      var[tmp[0]] = temp;
     }
-    var[tmp[0]] = temp;
+    f.close();
   }
-  f.close();
 }
 
+template <class T>
 void load_bias(unordered_map<
                string, double
                > & var,
-               string & fn) {
-  ifstream f(fn);
+               const T & fn) {
   string line_buf;
-  while(getline(f, line_buf)) {
-    auto tmp = paracel::str_split(line_buf, "\t");
-    var[tmp[0]] = stod(tmp[1]);
+  auto fn_lst = paracel::expand(fn);
+  for(auto & fn : fn_lst) {
+    ifstream f(fn);
+    while(getline(f, line_buf)) {
+      auto tmp = paracel::str_split(line_buf, "\t");
+      var[tmp[0]] = stod(tmp[1]);
+    }
+    f.close();
   }
-  f.close();
 }
 
 void load_miu(double & miu, 
-              string & fn) {
+              const string & fn) {
   ifstream f(fn);
   string line_buf;
 
@@ -68,12 +80,12 @@ void load_miu(double & miu,
   f.close();
 }
 
-double cal_rmse(string & in_miu,
-               string & in_ibias,
-               string & in_ifac,
-               string & in_ubias,
-               string & in_ufac,
-               string & in_test) {
+double cal_rmse(const string & in_miu,
+                const string & in_ibias,
+                const string & in_ifac,
+                const string & in_ubias,
+                const string & in_ufac,
+                const string & in_test) {
   double miu;
   unordered_map<string, double> ibias, ubias;
   unordered_map<string, vector<double> > ifac, ufac;
@@ -107,14 +119,14 @@ double cal_rmse(string & in_miu,
   return sqrt(rmse / rating_sz);
 }
 
-double cal_rmse_mix(string & in_miu,
-                    string & in_ibias,
-                    string & in_ifac,
-                    string & in_ubias1,
-                    string & in_ufac1,
-                    string & in_ubias2,
-                    string & in_ufac2,
-                    string & in_test) {
+double cal_rmse_mix(const string & in_miu,
+                    const string & in_ibias,
+                    const string & in_ifac,
+                    const string & in_ubias1,
+                    const string & in_ufac1,
+                    const string & in_ubias2,
+                    const string & in_ufac2,
+                    const string & in_test) {
   double miu;
   unordered_map<string, double> ibias, ubias1, ubias2;
   unordered_map<string, vector<double> > ifac, ufac1, ufac2;
@@ -164,8 +176,8 @@ int main(int argc, char *argv[])
   string ifac = "/mfs/user/wuhong/paracel/data/netflix_result8/H_0";
   string ubias = "/mfs/user/wuhong/paracel/data/netflix_result8/ubias_0";
   string ufac = "/mfs/user/wuhong/paracel/data/netflix_result8/W_0";
-  string cbr_ubias = "/mfs/user/wuhong/paracel/data/cbr_result88/ubias_0";
-  string cbr_ufac = "/mfs/user/wuhong/paracel/data/cbr_result88/W_0";
+  string cbr_ubias = "/mfs/user/wuhong/paracel/data/cbr_result_parallel/ubias_*";
+  string cbr_ufac = "/mfs/user/wuhong/paracel/data/cbr_result_parallel/W_*";
   string mix_ubias = "/mfs/user/wuhong/paracel/test/serial/mix_ubias_netflix";
   string mix_ufac = "/mfs/user/wuhong/paracel/test/serial/mix_ufactor_netflix";
   string test = "/mfs/user/wuhong/paracel/data/netflix/test/test";

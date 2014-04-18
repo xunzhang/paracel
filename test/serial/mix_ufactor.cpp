@@ -6,9 +6,10 @@
 
 using namespace std;
 
+template <class T>
 unordered_map<string, vector<double> > 
-factor_mix(const string & ufn1, 
-           const string & ufn2,
+factor_mix(const T & fn1, 
+           const T & fn2,
            double frac = 0.7) {
   
   unordered_map<string, vector<double> > uf1, uf2, uf3;
@@ -24,15 +25,23 @@ factor_mix(const string & ufn1,
     dct[tmp[0]] = temp;
   };
 
-  ifstream f1(ufn1);
-  ifstream f2(ufn2);
-
+  auto fn_lst1 = paracel::expand(fn1);
+  auto fn_lst2 = paracel::expand(fn2);
   string line_buf;
-  while(getline(f1, line_buf)) {
-    handler_lambda(uf1, line_buf);
+  
+  for(auto & ufn1 : fn_lst1) {
+    ifstream f1(ufn1);
+    while(getline(f1, line_buf)) {
+      handler_lambda(uf1, line_buf);
+    }
+    f1.close();
   }
-  while(getline(f2, line_buf)) {
-    handler_lambda(uf2, line_buf);
+  for(auto & ufn2 : fn_lst2) {
+    ifstream f2(ufn2);
+    while(getline(f2, line_buf)) {
+      handler_lambda(uf2, line_buf);
+    }
+    f2.close();
   }
   std::cout << "init done" << std::endl;
 
@@ -47,8 +56,6 @@ factor_mix(const string & ufn1,
   }
   std::cout << "done" << std::endl;
 
-  f1.close();
-  f2.close();
   return uf3;
 }
 
@@ -58,7 +65,8 @@ void dump(const unordered_map<
           const string & output) {
   // dump
   ofstream fout;
-  fout.open(output, ofstream::app);
+  //fout.open(output, ofstream::app);
+  fout.open(output);
   std::cout << "dump begin" << std::endl;
   for(auto & kv : ufac) {
     fout << kv.first << '\t';
@@ -73,8 +81,8 @@ void dump(const unordered_map<
 
 int main(int argc, char *argv[])
 {
-  string ufac1 = "/mfs/user/wuhong/paracel/data/netflix_result8/W_0";
-  string ufac2 = "/mfs/user/wuhong/paracel/data/cbr_result88/W_0";
+  string ufac1 = "/mfs/user/wuhong/paracel/data/netflix_result8/W_*";
+  string ufac2 = "/mfs/user/wuhong/paracel/data/cbr_result_parallel/W_*";
   string output = "/mfs/user/wuhong/paracel/test/serial/mix_ufactor_netflix";
   auto mix_ufac = factor_mix(ufac1, ufac2);
   dump(mix_ufac, output);
