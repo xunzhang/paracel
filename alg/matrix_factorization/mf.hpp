@@ -60,6 +60,7 @@ class matrix_factorization: public paracel::paralg {
   }
 
   double cal_rmse() {
+    auto worker_comm = get_comm();
     rmse = 0.;
     auto rmse_lambda = [&] (const std::string & uid,
                             const std::string & iid,
@@ -68,9 +69,9 @@ class matrix_factorization: public paracel::paralg {
       rmse += e * e;
     };
     rating_graph.traverse(rmse_lambda);
-    auto worker_comm = get_comm();
     double rmse_sum = rmse;
     int sz_sum = rating_sz;
+    sync();
     worker_comm.allreduce(rmse_sum);
     worker_comm.allreduce(sz_sum);
     return sqrt(rmse_sum / sz_sum);
@@ -78,6 +79,7 @@ class matrix_factorization: public paracel::paralg {
 
   void init_parameters() {
 
+    auto worker_comm = get_comm(); 
     auto f_parser = paracel::gen_parser(local_parser);
     paracel_load_as_graph(rating_graph, input, f_parser, "fsmap");
     std::cout << "load done" << std::endl;
@@ -91,7 +93,6 @@ class matrix_factorization: public paracel::paralg {
     };
     rating_graph.traverse(init_lambda);
     sync();
-    auto worker_comm = get_comm();
     worker_comm.allreduce(miu);
     long rating_sz_tmp = rating_sz;
     worker_comm.allreduce(rating_sz_tmp);
@@ -276,12 +277,11 @@ class matrix_factorization: public paracel::paralg {
   }
 
   void dump_result() {
+    auto worker_comm = get_comm(); 
+    long rating_sz_tmp = rating_sz;
+    worker_comm.allreduce(rating_sz_tmp);
 
     if(id == 0) {
-    
-      auto worker_comm = get_comm();
-      long rating_sz_tmp = rating_sz;
-      worker_comm.allreduce(rating_sz_tmp);
       std::unordered_map<string, double> dump_miu;
       dump_miu["miu"] = miu;
       dump_miu["rating_sz"] = static_cast<double>(rating_sz_tmp);
@@ -338,6 +338,7 @@ class matrix_factorization: public paracel::paralg {
         paracel_dump_dict(dump_item_bias, "ibias_");
       };
       dump_lambda();
+      std::cout << "dumpdone" << std::endl;
     }
   }
 
@@ -378,11 +379,9 @@ class matrix_factorization: public paracel::paralg {
       }
     };
 
-    auto worker_comm = get_comm();
-    
     int row_color = id / npy;
     int col_color = id % npy;
-    
+    auto worker_comm = get_comm(); 
     auto x_comm = worker_comm.split(row_color);
     auto y_comm = worker_comm.split(col_color);
     

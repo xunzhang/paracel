@@ -113,7 +113,6 @@ class paralg {
 
   virtual ~paralg() {
     if(ps_obj) {
-      std::cout << "debugggg" << std::endl;
       delete ps_obj;
     }
   }
@@ -571,6 +570,9 @@ class paralg {
     worker_comm.sync();
   }
 
+  /**
+   * Never called in if(rank == 0) clause because dup will hang.
+   */
   paracel::Comm get_comm() {
     return worker_comm;
   }
