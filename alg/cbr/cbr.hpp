@@ -81,6 +81,7 @@ class content_base_recommendation: public paracel::paralg {
     };
     local_ibias_parser(lines, '\t');
     lines.resize(0);
+    std::cout << "print: " << ibias.size() << std::endl;
 
 /*
     // load some of ifactor
@@ -109,7 +110,6 @@ class content_base_recommendation: public paracel::paralg {
 
     // init global ifactor
     if(get_worker_id() == 0) {
-      std::unordered_map<string, vector<double> > ifactor_global;
       auto handler_lambda = [&] (const vector<string> & linelst) {
         for(auto & line : linelst) {
           vector<double> tmp;
@@ -118,14 +118,14 @@ class content_base_recommendation: public paracel::paralg {
           for(size_t i = 0;i < vv.size(); ++i) {
             tmp.push_back(std::stod(vv[i]));
           }
-          ifactor_global[v[0]] = tmp;
+          ifactor[v[0]] = tmp;
           paracel_write(v[0] + "_ifactor", tmp); // key: "iid_ifactor"
         }
       };
       paracel_sequential_loadall(input_ifac, handler_lambda);
-      ifactor_global.clear();
     }
     sync();
+    ifactor.clear();
     
     // load bigraph
     auto local_rating_parser = [] (const std::string & line) {
@@ -147,15 +147,7 @@ class content_base_recommendation: public paracel::paralg {
     };
     rating_graph.traverse(split_lambda);
     std::cout << "traverse done" << std::endl;
-
-    /*
-    // resize ufactor/ubias here, if no ufac specified
-    for(auto & kv : usr_rating_lst) {
-      ufactor[kv.first] = paracel::random_double_list(fac_dim, 0.1);
-      ubias[kv.first] = 0.1 * paracel::random_double();
-    }
-    */
-
+    
     // init ufactor with specified ufac 
     auto select_lambda = [&] (const vector<string> & linelst) {
       auto tmp1 = paracel::str_split(linelst[0], '\t');
@@ -165,41 +157,47 @@ class content_base_recommendation: public paracel::paralg {
       for(auto & line : linelst) {
         vector<double> tmp;
         auto v = paracel::str_split(line, '\t');
+        if(usr_rating_lst.count(v[0]) == 0) { continue; }
         auto vv = paracel::str_split(v[1], '|');
         for(size_t i = 0; i < vv.size(); ++i) {
           tmp.push_back(std::stod(vv[i]));
         }
-        if(usr_rating_lst.count(v[0]) != 0) {
-          ufactor[v[0]] = tmp;
-        }
+        ufactor[v[0]] = tmp;
       }
     }; // select_lambda
     // load started user factor
     paracel_sequential_loadall(input_ufac, select_lambda);
-    std::cout << "load ufactor done" << std::endl;
+    std::cout << "load ufactor done" << ufactor.size() << "|" << std::endl;
 
     // init ubias with specified ubias
     auto filter_lambda = [&] (const vector<string> & linelst) {
       for(auto & line : linelst) {
         auto v = paracel::str_split(line, '\t');
         string uid = v[0];
-        double wgt = std::stod(v[1]);
-        if(usr_rating_lst.count(uid) != 0) {
-          ubias[uid] = wgt;
-        }
+        if(usr_rating_lst.count(uid) == 0) { continue; }
+        ubias[uid] = std::stod(v[1]);
       }
     };
     // load started user bias
     paracel_sequential_loadall(input_ubias, filter_lambda);
-    std::cout << "load ubias done" << std::endl;
+    std::cout << "load ubias done" << ubias.size() << std::endl;
+    
+    // resize ufactor/ubias here, with no ufac specified
+    for(auto & kv : usr_rating_lst) {
+      if(ufactor.count(kv.first) == 0) {
+        ufactor[kv.first] = paracel::random_double_list(fac_dim, 0.001);
+      }
+      if(ubias.count(kv.first) == 0) {
+        ubias[kv.first] = 0.001 * paracel::random_double();
+      }
+    }
+
   }
 
   void learning_1d() {
-    
     init("fmap");
     sync();
     std::cout << "init done" << std::endl;
-
     // learning
     for(int rd = 0; rd < rounds; ++rd) {
       // every user 
@@ -209,11 +207,13 @@ class content_base_recommendation: public paracel::paralg {
         for(auto & kv : meta.second) {
           auto iid = kv.first;
           auto wgt = kv.second;
+	  //assert(ufactor[uid].size() == (size_t)fac_dim);
+	  //assert(ifactor[iid].size() == (size_t)fac_dim);
+	  //assert(ubias.count(uid) == 1);
+	  //assert(ibias.count(iid) == 1);
           if(ifactor.count(iid) == 0) {
-            auto ifactor_tmp = paracel_read<vector<double> >(iid + "_ifactor");
-            ifactor[iid] = ifactor_tmp;
-          }
-
+            ifactor[iid] = paracel_read<vector<double> >(iid + "_ifactor");
+          } 
           double e = wgt - miu - 
               ibias[iid] - ubias[uid] - 
               paracel::dot_product(ufactor[uid], ifactor[iid]);
@@ -224,12 +224,11 @@ class content_base_recommendation: public paracel::paralg {
           }
           // ubias
           ubias[uid] += alpha * (e - beta * ubias[uid]);
-          if(ifactor.size() > 100000) {
+          if(ifactor.size() > 10000) {
             ifactor.clear();
           }
         }
       }
-      //
     }
     usr_rating_lst.clear();
     ifactor.clear();
