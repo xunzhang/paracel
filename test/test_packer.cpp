@@ -3,10 +3,26 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <tuple>
 #include <tr1/unordered_map>
+#include <msgpack.hpp>
 #include "paracel_types.hpp"
 #include "packer.hpp"
+#include "graph.hpp"
 //#include "msgpack/type/tr1/unordered_map.hpp"
+    
+struct AA {
+ public:
+  AA() : a(1), b(1.) {}
+  AA(int i, double j) : a(i), b(j) {}
+  ~AA() {}
+  void dump() {
+    std::cout << "a: " << a << " b: " << b << std::endl;
+  }
+  int a;
+  double b;
+  MSGPACK_DEFINE(a, b);
+};
 
 int main(int argc, char *argv[])
 {
@@ -192,6 +208,42 @@ int main(int argc, char *argv[])
         std::cout << va << std::endl;
       }
     }
+  }
+  {
+    AA d(7, 3.14);
+    paracel::packer<AA> obj(d);
+    std::string s;
+    obj.pack(s);
+    AA r = obj.unpack(s);
+    r.dump();
+  }
+  {
+    paracel::list_type<std::tuple<size_t, size_t, double> > tpls;
+    tpls.emplace_back(std::make_tuple(0, 0, 3.));
+    tpls.emplace_back(std::make_tuple(0, 2, 5.));
+    tpls.emplace_back(std::make_tuple(1, 0, 4.));
+    tpls.emplace_back(std::make_tuple(1, 1, 3.));
+    tpls.emplace_back(std::make_tuple(1, 2, 1.));
+    tpls.emplace_back(std::make_tuple(2, 0, 2.));
+    tpls.emplace_back(std::make_tuple(2, 3, 1.));
+    tpls.emplace_back(std::make_tuple(3, 1, 3.));
+    tpls.emplace_back(std::make_tuple(3, 3, 1.));
+    paracel::bigraph<size_t> bgrp(tpls);
+    std::cout << bgrp.v() << std::endl;
+    std::cout << bgrp.e() << std::endl;
+    std::cout << bgrp.avg_degree() << std::endl;
+    auto kk = bgrp.adjacent(0);
+    std::cout << "cao" << kk.size() << std::endl;
+
+    paracel::packer<paracel::bigraph<size_t> > obj(bgrp);
+    std::string s;
+    obj.pack(s);
+    paracel::bigraph<size_t> r = obj.unpack(s);
+    std::cout << r.v() << std::endl;
+    std::cout << r.e() << std::endl;
+    std::cout << r.avg_degree() << std::endl;
+    auto kkk = r.adjacent(0);
+    std::cout << "cao" << kkk.size() << std::endl;
   }
   return 0;
 }

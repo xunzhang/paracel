@@ -18,6 +18,7 @@
 #include <tuple>
 #include <utility>
 #include <algorithm>
+#include <msgpack.hpp>
 #include "paracel_types.hpp"
 
 namespace paracel {
@@ -354,11 +355,13 @@ public:
     return cnt;
   }
 
-private:
+ private:
   size_t v_sz = 0; 
   size_t e_sz = 0;
   paracel::dict_type<T, paracel::dict_type<T, double> > adj;
   paracel::dict_type<T, paracel::dict_type<T, double> > reverse_adj;
+ public:
+  MSGPACK_DEFINE(v_sz, e_sz, adj, reverse_adj);
 };
 
 } // namespace paracel
