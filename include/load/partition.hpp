@@ -99,7 +99,9 @@ void files_load_lines_impl(paracel::coroutine<paracel::str_type>::caller_type & 
     }
 
     std::ifstream f(name_list[fi], std::ios::binary);
-    if(!f) { throw std::runtime_error("paracel error in files_load_lines_impl: loader reading failed."); }
+    if(!f) { 
+      throw std::runtime_error("paracel error in files_load_lines_impl: loader reading failed."); 
+    }
     
     if(offset) {
       f.seekg(offset - 1);

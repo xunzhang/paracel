@@ -139,7 +139,10 @@ sort_and_cnt(const paracel::list_type<paracel::str_type> & in) {
 
 bool isfile(const paracel::str_type & f) {
   struct stat st;
-  stat(f.c_str(), &st);
+  int r = stat(f.c_str(), &st);
+  if(r != 0) {
+    return false;
+  }
   if(S_ISREG(st.st_mode)) {
     return true;
   }
@@ -148,7 +151,10 @@ bool isfile(const paracel::str_type & f) {
 
 bool isdir(const paracel::str_type & d) {
   struct stat st;
-  stat(d.c_str(), &st);
+  int r = stat(d.c_str(), &st);
+  if(r != 0) {
+    return false;
+  }
   if(S_ISDIR(st.st_mode)) {
     return true;
   }
