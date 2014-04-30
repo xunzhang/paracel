@@ -37,5 +37,11 @@ int main(int agrc, char *argv[])
       std::cout << item << std::endl;
     std::cout << "---------------" << std::endl;
   }
+  {
+    std::vector<std::string> lst = paracel::paracel_glob("/mfs/alg/tmp/jasontmp/user_music_factor_model/artist_factor/a9");
+    for(auto & fn : lst) {
+      std::cout << fn << std::endl;
+    }
+  }
   return 0;
 }
