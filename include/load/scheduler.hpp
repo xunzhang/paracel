@@ -38,7 +38,14 @@ class scheduler {
 public:
   scheduler(paracel::Comm comm) : m_comm(comm) { dim_init(); } 
 
-  scheduler(paracel::Comm comm, std::string pt = "fmap", bool flag = false) : mix(flag), pattern(pt), m_comm(comm) { dim_init(); }
+  scheduler(paracel::Comm comm, 
+            std::string pt = "fmap", 
+            bool flag = false) : 
+      mix(flag), 
+      pattern(pt), 
+      m_comm(comm) { 
+    dim_init(); 
+  }
   
   void dim_init();
    
@@ -54,6 +61,13 @@ public:
     return r;
   }
 
+  template <class A, class B>
+  inline size_t select(A & i, B & j) const {
+    paracel::hash_type<A> hf1;
+    paracel::hash_type<B> hf2;
+    return (hf1(i) % npx) * npy + hf2(j) * npy;
+  }
+
   template <class F = std::function< paracel::list_type<paracel::str_type>(paracel::str_type) > >
   llt_type lines_organize(const paracel::list_type<paracel::str_type> & lines,
       F && parser_func = tmp_parser) {
@@ -64,34 +78,37 @@ public:
       auto stf = parser_func(line);
       if(stf.size() == 2) {
         // bfs or part of fset case
-	// ['a', 'b'] or ['a', 'b:0.2']
-	auto tmp = paracel::str_split(stf[1], delimiter);
-	if(tmp.size() == 1) {
-	  paracel::triple_type tpl(stf[0], stf[1], 1.);
-	  line_slot_lst[h(stf[0], stf[1], npx, npy)].push_back(tpl);
-	} else {
-	  paracel::triple_type tpl(stf[0], tmp[0], std::stod(tmp[1]));
-	  line_slot_lst[h(stf[0], tmp[0], npx, npy)].push_back(tpl);
-	}
+	      // ['a', 'b'] or ['a', 'b:0.2']
+	      auto tmp = paracel::str_split(stf[1], delimiter);
+	      if(tmp.size() == 1) {
+	        paracel::triple_type tpl(stf[0], stf[1], 1.);
+	        line_slot_lst[h(stf[0], stf[1], npx, npy)].push_back(tpl);
+	      } else {
+	        paracel::triple_type tpl(stf[0], tmp[0], std::stod(tmp[1]));
+	        line_slot_lst[h(stf[0], tmp[0], npx, npy)].push_back(tpl);
+	      }
       } else if(mix) {
         // fset case
-	// ['a', 'b', 'c'] or ['a', 'b|0.2', 'c|0.4'], but ['a', '0.2', '0.4'] is not supported here
+	      // ['a', 'b', 'c'] or ['a', 'b|0.2', 'c|0.4']
+        // but ['a', '0.2', '0.4'] is not supported here
         for(size_t i = 1; i < stf.size(); ++i) {
-	  auto item = stf[i];
-	  auto tmp = paracel::str_split(item, delimiter);
-	  if(tmp.size() == 1) {
-	    paracel::triple_type tpl(stf[0], item, 1.);
-	    line_slot_lst[h(stf[0], item, npx, npy)].push_back(tpl);
-	  } else {
-	    paracel::triple_type tpl(stf[0], tmp[0], std::stod(tmp[1]));
-	    line_slot_lst[h(stf[0], tmp[0], npx, npy)].push_back(tpl);
-	  }
-	} // end of for
+	        auto item = stf[i];
+	        auto tmp = paracel::str_split(item, delimiter);
+	        if(tmp.size() == 1) {
+	          paracel::triple_type tpl(stf[0], item, 1.);
+	          line_slot_lst[h(stf[0], item, npx, npy)].push_back(tpl);
+	        } else {
+	          paracel::triple_type tpl(stf[0], tmp[0], std::stod(tmp[1]));
+	          line_slot_lst[h(stf[0], tmp[0], npx, npy)].push_back(tpl);
+	        }
+	      } // end of for
       } else {
-	if(stf.size() != 3) { throw std::runtime_error("Paracel error in lines_organize: fmt of input files not supported"); }
+	      if(stf.size() != 3) { 
+          throw std::runtime_error("Paracel error in lines_organize: fmt of input files not supported"); 
+        }
         // fsv case
         paracel::triple_type tpl(stf[0], stf[1], std::stod(stf[2]));
-	line_slot_lst[h(stf[0], stf[1], npx, npy)].push_back(tpl);
+	      line_slot_lst[h(stf[0], stf[1], npx, npy)].push_back(tpl);
       } // end of if
     } // end of for
     return line_slot_lst;
@@ -166,38 +183,38 @@ public:
     }
 
     if (pattern == "fmap") {
-    // cal dm
-    // little tricky: default stl map sort is equal to stl set
-    auto deg = paracel::sort_and_cnt(rows);
-    indx = 0;
-    for(auto & item : deg) {
-      dm[indx] = item;
-      indx += 1;
-    }
-    
-    // cal col_dm
-    paracel::dict_type<size_t, int> reduce_map;
-    for(auto & tpl : stf) {
-      auto key = std::get<1>(tpl);
-      if(reduce_map.find(key) == reduce_map.end()) {
-        reduce_map[key] = 1;
-      } else {
-        reduce_map[key] += 1;
+      // cal dm
+      // little tricky: default stl map sort is equal to stl set
+      auto deg = paracel::sort_and_cnt(rows);
+      indx = 0;
+      for(auto & item : deg) {
+        dm[indx] = item;
+        indx += 1;
       }
-    }
     
-    auto union_func3 = [&] (paracel::dict_type<size_t, int> tmp) {
-      for(auto & kv : tmp) {
-        auto key = kv.first;
-	auto val = kv.second;
-	if(col_dm.find(key) == col_dm.end()) {
-	  col_dm[key] = val;
-	} else {
-	  col_dm[key] += val;
-	}
+      // cal col_dm
+      paracel::dict_type<size_t, int> reduce_map;
+      for(auto & tpl : stf) {
+        auto key = std::get<1>(tpl);
+        if(reduce_map.find(key) == reduce_map.end()) {
+          reduce_map[key] = 1;
+        } else {
+          reduce_map[key] += 1;
+        }
       }
-    };
-    m_comm.bcastring(reduce_map, union_func3);
+    
+      auto union_func3 = [&] (paracel::dict_type<size_t, int> tmp) {
+        for(auto & kv : tmp) {
+          auto key = kv.first;
+	        auto val = kv.second;
+	        if(col_dm.find(key) == col_dm.end()) {
+	          col_dm[key] = val;
+	        } else {
+	          col_dm[key] += val;
+	        }
+        }
+      };
+      m_comm.bcastring(reduce_map, union_func3);
     } // end of if 
   } // index_mapping
   
@@ -212,7 +229,7 @@ private:
 private:
   int leader = 0;
   bool mix;
-  paracel::str_type pattern; 
+  paracel::str_type pattern = "fmap"; 
   paracel::Comm m_comm;
   int npx;
   int npy;

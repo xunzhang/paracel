@@ -558,7 +558,7 @@ class paralg {
     total_iters = n;
   }
 
-  inline int get_worker_id() {
+  inline size_t get_worker_id() {
     return worker_comm.get_rank();
   }
 
