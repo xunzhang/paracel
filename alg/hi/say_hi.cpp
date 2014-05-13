@@ -15,6 +15,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 #include <mpi.h>
 #include <google/gflags.h>
@@ -23,6 +24,7 @@
 #include "utils.hpp"
 
 using std::string;
+using std::vector;
 
 DEFINE_string(server_info, "host1:7777PARACELhost2:8888", "hosts name string of paracel-servers.\n");
 
@@ -40,6 +42,8 @@ int main(int argc, char *argv[])
   string input = jp.parse<string>("input"); 
   string output = jp.parse<string>("output"); 
   string para = jp.parse<string>("para");
+  vector<int> demo = jp.parse_v<int>("demo");
+
   paracel::hi hi_solver(comm, FLAGS_server_info, input, output, para);
   hi_solver.solve();
   return 0;

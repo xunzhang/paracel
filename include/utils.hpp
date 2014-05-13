@@ -137,6 +137,15 @@ public:
   T parse(const paracel::str_type & key) {
     return pt->get<T>(key);
   }
+  template <class T>
+  paracel::list_type<T> parse_v(const paracel::str_type & key) {
+    paracel::list_type<T> r;
+    for(auto & v : pt->get_child(key)) {
+      auto tmp = v.second.get_value<T>();
+      r.push_back(tmp);
+    }
+    return r;
+  }
 };
 
 } // namespace paracel

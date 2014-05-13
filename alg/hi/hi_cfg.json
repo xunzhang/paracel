@@ -1,5 +1,6 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/0018",
+  "input" : "/mfs/alg/tmp/jasontmp/user_music_factor_model/model_0/a*",
   "output" : "/mfs/user/wuhong/paracel/tmp/",
-  "para" : "kiss"
+  "para" : "kiss",
+  "demo" : [1,2,3]
 }

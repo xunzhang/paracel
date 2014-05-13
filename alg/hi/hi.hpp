@@ -16,6 +16,7 @@
 #ifndef FILE_49843a5e_b2f8_f70c_58c7_1b13de85a6eb_HPP 
 #define FILE_49843a5e_b2f8_f70c_58c7_1b13de85a6eb_HPP 
 
+#include <unordered_map>
 #include <iostream>
 #include "ps.hpp"
 
@@ -44,7 +45,19 @@ public:
 	    std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	  }
 	};
-    paracel_sequential_loadall(input, lambda);
+    //paracel_sequential_loadall(input, lambda);
+    paracel_loadall(input);
+    std::unordered_map<std::string, double> map;
+    std::string tt = "a";
+    map[tt] = 1.;
+    std::cout << "b" << std::endl;
+    paracel_dump_dict(map);
+    std::cout << "a" << std::endl;
+    map.clear();
+    tt = "b";
+    map[tt] = 2.;
+    paracel_dump_dict(map);
+    map.clear();
   }
 
 private:
