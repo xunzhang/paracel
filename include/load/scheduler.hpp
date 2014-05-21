@@ -39,8 +39,8 @@ public:
   scheduler(paracel::Comm comm) : m_comm(comm) { dim_init(); } 
 
   scheduler(paracel::Comm comm, 
-            std::string pt = "fmap", 
-            bool flag = false) : 
+            std::string pt, 
+            bool flag) : 
       mix(flag), 
       pattern(pt), 
       m_comm(comm) { 
