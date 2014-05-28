@@ -65,7 +65,7 @@ public:
   inline size_t select(A & i, B & j) const {
     paracel::hash_type<A> hf1;
     paracel::hash_type<B> hf2;
-    return (hf1(i) % npx) * npy + hf2(j) * npy;
+    return (hf1(i) % npx) * npy + hf2(j) % npy;
   }
 
   template <class F = std::function< paracel::list_type<paracel::str_type>(paracel::str_type) > >
