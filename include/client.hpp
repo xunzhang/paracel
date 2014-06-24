@@ -47,7 +47,7 @@ public:
       p_contains_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("contains"), key);
-    bool val;
+    bool val = false;;
     req_send_recv(*p_contains_sock, scrip, val);
     return val;
   }
