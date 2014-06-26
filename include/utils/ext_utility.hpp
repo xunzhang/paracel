@@ -32,7 +32,7 @@ slst_type str_split(const paracel::str_type & str, const char sep) {
   while(1) {
     en = str.find(sep, st);
     auto s = str.substr(st, en - st);
-    if(s != "") result.push_back(std::move(s));
+    if(s.size()) result.push_back(std::move(s));
     if(en == paracel::str_type::npos) break;
     st = en + 1;
   }
@@ -45,7 +45,7 @@ slst_type str_split(paracel::str_type && str, const char sep) {
   while(1) {
     en = str.find(sep, st);
     auto s = str.substr(st, en - st);
-    if(s != "") result.push_back(std::move(s));
+    if(s.size()) result.push_back(std::move(s));
     if(en == paracel::str_type::npos) break;
     st = en + 1;
   }
@@ -58,7 +58,7 @@ slst_type str_split(const paracel::str_type & str, const paracel::str_type & sep
   while(1) {
     en = str.find_first_of(seps, st);
     auto s = str.substr(st, en - st);
-    if(s != "") result.push_back(std::move(s));
+    if(s.size()) result.push_back(std::move(s));
     if(en == paracel::str_type::npos) break;
     st = en + 1;
   }
@@ -72,7 +72,7 @@ slst_type str_split(paracel::str_type && str, const paracel::str_type & seps) {
   while(1) {
     en = str.find_first_of(seps, st);
     auto s = str.substr(st, en - st);
-    if(s != "") result.push_back(std::move(s));
+    if(s.size()) result.push_back(std::move(s));
     if(en == paracel::str_type::npos) break;
     st = en + 1;
   }
