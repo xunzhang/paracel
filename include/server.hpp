@@ -220,7 +220,7 @@ void thrd_exec(zmq::socket_t & sock) {
       auto exist = paracel::tbl_store.get(key, result);
       if(!exist) {
         std::cerr << "while: " << key << " is not exist." << '\n';
-	abort();
+        abort();
       }
       rep_send(sock, result);
       //auto result = paracel::tbl_store.get(key);

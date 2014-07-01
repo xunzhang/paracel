@@ -313,11 +313,17 @@ public:
     };
     paracel::str_type *str_pt = new paracel::str_type;
     pt_enqueue(str_pt);
-    for(size_t i = 0; i < triple_lst.size() - 1; ++i) {
-      *str_pt += lambda_local_pack(triple_lst[i]) + paracel::seperator;
-    }
-    *str_pt += lambda_local_pack(triple_lst[triple_lst.size() - 1]);
+    if(triple_lst.size() != 0) {
+      if(triple_lst.size() == 1) { 
+        *str_pt += lambda_local_pack(triple_lst[0]) + paracel::seperator;
+      } else {
+        for(size_t i = 0; i < triple_lst.size() - 1; ++i) {
+          *str_pt += lambda_local_pack(triple_lst[i]) + paracel::seperator;
+        }
+        *str_pt += lambda_local_pack(triple_lst[triple_lst.size() - 1]);
     
+      }
+    }
     auto vreq = isend(*str_pt, dest, tag);
     v_req.append(vreq);
     return v_req;

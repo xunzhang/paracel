@@ -40,15 +40,15 @@ scheduler::schedule_load(load_para_type & loads) {
   int cnt = cnt_control - 1;
   int ntasks = sz * cnt_control;
   int bnd = ntasks + sz - 2;
- 
+
   if(rk == leader) {
     // load tasks [0, BLK_SZ - 1]
     for(int i = 0; i < blk_sz; ++i) {
       // loading lines
       while(loads[i]) {
-	auto line = loads[i].get();
-	result.push_back(line);
-	loads[i]();
+        auto line = loads[i].get();
+        result.push_back(line);
+        loads[i]();
       }
     }
   }
@@ -60,12 +60,12 @@ scheduler::schedule_load(load_para_type & loads) {
       m_comm.recv(cnt, leader, 2014);
       m_comm.recv(flag, leader, 2014);
       if(!flag) {
-	// loading lines
-	while(loads[cnt]) {
-	  auto line = loads[cnt].get();
-	  result.push_back(line);
-	  loads[cnt]();
-	}
+        // loading lines
+        while(loads[cnt]) {
+          auto line = loads[cnt].get();
+          result.push_back(line);
+          loads[cnt]();
+        }
       }
     } // end of while
   } else {
@@ -79,10 +79,10 @@ scheduler::schedule_load(load_para_type & loads) {
       m_comm.send(cnt, src, 2014);
 
       if( (cnt == ntasks - 1) && (!flag) ) {
-	m_comm.send(flag, src, 2014);
-	flag = 1;
+        m_comm.send(flag, src, 2014);
+        flag = 1;
       } else {
-	m_comm.send(flag, src, 2014);
+        m_comm.send(flag, src, 2014);
       }
       mutex.unlock();
     } // end of while
@@ -101,10 +101,10 @@ scheduler::structure_load(load_para_type & loads) {
   int en = (m_comm.get_rank() + 1) * blk_sz;
   for(int i = st; i < en; ++i) {
     while(loads[i]) {
-	  auto line = loads[i].get();
-	  result.push_back(line);
-	  loads[i]();
-	}
+      auto line = loads[i].get();
+      result.push_back(line);
+      loads[i]();
+    }
   }
   return result;
 }

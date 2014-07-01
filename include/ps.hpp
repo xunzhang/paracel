@@ -193,7 +193,7 @@ class paralg {
     // TODO: check pattern 
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
-    paracel::list_type<paracel::str_type> lines = ld.load();
+    paracel::list_type<paracel::str_type> lines = ld.fixload();
     sync();
     // create graph 
     ld.create_graph(lines, grp, degree_map, col_degree_map);
