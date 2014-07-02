@@ -109,15 +109,18 @@ class matrix_factorization: public paracel::paralg {
 
     // init push
     get_decomp_info(npx, npy);
-    wgt_x = 1. / npy;
-    wgt_y = 1. / npx;
+    //wgt_x = 1. / npy;
+    //wgt_y = 1. / npx;
     id = get_worker_id();
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libmf_update.so",
+                             "cnt_updater");
     for(auto & kv : usr_bag) {
       auto uid = kv.first;
       std::string W_key = "W[" + uid + "]_" + std::to_string(id / npy);
       std::string ub_key = "usr_bias[" + uid + "]_" + std::to_string(id / npy);
       paracel_write(W_key, W[uid]);
       paracel_write(ub_key, usr_bias[uid]);
+      paracel_update_default(uid + "_u_cnt", 1);
     }
     for(auto & kv : item_bag) {
       auto iid = kv.first;
@@ -125,7 +128,20 @@ class matrix_factorization: public paracel::paralg {
       std::string ib_key = "item_bias[" + iid + "]_" + std::to_string(id % npy);
       paracel_write(H_key, H[iid]);
       paracel_write(ib_key, item_bias[iid]);
+      paracel_update_default(iid + "_i_cnt", 1);
     }
+
+    auto cntx_map = paracel_read_special<int>("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so",
+                                              "mf_cntx_filter");
+    auto cnty_map = paracel_read_special<int>("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so",
+                                              "mf_cnty_filter");
+    for(auto & kv : cntx_map) {
+      wgtx_map[kv.first] = 1. / static_cast<double>(kv.second);
+    }
+    for(auto & kv : cnty_map) {
+      wgty_map[kv.first] = 1. / static_cast<double>(kv.second);
+    }
+
     sync();
     std::cout << "init done" << std::endl;
   }
@@ -160,7 +176,7 @@ class matrix_factorization: public paracel::paralg {
       auto uid = kv.first;
       std::string W_key = "W[" + uid + "]_" + std::to_string(id / npy);
       for(int i = 0; i < fac_dim; ++i) {
-        delta_W[i] = wgt_x * (W[uid][i] - old_W[uid][i]);
+        delta_W[i] = wgtx_map[uid] * (W[uid][i] - old_W[uid][i]);
       }
       //paracel_bupdate(W_key, delta_W);
       paracel_bupdate(W_key, delta_W, file_name, func_name);
@@ -169,7 +185,7 @@ class matrix_factorization: public paracel::paralg {
       auto iid = kv.first;
       std::string H_key = "H[" + iid + "]_" + std::to_string(id % npy);
       for(int i = 0; i < fac_dim; ++i) {
-        delta_H[i] = wgt_y * (H[iid][i] - old_H[iid][i]);
+        delta_H[i] = wgty_map[iid] * (H[iid][i] - old_H[iid][i]);
       }
       //paracel_bupdate(H_key, delta_H);
       paracel_bupdate(H_key, delta_H, file_name, func_name);
@@ -187,13 +203,13 @@ class matrix_factorization: public paracel::paralg {
     for(auto & kv : usr_bag) {
       auto uid = kv.first;
       std::string ub_key = "usr_bias[" + uid + "]_" + std::to_string(id / npy);
-      paracel_bupdate(ub_key, wgt_x * (usr_bias[uid] - old_ubias[uid]), file_name, func_name);
+      paracel_bupdate(ub_key, wgtx_map[uid] * (usr_bias[uid] - old_ubias[uid]), file_name, func_name);
       //paracel_bupdate(ub_key, wgt_x * (usr_bias[uid] - old_ubias[uid]));
     }
     for(auto & kv : item_bag) {
       auto iid = kv.first;
       std::string ib_key = "item_bias[" + iid + "]_" + std::to_string(id % npy);
-      paracel_bupdate(ib_key, wgt_y * (item_bias[iid] - old_ibias[iid]), file_name, func_name);
+      paracel_bupdate(ib_key, wgty_map[iid] * (item_bias[iid] - old_ibias[iid]), file_name, func_name);
       //paracel_bupdate(ib_key, wgt_y * (item_bias[iid] - old_ibias[iid]));
     }
   }
@@ -423,9 +439,10 @@ class matrix_factorization: public paracel::paralg {
   int npx = 0, npy = 0;
   size_t rating_sz = 0;
   double miu = 0., rmse = 0.;
-  double wgt_x = 0., wgt_y = 0.;
+  //double wgt_x = 0., wgt_y = 0.;
   paracel::bigraph<std::string> rating_graph;
-
+  
+  std::unordered_map<string, double> wgtx_map, wgty_map;
   std::unordered_map<string, char> usr_bag, item_bag;
   std::unordered_map<string, vector<double> > W, H;
   std::unordered_map<string, double> usr_bias, item_bias;

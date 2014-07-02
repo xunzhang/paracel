@@ -337,10 +337,16 @@ public:
     vrequest v_req = isend(*sz, dest, tag);
     paracel::str_type *str_pt = new paracel::str_type;
     pt_enqueue(str_pt);
-    for(size_t i = 0; i < strlst.size() - 1; ++i) {
-      *str_pt += strlst[i] + paracel::seperator;
+    if(strlst.size() != 0) {
+      if(strlst.size() == 1) {
+        *str_pt += strlst[0];
+      } else {
+        for(size_t i = 0; i < strlst.size() - 1; ++i) {
+          *str_pt += strlst[i] + paracel::seperator;
+        }
+        *str_pt += strlst[strlst.size() - 1];
+      }
     }
-    *str_pt += strlst[strlst.size() - 1];
     auto vreq = isend(*str_pt, dest, tag);
     v_req.append(vreq);
     return v_req;

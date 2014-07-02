@@ -22,6 +22,7 @@ using std::vector;
 extern "C" {
   extern paracel::update_result mf_fac_updater;
   extern paracel::update_result mf_bias_updater;
+  extern paracel::update_result cnt_updater;
 }
 
 vector<double> local_update_fac(const vector<double> & a, const vector<double> & b) {
@@ -36,5 +37,10 @@ double local_update_bias(double a, double b) {
   return a + b;
 }
 
+int local_cnt_update(int a, int b) {
+  return a + b;
+}
+
 paracel::update_result mf_fac_updater = paracel::update_proxy(local_update_fac);
 paracel::update_result mf_bias_updater = paracel::update_proxy(local_update_bias);
+paracel::update_result cnt_updater = paracel::update_proxy(local_cnt_update);
