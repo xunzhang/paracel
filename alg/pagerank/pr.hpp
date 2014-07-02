@@ -48,6 +48,18 @@ class pagerank : public paracel::paralg {
     auto f_parser = paracel::gen_parser(local_parser);
     paracel_load_as_graph(local_graph, input, f_parser, "fmap");
 
+    /*
+    // debug print
+    auto debug_lambda = [&] (const std::string & a,
+                             const std::string & b,
+                             double c) {
+      std::cout << a << "-" << b << "-" << c << std::endl;
+    };
+    if(get_worker_id() == 0) {
+      local_graph.traverse(debug_lambda);
+    }
+    */
+
     auto cnt_lambda = [&] (const std::string & a,
                            const std::string & b,
                            double c) {
@@ -84,11 +96,6 @@ class pagerank : public paracel::paralg {
           >(kv.first + "_links");
     }
 
-    // init pagerank
-    for(auto & kv : kvmap) {
-      paracel_write(kv.first + "_pr", 1.);
-    }
-    
     // reuse kvmap to store pr
     // init pr with 1./total_node_sz
     auto worker_comm = get_comm();
@@ -97,19 +104,25 @@ class pagerank : public paracel::paralg {
     double init_val = 1. / node_sz;
     for(auto & kv : kvmap) {
       kvmap[kv.first] = init_val; 
+      paracel_write(kv.first + "_pr", init_val);
     }
   }
 
   void learning() {
+    // first read
     std::unordered_map<std::string, double> kvmap_stale;
-    for(int rd = 0; rd < rounds; ++rd) {
-      if(rd == 0) {
-        kvmap_stale = kvmap;
-      } else {
-        // pull
-        for(auto & kv : kvmap) {
-          kvmap_stale[kv.first] = paracel_read<double>(kv.first + "_pr");
+    for(auto & kv : klstmap) {
+      for(auto & k : kv.second) {
+        if(!kvmap_stale.count(k.first)) {
+          kvmap_stale[k.first] = paracel_read<double>(k.first + "_pr");
         }
+      }
+    }
+
+    for(int rd = 0; rd < rounds; ++rd) {
+      // pull
+      for(auto & kv : kvmap_stale) {
+        kvmap_stale[kv.first] = paracel_read<double>(kv.first + "_pr");
       }
 
       // map
@@ -118,13 +131,12 @@ class pagerank : public paracel::paralg {
         for(auto & item : kv.second) {
           sigma += (kvmap_stale[item.first] / item.second);
         }
-        kvmap[kv.first] = (1 - damping_factor) + damping_factor * sigma;
+        kvmap[kv.first] = (1. - damping_factor) + damping_factor * sigma;
       }
       sync();
 
       // reduce
       for(auto & kv : kvmap) {
-        std::cout << kv.first << " : " << kv.second << std::endl;
         paracel_write(kv.first + "_pr", kv.second);
       }
       sync();

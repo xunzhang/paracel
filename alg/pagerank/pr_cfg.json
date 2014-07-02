@@ -1,7 +1,7 @@
 {
   "input" : "/mfs/user/wuhong/paracel/data/pagerank/data.csv",
   "output" : "/mfs/user/wuhong/paracel/data/pagerank_result/",
-  "rounds" : 2,
+  "rounds" : 76,
   "damping_factor" : 0.85,
   "limit_s" : 0 
 }
