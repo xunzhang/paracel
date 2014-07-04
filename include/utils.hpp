@@ -24,6 +24,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
+
 #include "utils/comm.hpp"
 #include "utils/hash.hpp"
 #include "utils/decomp.hpp"
@@ -147,6 +150,35 @@ public:
     return r;
   }
 };
+
+// std::vector to Eigen::VectorXd
+Eigen::VectorXd vec2evec(const std::vector<double> & v) {
+  Eigen::VectorXd ev(v.size());
+  //Eigen::Map<Eigen::VectorXd>(&ev[0], v.size());
+  ev = Eigen::VectorXd::Map(&v[0], v.size());
+  return ev;
+}
+
+std::vector<double> evec2vec(const Eigen::VectorXd & ev) {
+  std::vector<double> v(ev.size());
+  Eigen::Map<Eigen::VectorXd>(v.data(), ev.size()) = ev;
+  return v;
+}
+
+// Eigen::MatrixXd only support column-major
+std::vector<double> mat2vec(const Eigen::MatrixXd & m) {
+  std::vector<double> v(m.size());
+  Eigen::Map<Eigen::MatrixXd>(v.data(), m.rows(), m.cols()) = m;
+  return v;
+}
+
+Eigen::MatrixXd vec2mat(const std::vector<double> & v,
+                        size_t rows) {
+  size_t cols = v.size() / rows;
+  Eigen::MatrixXd m(rows, cols);
+  m = Eigen::MatrixXd::Map(&v[0], rows, cols);
+  return m;
+}
 
 } // namespace paracel
 
