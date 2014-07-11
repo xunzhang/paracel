@@ -660,8 +660,9 @@ class paralg {
     }
   }
 
+  template <class T, class P>
   void paracel_dump_dict(const paracel::dict_type<
-                         paracel::str_type, paracel::list_type<double> > & data, 
+                         T, paracel::list_type<P> > & data, 
                          const paracel::str_type & filename = "result_",
                          bool merge = false) {
     std::ofstream os;

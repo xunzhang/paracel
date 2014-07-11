@@ -138,7 +138,7 @@ public:
     } 
     // create dense block matrix
     blk_dense_mtx.resize(rm.size(), csz);
-    for(int i = 0; i < rm.size(); ++i) {
+    for(size_t i = 0; i < rm.size(); ++i) {
       blk_dense_mtx.row(i) = mtx_llst[i];
     }
   }

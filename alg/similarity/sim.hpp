@@ -131,7 +131,7 @@ class similarity : public paracel::paralg {
 
     // calc similarity with items in other proces 
     for(int node_id = 0; node_id < (int)get_worker_size(); ++node_id) {
-      if(node_id == get_worker_id()) continue;
+      if(node_id == (int)get_worker_id()) continue;
       auto id_bag = paracel_read<std::vector<std::string> >(
           "item_bag_" + 
           std::to_string(node_id)

@@ -29,7 +29,9 @@ public:
   	std::string _input, std::string _output, std::string para) :
 	paracel::paralg(hosts_dct_str, comm, _output, 1, 0, true), 
 	input(_input),
-	hi_para(para) {}
+	hi_para(para) {
+    wid = (size_t)get_worker_id();
+  }
 
   virtual ~hi() {}
 
@@ -60,9 +62,42 @@ public:
     map.clear();
   }
 
+  void init_partition(const std::string & fn,
+                      std::unordered_map<
+                      std::string, 
+                      char> & target) {
+    auto handler = [&] (const std::vector<std::string> & linelst,
+                        std::unordered_map<
+                        std::string,
+                        char> & out,
+                        const char sep = ',') {
+      paracel::scheduler scheduler(get_comm());
+      for(auto & line : linelst) {
+        auto lst = paracel::str_split(line, sep);
+        auto uid = lst[0];
+        auto iid = lst[1];
+        double rating = std::stod(lst[2]);
+        size_t hid = scheduler.select(uid, iid);
+        if(hid == wid) {
+          out[uid] = 't';
+        }
+      } // for
+    };
+    auto handler_wrapper = [&] (const std::vector<std::string> & linelst) {
+      handler(linelst, target);
+    };
+    paracel_sequential_loadall(fn, handler_wrapper);
+  }
+
+  virtual void opt() {
+    init_partition("/mfs/user/wuhong/plato/data/input/netflix.train", rlst);
+  }
+
 private:
   std::string input;
   std::string hi_para;
+  size_t wid;
+  std::unordered_map<std::string, char> rlst;
 };
 
 }

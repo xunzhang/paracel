@@ -588,7 +588,7 @@ public:
     T tmp;
     tmp.resize(data.size());
     MPI_Allreduce((void *)&data[0], (void *)&tmp[0], sz, dtype, MPI_SUM, m_comm);
-    for(int i = 0; i < data.size(); ++i) {
+    for(size_t i = 0; i < data.size(); ++i) {
       data[i] = tmp[i];
     } 
   }

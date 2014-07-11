@@ -57,65 +57,139 @@ class kmeans : public paracel::paralg {
   void init() {
     if(dtype == "fvec") {
       
+      // load local dense matrix
+      auto local_parser = [] (const std::string & line) {
+        auto r = paracel::str_split(line, '\t');
+        auto vec = paracel::str_split(r[1], ',');
+        std::copy(vec.begin(), vec.end(), r.begin() + 1); // buggy
+        std::cout << r.size() << std::endl;
+        return r;
+      };
+      auto f_parser = paracel::gen_parser(local_parser);
+      //paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser);
+      paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser, "fvec", true);
+    
+      // TODO: buggy if worker 0 don't have enough samples
       // random pick k sample as init kcluster
       if(get_worker_id() == 0) {
         std::vector<std::string> ids;
         auto get_ids = [&] (const std::vector<std::string> & linelst) {
-          for(auto & line : lines) {
-            auto r = paracel::str_split(line, ' ');
+          for(auto & line : linelst) {
+            auto r = paracel::str_split(line, '\t');
             ids.push_back(r[0]);
           }
         };
+
         auto lines = paracel_load(input);
         get_ids(lines); // init ids
         std::random_shuffle(ids.begin(), ids.end());
-        ids.resize(kclusters);
-      }
-      std::unordered_map<std::string, char> map;
-      for(size_t i = 0; i < ids.size(); ++i) {
-        map[ids[i]] = '7';
-      }
+        ids.resize(kclusters); // pick k
 
-      // load local dense matrix
-      auto local_parser = [] (const std::string & line) {
-        auto r = paracel::str_split(line, ' ');
-        auto vec = paracel::str_split(r[1], '|');
-        std::copy(vec.begin(), vec.end(), r.end());
-        return r;
-      };
-      auto f_parser = paracel::gen_parser(local_parser);
-      //paracel_load_as_matrix(blk_smtx, row_map, input, f_parser);
-      paracel_load_as_matrix(blk_smtx, row_map, input, f_parser, "fvec", true);
-    
-      // push init val into ps
-      std::vector<size_t> indxs(kclusters);
-      for(auto & kv : row_map) {
-        if(map.count(kv.second) != 0) {
-          indxs.push_back(kv.first); 
+        // record original idmap
+        std::unordered_map<std::string, char> map;
+        for(size_t i = 0; i < ids.size(); ++i) {
+          map[ids[i]] = '7';
         }
-      }
-      std::vector<std::vector<double> > init_clusters;
-      for(auto & indx : indxs) {
-        Eigen::VectorXd row = blk_smtx.row(indx);
-        init_clusters.push_back(evec2vec(row));
-      }
-      paracel_write("init_clusters", init_clusters);
+
+        // push init val into ps
+        std::vector<size_t> indxs(kclusters); // matrix indexes
+        for(auto & kv : row_map) {
+          if(map.count(kv.second) != 0) {
+            indxs.push_back(kv.first);
+          }
+        }
+        std::vector<std::vector<double> > init_clusters;
+        for(auto & indx : indxs) {
+          Eigen::VectorXd row = blk_dmtx.row(indx);
+          init_clusters.push_back(paracel::evec2vec(row));
+        }
+        paracel_write("clusters", init_clusters);
+      } // worker 0
+      sync(); // !
     } else if(dtype == "sim") {
     }
   }
 
-  void learning() {}
+  void learning() {
+    std::unordered_map<size_t, int> pnt_owner; // matrix_indx: cluster_indx 
+
+    // main loop
+    for(int rd = 0; rd < rounds; ++rd) {
+      // pull clusters
+      clusters = paracel_read<std::vector<std::vector<double> > >("clusters");
+
+      Eigen::MatrixXd clusters_mtx(kclusters, blk_dmtx.cols());
+
+      // convert to eigen
+      for(int k = 0; k < kclusters; ++k) {
+        clusters_mtx.row(k) = paracel::vec2evec(clusters[k]);
+      }
+
+      for(size_t i = 0; i < (size_t)blk_dmtx.rows(); ++i) {
+        Eigen::MatrixXd::Index indx;
+        (clusters_mtx.rowwise() - blk_dmtx.row(i)).rowwise().squaredNorm().minCoeff(&indx);
+        pnt_owner[i] = indx;
+      } // sample
+      
+      std::vector<size_t> cluster_cnt_map(kclusters, 0);
+      for(auto & kv : pnt_owner) {
+        cluster_cnt_map[kv.second] += 1;
+        clusters_mtx.row(kv.second) += blk_dmtx.row(kv.first);
+      }
+      
+      // allreduce count for every cluster
+      std::vector<size_t> cluster_cnt_map_global(cluster_cnt_map);
+      get_comm().allreduce(cluster_cnt_map_global);
+      
+      // local combine and convert to stl
+      for(int k = 0; k < kclusters; ++k) {
+        clusters_mtx.row(k) *= 1. / cluster_cnt_map_global[k];
+        clusters[k] = paracel::evec2vec(clusters_mtx.row(k));
+      }
+
+      // update clusters
+      paracel_write("clusters", clusters);
+
+    } // rounds
+
+    // last pull
+    clusters = paracel_read<std::vector<std::vector<double> > >("clusters");
+
+    // store result into groups
+    for(auto & kv : pnt_owner) {
+      groups[kv.second].push_back(row_map[kv.first]);
+    }
+  }
 
  public:
-  void solve() {}
+  void solve() {
+    init();
+    sync();
+    learning();
+  }
+
+  void dump_result() {
+    if(get_worker_id() == 0) {
+      paracel_dump_dict(groups, "kmeans_");
+      std::unordered_map<int, std::vector<double> > clusters_tmp;
+      for(size_t i = 0; i < clusters.size(); ++i) {
+        clusters_tmp[i] = clusters[i];
+      }
+      paracel_dump_dict(clusters_tmp, "centers_");
+    }
+  }
 
  private:
-  int kclusters;
+  std::string input;
+  int rounds;
   std::string dtype;
+  int kclusters;
 
-  Eigen::SparseMatrix<double, Eigen::RowMajor> blk_smtx;
+  //Eigen::SparseMatrix<double, Eigen::RowMajor> blk_smtx;
   Eigen::MatrixXd blk_dmtx;
   std::unordered_map<size_t, std::string> row_map; // matrix_indx -> id
+  std::vector<std::vector<double> > clusters;
+  std::unordered_map<int, std::vector<std::string> > groups;
 }; // class kmeans
 
 } // namespace paracel

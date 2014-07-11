@@ -1,0 +1,8 @@
+{
+  "input" : "/mfs/user/wuhong/paracel/data/kmeans/sample.out",
+  "output" : "/mfs/user/wuhong/paracel/data/kmeans_result/",
+  "type" : "fvec",
+  "kclusters" : 8,
+  "rounds" : 10,
+  "limit_s" : 0
+}
