@@ -61,14 +61,17 @@ class kmeans : public paracel::paralg {
       auto local_parser = [] (const std::string & line) {
         auto r = paracel::str_split(line, '\t');
         auto vec = paracel::str_split(r[1], ',');
-        std::copy(vec.begin(), vec.end(), r.begin() + 1); // buggy
-        std::cout << r.size() << std::endl;
+        r.resize(vec.size() + 1);
+        std::copy(vec.begin(), vec.end(), r.begin() + 1);
         return r;
       };
       auto f_parser = paracel::gen_parser(local_parser);
       //paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser);
       paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser, "fvec", true);
     
+      // for worker0 usage 
+      auto lines = paracel_load(input);
+      
       // TODO: buggy if worker 0 don't have enough samples
       // random pick k sample as init kcluster
       if(get_worker_id() == 0) {
@@ -79,8 +82,6 @@ class kmeans : public paracel::paralg {
             ids.push_back(r[0]);
           }
         };
-
-        auto lines = paracel_load(input);
         get_ids(lines); // init ids
         std::random_shuffle(ids.begin(), ids.end());
         ids.resize(kclusters); // pick k
@@ -92,7 +93,7 @@ class kmeans : public paracel::paralg {
         }
 
         // push init val into ps
-        std::vector<size_t> indxs(kclusters); // matrix indexes
+        std::vector<size_t> indxs; // matrix indxs
         for(auto & kv : row_map) {
           if(map.count(kv.second) != 0) {
             indxs.push_back(kv.first);
@@ -103,11 +104,15 @@ class kmeans : public paracel::paralg {
           Eigen::VectorXd row = blk_dmtx.row(indx);
           init_clusters.push_back(paracel::evec2vec(row));
         }
+        
         paracel_write("clusters", init_clusters);
-      } // worker 0
-      sync(); // !
+      } else { // worker 0
+        lines.resize(0);
+      }
     } else if(dtype == "sim") {
+      // TODO
     }
+    sync(); // !
   }
 
   void learning() {

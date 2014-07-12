@@ -3,6 +3,6 @@
   "output" : "/mfs/user/wuhong/paracel/data/kmeans_result/",
   "type" : "fvec",
   "kclusters" : 8,
-  "rounds" : 10,
+  "rounds" : 30,
   "limit_s" : 0
 }
