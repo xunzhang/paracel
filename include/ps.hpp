@@ -267,7 +267,7 @@ class paralg {
     // TODO: check pattern
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
-    paracel::list_type<paracel::str_type> lines = ld.load();
+    paracel::list_type<paracel::str_type> lines = ld.fixload();
     sync();
     // create sparse matrix
     ld.create_matrix(lines, blk_dense_mtx, row_map);
@@ -668,7 +668,7 @@ class paralg {
     std::ofstream os;
     os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()), std::ofstream::app);
     for(auto & kv : data) {
-      os << kv.first + '\t';
+      os << kv.first << '\t';
       for(size_t i = 0; i < kv.second.size() - 1; ++i) {
         os << kv.second[i] << "|";
       }
