@@ -56,7 +56,6 @@ class kmeans : public paracel::paralg {
 
   void init() {
     if(dtype == "fvec") {
-      
       // load local dense matrix
       auto local_parser = [] (const std::string & line) {
         auto r = paracel::str_split(line, '\t');
@@ -111,6 +110,7 @@ class kmeans : public paracel::paralg {
       }
     } else if(dtype == "sim") {
       // TODO
+      // sparsity case 
     }
     sync(); // !
   }

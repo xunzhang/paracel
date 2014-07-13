@@ -70,5 +70,5 @@ add_subdirectory(alg/similarity)
 add_subdirectory(alg/hi)
 add_subdirectory(alg/cbr)
 add_subdirectory(alg/pagerank)
-add_subdirectory(alg/kmeans)
+add_subdirectory(alg/clustering)
 ################################################################################
