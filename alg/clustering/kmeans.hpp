@@ -126,11 +126,6 @@ class kmeans : public paracel::paralg {
       // pull clusters
       clusters = paracel_read<std::vector<std::vector<double> > >("clusters_" + std::to_string(rd - 1));
       
-      if(get_worker_id() == 0) {
-        // debug
-        std::cout << "la1L" << clusters[0][0] << std::endl;
-      }
-
       Eigen::MatrixXd clusters_mtx(kclusters, blk_dmtx.cols());
       // convert to eigen
       for(int k = 0; k < kclusters; ++k) {
@@ -143,9 +138,11 @@ class kmeans : public paracel::paralg {
       } // sample
       
       std::vector<size_t> cluster_cnt_map(kclusters, 0);
+      
+      Eigen::MatrixXd clusters_mtx_tricky(kclusters, blk_dmtx.cols());
       for(auto & kv : pnt_owner) {
         cluster_cnt_map[kv.second] += 1;
-        clusters_mtx.row(kv.second) += blk_dmtx.row(kv.first);
+        clusters_mtx_tricky.row(kv.second) += blk_dmtx.row(kv.first);
       }
       
       // allreduce count for every cluster
@@ -154,8 +151,8 @@ class kmeans : public paracel::paralg {
       
       // local combine and convert to stl
       for(int k = 0; k < kclusters; ++k) {
-        clusters_mtx.row(k) *= 1. / cluster_cnt_map_global[k];
-        clusters[k] = paracel::evec2vec(clusters_mtx.row(k));
+        clusters_mtx_tricky.row(k) *= 1. / cluster_cnt_map_global[k];
+        clusters[k] = paracel::evec2vec(clusters_mtx_tricky.row(k));
       }
 
       // update clusters
