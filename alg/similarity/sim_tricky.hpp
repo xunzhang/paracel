@@ -126,11 +126,13 @@ private:
 		  tmp.push_back(std::make_pair(jv.first, sim));
 		  tmp2.push_back(std::make_pair(iv.first, sim));
 		  auto k2 = jv.first + "_similarity";
-		  paracel_update_default(k2, tmp2);
+		  paracel_bupdate(k2, tmp2);
+      //paracel_update_default(k2, tmp2);
 		}
 	  } // for jv
 	  auto k1 = iv.first + "_similarity";
-	  paracel_update_default(k1, tmp);
+    paracel_bupdate(k1, tmpp);
+	  //paracel_update_default(k1, tmp);
 	} // for iv
   }
   

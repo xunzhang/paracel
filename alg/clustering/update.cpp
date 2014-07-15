@@ -14,18 +14,24 @@
  */
 
 #include <vector>
+#include <string>
+#include <unordered_map>
 #include <eigen3/Eigen/Dense>
 #include "proxy.hpp"
 #include "paracel_types.hpp"
 
 using std::vector;
+using std::string;
+using std::unordered_map;
 
 extern "C" {
-  extern paracel::update_result local_update_clusters;
+  extern paracel::update_result local_update_kmeans_clusters;
+  extern paracel::update_result local_update_kmeans_groups;
 }
 
-vector<vector<double> > local_update_clusters_stl(const vector<vector<double> > & a ,
-                                                  const vector<vector<double> > & b) {
+vector<vector<double> >
+local_update_kmeans_clusters_stl(const vector<vector<double> > & a ,
+                                 const vector<vector<double> > & b) {
   size_t kclusters = a.size();
   size_t dims = a[0].size();
   vector<vector<double> > r(kclusters);
@@ -40,11 +46,14 @@ vector<vector<double> > local_update_clusters_stl(const vector<vector<double> > 
   return r;
 }
 
-// TODO
-/*
-Eigen::MatrixXd local_update_clusters_eigen(const Eigen::MatrixXd & a,
-                                            const Eigen::MatrixXd & b) {}
-*/
+unordered_map<int, vector<string> > local_update_kmeans_groups_stl(const unordered_map<int, vector<string> > & a,
+                                                                   const unordered_map<int, vector<string> > & b) {
+  unordered_map<int, vector<string> > r(a);
+  for(auto & kv : b) {
+    r[kv.first].insert(r[kv.first].end(), kv.second.begin(), kv.second.end());
+  }
+  return r;
+}
 
- paracel::update_result local_update_clusters = paracel::update_proxy(local_update_clusters_stl);
- //paracel::update_result local_update_clusters = paracel::update_proxy(local_update_clusters_eigen);
+paracel::update_result local_update_kmeans_clusters = paracel::update_proxy(local_update_kmeans_clusters_stl);
+paracel::update_result local_update_kmeans_groups = paracel::update_proxy(local_update_kmeans_groups_stl);

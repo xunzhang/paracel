@@ -54,6 +54,7 @@ class kmeans : public paracel::paralg {
   // sparse matrix
   void local_load_sim() {}
 
+  // TODO: kmeans++ initialization
   void init() {
     if(dtype == "fvec") {
       // load local dense matrix
@@ -82,7 +83,7 @@ class kmeans : public paracel::paralg {
           }
         };
         get_ids(lines); // init ids
-        std::random_shuffle(ids.begin(), ids.end());
+        //std::random_shuffle(ids.begin(), ids.end());
         ids.resize(kclusters); // pick k
 
         // record original idmap
@@ -96,6 +97,7 @@ class kmeans : public paracel::paralg {
         for(auto & kv : row_map) {
           if(map.count(kv.second) != 0) {
             indxs.push_back(kv.first);
+            std::cout << "debug" << kv.first << std::endl;
           }
         }
         std::vector<std::vector<double> > init_clusters;
@@ -103,8 +105,7 @@ class kmeans : public paracel::paralg {
           Eigen::VectorXd row = blk_dmtx.row(indx);
           init_clusters.push_back(paracel::evec2vec(row));
         }
-        
-        paracel_write("clusters", init_clusters);
+        paracel_write("clusters_-1", init_clusters);
       } else { // worker 0
         lines.resize(0);
       }
@@ -115,21 +116,26 @@ class kmeans : public paracel::paralg {
     sync(); // !
   }
 
+  // TODO: convergence condition
   void learning() {
-    std::unordered_map<size_t, int> pnt_owner; // matrix_indx: cluster_indx 
-
+    std::unordered_map<size_t, int> pnt_owner; // matrix_indx -> cluster_indx 
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libclustering_update.so",
+                              "local_update_kmeans_clusters");
     // main loop
     for(int rd = 0; rd < rounds; ++rd) {
       // pull clusters
-      clusters = paracel_read<std::vector<std::vector<double> > >("clusters");
+      clusters = paracel_read<std::vector<std::vector<double> > >("clusters_" + std::to_string(rd - 1));
+      
+      if(get_worker_id() == 0) {
+        // debug
+        std::cout << "la1L" << clusters[0][0] << std::endl;
+      }
 
       Eigen::MatrixXd clusters_mtx(kclusters, blk_dmtx.cols());
-
       // convert to eigen
       for(int k = 0; k < kclusters; ++k) {
         clusters_mtx.row(k) = paracel::vec2evec(clusters[k]);
       }
-
       for(size_t i = 0; i < (size_t)blk_dmtx.rows(); ++i) {
         Eigen::MatrixXd::Index indx;
         (clusters_mtx.rowwise() - blk_dmtx.row(i)).rowwise().squaredNorm().minCoeff(&indx);
@@ -153,17 +159,26 @@ class kmeans : public paracel::paralg {
       }
 
       // update clusters
-      paracel_write("clusters", clusters);
-
+      paracel_bupdate("clusters_" + std::to_string(rd), clusters);
+      sync();
+      //paracel_update_default("clusters_" + std::to_string(rd), clusters);
     } // rounds
 
     // last pull
-    clusters = paracel_read<std::vector<std::vector<double> > >("clusters");
+    clusters = paracel_read<std::vector<std::vector<double> > >("clusters_" + std::to_string(rounds - 1));
 
     // store result into groups
     for(auto & kv : pnt_owner) {
       groups[kv.second].push_back(row_map[kv.first]);
     }
+
+    // allreduce
+    paracel_bupdate("kmeans_result", 
+                   groups, 
+                   "/mfs/user/wuhong/paracel/local/lib/libclustering_update.so", 
+                   "local_update_kmeans_groups");
+    sync();
+    groups = paracel_read<std::unordered_map<int, std::vector<std::string> > >("kmeans_result");
   }
 
  public:
@@ -194,7 +209,7 @@ class kmeans : public paracel::paralg {
   Eigen::MatrixXd blk_dmtx;
   std::unordered_map<size_t, std::string> row_map; // matrix_indx -> id
   std::vector<std::vector<double> > clusters;
-  std::unordered_map<int, std::vector<std::string> > groups;
+  std::unordered_map<int, std::vector<std::string> > groups; // cluster_indx -> [ids]
 }; // class kmeans
 
 } // namespace paracel

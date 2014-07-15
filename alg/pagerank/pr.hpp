@@ -84,7 +84,8 @@ class pagerank : public paracel::paralg {
     paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libpr_update.so",
                              "init_updater");
     for(auto & kv : klstmap) {
-      paracel_update_default(kv.first + "_links", kv.second);
+      paracel_bupdate(kv.first + "_links", kv.second);
+      //paracel_update_default(kv.first + "_links", kv.second);
     }
 
     // read connect info only once

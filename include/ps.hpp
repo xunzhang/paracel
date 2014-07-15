@@ -544,6 +544,7 @@ class paralg {
     paralg::paracel_bupdate(key, d, file_name, func_name, replica_flag);
   }
 
+  /*
   template <class V>
   void paracel_update_default(const paracel::str_type & key, const V & v_or_delta) {
     if(paracel_contains(key)) {
@@ -552,6 +553,7 @@ class paralg {
       paracel_write(key, v_or_delta);
     }
   }
+  */
 
   // set invoke cnts
   void set_total_iters(int n) {

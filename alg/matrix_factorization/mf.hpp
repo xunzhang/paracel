@@ -120,7 +120,8 @@ class matrix_factorization: public paracel::paralg {
       std::string ub_key = "usr_bias[" + uid + "]_" + std::to_string(id / npy);
       paracel_write(W_key, W[uid]);
       paracel_write(ub_key, usr_bias[uid]);
-      paracel_update_default(uid + "_u_cnt", 1);
+      paracel_bupdate(uid + "_u_cnt", 1);
+      //paracel_update_default(uid + "_u_cnt", 1);
     }
     for(auto & kv : item_bag) {
       auto iid = kv.first;
@@ -128,7 +129,8 @@ class matrix_factorization: public paracel::paralg {
       std::string ib_key = "item_bias[" + iid + "]_" + std::to_string(id % npy);
       paracel_write(H_key, H[iid]);
       paracel_write(ib_key, item_bias[iid]);
-      paracel_update_default(iid + "_i_cnt", 1);
+      paracel_bupdate(iid + "_i_cnt", 1);
+      //paracel_update_default(iid + "_i_cnt", 1);
     }
 
     auto cntx_map = paracel_read_special<int>("/mfs/user/wuhong/paracel/local/lib/libmf_filter.so",
