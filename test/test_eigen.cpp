@@ -79,5 +79,15 @@ int main(int argc, char *argv[])
   std::cout << mtx * vech << std::endl;
   mtx.row(0) *= 10;
   std::cout << mtx << std::endl;
+
+  std::cout << "---" << std::endl;
+  Eigen::Matrix2d mmat;
+  mmat << 1, 2,
+          3, 4;
+  Eigen::VectorXd vvec(2);
+  int rr = -1, cc = -1;
+  vvec << 1.1, 2.2;
+  std::cout << mmat.maxCoeff(&rr, &cc) << std::endl;
+  std::cout << rr << " | " << cc << std::endl;
   return 0;
 }
