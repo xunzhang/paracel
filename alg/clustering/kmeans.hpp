@@ -95,6 +95,7 @@ class kmeans : public paracel::paralg {
     std::unordered_map<size_t, int> pnt_owner; // matrix_indx -> cluster_indx 
     paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libclustering_update.so",
                               "local_update_kmeans_clusters");
+
     // main loop
     for(int rd = 0; rd < rounds; ++rd) {
       pnt_owner.clear();
@@ -102,9 +103,6 @@ class kmeans : public paracel::paralg {
       // pull clusters
       clusters = paracel_read<std::vector<std::vector<double> > >("clusters_" + std::to_string(rd - 1));
       
-      //Eigen::MatrixXd fuck(kclusters, blk_dmtx.cols());
-      //std::cout << "cao" << fuck.row(7)[0] << std::endl;
-
       // convert to eigen
       Eigen::MatrixXd clusters_mtx(kclusters, blk_dmtx.cols());
       for(int k = 0; k < kclusters; ++k) {
