@@ -68,7 +68,7 @@ class kmeans : public paracel::paralg {
       auto f_parser = paracel::gen_parser(local_parser);
       //paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser);
       paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser, "fvec", true);
-      
+
       // init clusters
       if(get_worker_id() == 0) {
         std::vector<size_t> indxs;

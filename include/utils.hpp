@@ -180,6 +180,22 @@ Eigen::MatrixXd vec2mat(const std::vector<double> & v,
   return m;
 }
 
+template <class F>
+void traverse_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & m, F & func) {
+  for(int k = 0; k < m.outerSize(); ++k) {
+    for(Eigen::SparseMatrix<double, Eigen::RowMajor>::InnerIterator it(m, k); it; ++it) {
+      func(it.row(), it.col(), it.value());
+    }
+  }
+}
+
+template <class F>
+void traverse_vector(Eigen::SparseVector<double> & v, F & func) {
+  for(Eigen::SparseVector<double>::InnerIterator it(v); it; ++it) {
+    func(it.index(), it.value());
+  }
+}
+
 } // namespace paracel
 
 #endif
