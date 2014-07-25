@@ -24,4 +24,4 @@ target_link_libraries(spectral_clustering ${Boost_LIBRARIES}
   scheduler)
 
 install(TARGETS kmeans RUNTIME DESTINATION bin)
-install(TARGETS spectral_clustering RUNTIME DESTINATION BIN)
+install(TARGETS spectral_clustering RUNTIME DESTINATION bin)

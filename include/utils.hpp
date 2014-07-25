@@ -184,7 +184,8 @@ template <class F>
 void traverse_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & m, F & func) {
   for(int k = 0; k < m.outerSize(); ++k) {
     for(Eigen::SparseMatrix<double, Eigen::RowMajor>::InnerIterator it(m, k); it; ++it) {
-      func(it.row(), it.col(), it.value());
+      //func(it.row(), it.col(), it.value());
+      func(it.row(), it.col(), it.valueRef());
     }
   }
 }

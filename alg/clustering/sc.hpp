@@ -13,6 +13,7 @@
  *
  */
 
+#include <cmath>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -85,7 +86,30 @@ class spectral_clustering : public paracel::paralg {
         }
       }
     }
+    
     // construct degree-matrix D
+    std::unordered_map<std::string, double> D;
+    for(size_t k = 0; k < blk_W.rows(); ++k) {
+      std::string name = row_map[k];
+      double tmp = 1. / sqrt(blk_W.row(k).sum());
+      blk_W.row(k) *= tmp; // W' = D ^ (-1/2) * W
+      D[name] = tmp;
+      paracel_write("D_" + name, tmp);
+    }
+    sync();
+
+    // construct transformation matrix W'' = W' * D ^ (-1/2)
+    auto rmul_lambda = [&] (int r, int c, double & v) {  
+      if(D.count(col_map[c])) {
+        v *= D[col_map[c]];
+      } else {
+        v *= paracel_read<double>("D_" + col_map[c]);
+      }
+    };
+    paracel::traverse_matrix(blk_W, rmul_lambda);
+    if(get_worker_id() == 1) {
+      std::cout << blk_W << std::endl;
+    }
   }
 
  private:
@@ -93,8 +117,7 @@ class spectral_clustering : public paracel::paralg {
   bool mutual_sim;
   int rounds;
 
-  Eigen::SparseMatrix<double, Eigen::RowMajor> W;
-  Eigen::DiagonalMatrix<double, Eigen::Dynamic> D;
+  Eigen::SparseMatrix<double, Eigen::RowMajor> blk_W;
   std::unordered_map<size_t, std::string> row_map, col_map;
 
 }; // class spectral_clustering

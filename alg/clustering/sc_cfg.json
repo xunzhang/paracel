@@ -1,0 +1,8 @@
+{
+  "input" : "/mfs/user/wuhong/paracel/data/spectral_clustering/demo.txt",
+  "output" : "/mfs/user/wuhong/paracel/data/spectral_clustering_result/",
+  "type" : "fvec",
+  "kclusters" : 8,
+  "rounds" : 2,
+  "limit_s" : 0
+}
