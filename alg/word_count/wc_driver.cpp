@@ -19,13 +19,8 @@
 #include <mpi.h>
 #include <google/gflags.h>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
 #include "wc.hpp"
 #include "utils.hpp"
-
-using namespace boost::property_tree;
 
 DEFINE_string(server_info, "host1:7777PARACELhost2:8888", "hosts name string of paracel-servers.\n");
 
@@ -39,12 +34,11 @@ int main(int argc, char *argv[])
   google::SetUsageMessage("[options]\n\t--server_info\n\t--cfg_file\n");
   google::ParseCommandLineFlags(&argc, &argv, true);
   
-  ptree pt;
-  json_parser::read_json(FLAGS_cfg_file, pt);
-  std::string input = pt.get<std::string>("input");
-  std::string output = pt.get<std::string>("output");
-  int topk = pt.get<int>("topk");
-  int limit_s = pt.get<int>("limit_s");
+  paracel::json_parser pt(FLAGS_cfg_file);
+  std::string input = pt.parse<std::string>("input");
+  std::string output = pt.parse<std::string>("output");
+  int topk = pt.parse<int>("topk");
+  int limit_s = pt.parse<int>("limit_s");
   std::cout << limit_s << std::endl;
   
   paracel::word_count wc_solver(comm, FLAGS_server_info, input, output, "optimized", topk);

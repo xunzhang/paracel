@@ -19,13 +19,8 @@
 #include <mpi.h>
 #include <google/gflags.h>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
 #include "mf.hpp"
 #include "utils.hpp"
-
-using namespace boost::property_tree;
 
 DEFINE_string(server_info, "host1:7777PARACELhost2:8888", "hosts name string of paracel-servers.\n");
 
@@ -39,15 +34,14 @@ int main(int argc, char *argv[])
   google::SetUsageMessage("[options]\n\t--server_info\n\t--cfg_file\n");
   google::ParseCommandLineFlags(&argc, &argv, true);
   
-  ptree pt;
-  json_parser::read_json(FLAGS_cfg_file, pt);
-  std::string input = pt.get<std::string>("input");
-  std::string output = pt.get<std::string>("output");
-  int k = pt.get<int>("k");
-  double alpha = pt.get<double>("alpha");
-  double beta = pt.get<double>("beta");
-  int rounds = pt.get<int>("rounds");
-  int limit_s = pt.get<int>("limit_s");
+  paracel::json_parser pt(FLAGS_cfg_file);
+  std::string input = pt.parse<std::string>("input");
+  std::string output = pt.parse<std::string>("output");
+  int k = pt.parse<int>("k");
+  double alpha = pt.parse<double>("alpha");
+  double beta = pt.parse<double>("beta");
+  int rounds = pt.parse<int>("rounds");
+  int limit_s = pt.parse<int>("limit_s");
   
   paracel::matrix_factorization mf_solver(comm, FLAGS_server_info, input, output, "ipm", k, rounds, alpha, beta, false, limit_s, true);
   mf_solver.solve();
