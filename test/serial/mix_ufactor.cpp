@@ -81,8 +81,8 @@ void dump(const unordered_map<
 
 int main(int argc, char *argv[])
 {
-  string ufac1 = "/mfs/user/wuhong/paracel/data/netflix_result8/W_*";
-  string ufac2 = "/mfs/user/wuhong/paracel/data/cbr_result_parallel/W_*";
+  string ufac1 = "/mfs/user/wuhong/paracel/data/netflix_parallel_split/W_*";
+  string ufac2 = "/mfs/user/wuhong/paracel/data/cbr_parallel_split/W_*";
   string output = "/mfs/user/wuhong/paracel/test/serial/mix_ufactor_netflix";
   auto mix_ufac = factor_mix(ufac1, ufac2);
   dump(mix_ufac, output);

@@ -176,15 +176,15 @@ int main(int argc, char *argv[])
   string ifac = "/mfs/user/wuhong/paracel/data/netflix_result8/H_0";
   string ubias = "/mfs/user/wuhong/paracel/data/netflix_result8/ubias_0";
   string ufac = "/mfs/user/wuhong/paracel/data/netflix_result8/W_0";
-  string cbr_ubias = "/mfs/user/wuhong/paracel/data/cbr_result_parallel/ubias_*";
-  string cbr_ufac = "/mfs/user/wuhong/paracel/data/cbr_result_parallel/W_*";
-  string mix_ubias = "/mfs/user/wuhong/paracel/test/serial/mix_ubias_netflix";
-  string mix_ufac = "/mfs/user/wuhong/paracel/test/serial/mix_ufactor_netflix";
+  //string cbr_ubias = "/mfs/user/wuhong/paracel/data/cbr_parallel_split/ubias_*";
+  //string cbr_ufac = "/mfs/user/wuhong/paracel/data/cbr_parallel_split/W_*";
+  //string mix_ubias = "/mfs/user/wuhong/paracel/test/serial/mix_ubias_netflix";
+  //string mix_ufac = "/mfs/user/wuhong/paracel/test/serial/mix_ufactor_netflix";
   string test = "/mfs/user/wuhong/paracel/data/netflix/test/test";
   //string test = "/mfs/user/wuhong/paracel/data/netflix/train/train";
-  //std::cout << cal_rmse(miu, ibias, ifac, ubias, ufac, test) << std::endl;
+  std::cout << cal_rmse(miu, ibias, ifac, ubias, ufac, test) << std::endl;
   //std::cout << cal_rmse(miu, ibias, ifac, cbr_ubias, cbr_ufac, test) << std::endl;
   //std::cout << cal_rmse(miu, ibias, ifac, mix_ubias, mix_ufac, test) << std::endl;
-  std::cout << cal_rmse_mix(miu, ibias, ifac, ubias, ufac, cbr_ubias, cbr_ufac, test) << std::endl;
+  //std::cout << cal_rmse_mix(miu, ibias, ifac, ubias, ufac, cbr_ubias, cbr_ufac, test) << std::endl;
   return 0;
 }

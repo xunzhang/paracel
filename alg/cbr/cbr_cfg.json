@@ -1,13 +1,13 @@
 {
-  "input_rating": "/mfs/user/wuhong/paracel/data/netflix/train/train_sorted_fmt",
-  "input_miu": "/mfs/user/wuhong/paracel/data/netflix_result8/miu_0",
-  "input_ubias": "/mfs/user/wuhong/paracel/data/netflix_result8/ubias_*",
-  "input_ibias": "/mfs/user/wuhong/paracel/data/netflix_result8/ibias_*",
-  "input_ufac": "/mfs/user/wuhong/paracel/data/netflix_result8/W_*",
-  "input_ifac": "/mfs/user/wuhong/paracel/data/netflix_result8/H_*",
-  "output": "/mfs/user/wuhong/paracel/data/cbr_result_parallel/",
+  "input_rating": "/mfs/user/wuhong/paracel/data/netflix/train_handled/train_split_part2_sorted_fmt",
+  "input_miu": "/mfs/user/wuhong/paracel/data/netflix_parallel_split/miu_0",
+  "input_ubias": "/mfs/user/wuhong/paracel/data/netflix_parallel_split/ubias_0",
+  "input_ibias": "/mfs/user/wuhong/paracel/data/netflix_parallel_split/ibias_0",
+  "input_ufac": "/mfs/user/wuhong/paracel/data/netflix_parallel_split/W_0",
+  "input_ifac": "/mfs/user/wuhong/paracel/data/netflix_parallel_split/H_0",
+  "output": "/mfs/user/wuhong/paracel/data/cbr_serial_split/",
   "alpha": 0.001,
   "beta": 0.01,
-  "rounds": 1,
+  "rounds": 10,
   "limit_s": 0
 }

@@ -126,5 +126,8 @@ int main(int argc, char *argv[])
   paracel::kmeans solver(comm, input, output, ktop, rounds);
   solver.solve();
   solver.dump_result();
+
+  Eigen::MatrixXd mm(8, 100);
+  std::cout << ";a;a" << mm.row(7)[0] << std::endl;
   return 0;
 }

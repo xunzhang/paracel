@@ -17,8 +17,8 @@
 #include <iostream>
 #include <google/gflags.h>
 
-//#include "kmeans.hpp"
-#include "sc.hpp"
+#include "kmeans.hpp"
+//#include "sc.hpp"
 #include "utils.hpp"
 
 using std::string;
@@ -43,12 +43,8 @@ int main(int argc, char *argv[])
   int k = jp.parse<int>("kclusters");
   int rounds = jp.parse<int>("rounds");
   int limit_s = jp.parse<int>("limit_s");
-  /*
   paracel::kmeans solver(comm, FLAGS_server_info, input, output, type, k, rounds, limit_s);
   solver.solve();
   solver.dump_result();
-  */
-  paracel::spectral_clustering solver(comm, FLAGS_server_info, input, output, false, rounds, 0);
-  solver.init();
   return 0;
 }

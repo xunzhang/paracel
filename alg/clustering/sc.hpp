@@ -35,11 +35,13 @@ class spectral_clustering : public paracel::paralg {
                       std::string hosts_dct_str,
                       std::string _input,
                       std::string _output,
+                      int _kclusters,
                       bool _mutual_sim = false,
                       int _rounds = 1,
                       int limit_s = 0) : 
       paracel::paralg(hosts_dct_str, comm, _output, _rounds, limit_s, true),
       input(_input),
+      kclusters(_kclusters),
       mutual_sim(_mutual_sim),
       rounds(_rounds) {}
 
@@ -68,8 +70,9 @@ class spectral_clustering : public paracel::paralg {
       paracel::traverse_matrix(blk_W, sim_constructer);
       sync();
       
-      auto kvmap_tmp = paracel_read_special<double>("/mfs/user/wuhong/paracel/local/lib/libclustering_filter.so",
-                                                    "W_filter");
+      auto kvmap_tmp = paracel_read_special<double>(
+          "/mfs/user/wuhong/paracel/local/lib/libclustering_filter.so",
+          "W_filter");
       std::unordered_map<std::string, size_t> row_reverse_map, col_reverse_map;
       for(auto & kv : row_map) {
         row_reverse_map[kv.second] = kv.first;
@@ -107,14 +110,30 @@ class spectral_clustering : public paracel::paralg {
       }
     };
     paracel::traverse_matrix(blk_W, rmul_lambda);
-    if(get_worker_id() == 1) {
-      std::cout << blk_W << std::endl;
+  } // init
+
+  void cal_eigen_value() {
+    size_t local_n = blk_W.rows();
+    size_t n = blk_W.cols();
+    int over_sampling = 10;
+    Eigen::MatrixXd W(local_n, n); // n/np * n
+    std::unordered_map<std::string, Eigen::MatrixXd> H_dct;
+    // random_matrix H
+    int local_h_ydim = (kclusters + over_sampleing) / get_worker_size();
+    for(auto & id : row_map) {
+      H_dct[id.second] = Eigen::Random(n, local_h_ydim);
     }
   }
 
+  void learning() {}
+
+  void dump() {}
+
  private:
   std::string input;
+  int kclusters;
   bool mutual_sim;
+  int k, p;
   int rounds;
 
   Eigen::SparseMatrix<double, Eigen::RowMajor> blk_W;

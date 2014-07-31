@@ -89,5 +89,8 @@ int main(int argc, char *argv[])
   vvec << 1.1, 2.2;
   std::cout << mmat.maxCoeff(&rr, &cc) << std::endl;
   std::cout << rr << " | " << cc << std::endl;
+
+  std::cout << "---" << std::endl;
+  std::cout << mmat.row(1).sum() << std::endl;
   return 0;
 }

@@ -38,7 +38,7 @@ bias_mix(const T & fn1,
     }
     f2.close();
   }
-  std::cout << "init done" << std::endl;
+  std::cout << "init done" << ubias1.size() << ubias2.size() << std::endl;
 
   // mix
   assert(ubias1.size() == ubias2.size());
@@ -66,8 +66,8 @@ void dump(const unordered_map<string, double> & ubias,
 
 int main(int argc, char *argv[])
 {
-  string ubn1 = "/mfs/user/wuhong/paracel/data/netflix_result8/ubias_*";
-  string ubn2 = "/mfs/user/wuhong/paracel/data/cbr_result_parallel/ubias_*";
+  string ubn1 = "/mfs/user/wuhong/paracel/data/netflix_parallel_split/ubias_*";
+  string ubn2 = "/mfs/user/wuhong/paracel/data/cbr_parallel_split/ubias_*";
   string output = "/mfs/user/wuhong/paracel/test/serial/mix_ubias_netflix";
   auto mix_ubias = bias_mix(ubn1, ubn2);
   dump(mix_ubias, output);

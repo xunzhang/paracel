@@ -13,21 +13,45 @@
  *
  */
 
+#include <unistd.h>
 #include <string>
 #include <iostream>
-#include <vector>
 
 #include <mpi.h>
 #include <google/gflags.h>
 
-#include "hi.hpp"
 #include "utils.hpp"
+#include "ps.hpp"
 
-using std::string;
-using std::vector;
+namespace paracel {
+
+class hostname : public paracel::paralg {
+ 
+ public:
+  hostname(paracel::Comm comm, 
+           std::string hosts_dct_str, 
+           std::string _output) : paracel::paralg(hosts_dct_str, comm, _output) {}
+
+  void solve() {
+    char hostname[1024];
+    gethostname(hostname, sizeof(hostname));
+    std::string hn = hostname;
+    paracel_bupdate("names", hn, "/mfs/user/wuhong/paracel/local/lib/libhostname_update.so", "hostname_updater");
+    sync();
+    if(get_worker_id() == 0) {
+      names = paracel_read<std::string>("names");
+      std::cout << names << std::endl;
+    }
+  }
+
+private:
+  std::string names;
+
+};
+
+} // namespace paracel
 
 DEFINE_string(server_info, "host1:7777PARACELhost2:8888", "hosts name string of paracel-servers.\n");
-
 DEFINE_string(cfg_file, "", "config json file with absolute path.\n");
 
 int main(int argc, char *argv[])
@@ -37,16 +61,8 @@ int main(int argc, char *argv[])
 
   google::SetUsageMessage("[options]\n\t--server_info\n\t--cfg_file\n");
   google::ParseCommandLineFlags(&argc, &argv, true);
-  
-  paracel::json_parser jp(FLAGS_cfg_file);
-  string input = jp.parse<string>("input"); 
-  string output = jp.parse<string>("output"); 
-  string para = jp.parse<string>("para");
-  vector<int> demo = jp.parse_v<int>("demo");
 
-  paracel::hi hi_solver(comm, FLAGS_server_info, input, output, para);
-  //hi_solver.solve();
-  hi_solver.opt();
-  
+  paracel::hostname obj(comm, FLAGS_server_info, "/mfs/user/wuhong/paracel/data/hostname_result/");
+  obj.solve();
   return 0;
 }

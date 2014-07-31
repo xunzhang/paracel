@@ -87,7 +87,7 @@ class cbr {
     delete rating_graph;
 
     // init ubias, ufactor with specified value
-    string s1 = "/mfs/user/wuhong/paracel/data/netflix_result7/ubias_0";
+    string s1 = "/mfs/user/wuhong/paracel/data/netflix_parallel_split/ubias_0";
     lines = pt->paracel_load(s1);
     auto local_ubias_parser = [&] (const vector<string> & linelst) {
       for(auto & line : linelst) {
@@ -97,7 +97,7 @@ class cbr {
     };
     local_ubias_parser(lines);
 
-    string s2 = "/mfs/user/wuhong/paracel/data/netflix_result7/W_0";
+    string s2 = "/mfs/user/wuhong/paracel/data/netflix_parallel_split/W_0";
     lines = pt->paracel_load(s2);
     auto local_ufac_parser = [&] (const vector<string> & linelst) {
       auto tmp1 = paracel::str_split(linelst[0], '\t');
@@ -128,6 +128,7 @@ class cbr {
   void learning() {
     init();
     pt->sync();
+    std::cout << "learning" << fac_dim << std::endl;
     // learning
     for(int rd = 0; rd < rounds; ++rd) {
       for(auto & meta : usr_rating_lst) {
@@ -135,6 +136,10 @@ class cbr {
         for(auto & kv : meta.second) {
           auto iid = kv.first;
           auto wgt = kv.second;
+	  assert(ifactor[iid].size() == fac_dim);
+	  assert(ufactor[uid].size() == fac_dim);
+	  assert(ubias.count(uid) != 0);
+	  assert(ibias.count(iid) != 0);
           if(ifactor.count(iid) == 0) {
             std::cout << "bug" << std::endl;
           }
