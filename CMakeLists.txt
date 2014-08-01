@@ -72,4 +72,5 @@ add_subdirectory(alg/cbr)
 add_subdirectory(alg/pagerank)
 add_subdirectory(alg/clustering)
 add_subdirectory(alg/hostname)
+add_subdirectory(alg/max_vertex_value)
 ################################################################################
