@@ -81,29 +81,34 @@ class max_vertex_value : public paracel::paralg {
         if(kv.second) {
           local_halt_flag = false;
           // iter outgoing edges
-          for(auto & edge_info : vertex_adj_edge_val_map) {
+          for(auto & edge_info : vertex_adj_edge_val_map[v]) {
             std::string link_v = edge_info.first;
+            //std::cout << v << "|" << link_v << "|" << vertex_val_map[v] << std::endl;
             paracel_bupdate(link_v, 
-                          vertex_val_map[v], 
-                          "/mfs/user/wuhong/paracel/local/lib/libmvv_update.so", 
-                          "max_updater");
-          } // for
-        } // if
+                            vertex_val_map[v], 
+                            "/mfs/user/wuhong/paracel/local/lib/libmvv_update.so",
+                            "max_updater");
+          }
+        }
         sync();
-      } //for
+      }
 
       // update vertex_active_map
       for(auto & kv : vertex_active_map) {
         std::string vertex = kv.first;
         double new_val = paracel_read<double>(vertex);
         double old_val = vertex_val_map[vertex];
+        vertex_val_map[vertex] = new_val; // local update
         if(new_val == old_val) {
           vertex_active_map[vertex] = false; // vote to halt
+        } else {
+          vertex_active_map[vertex] = true; // reactive
         }
       }
       if(local_halt_flag) {
         break;
       }
+      //std::cout << "___" << std::endl;
     }
   } // solve
 
