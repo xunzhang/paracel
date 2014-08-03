@@ -51,12 +51,9 @@ class max_vertex_value : public paracel::paralg {
       vertex_val_map[rid] = std::stod(rid);
     };
     grp.traverse(lambda);
-    // init vertex_adj_edge_val_map
+    // init vertex_adj_edge_val_map & vertex_active_map
     for(auto & vertex : vertex_val_map) {
       vertex_adj_edge_val_map[vertex.first] = grp.adjacent(vertex.first);
-    }
-    // init vertex_active_map
-    for(auto & vertex : vertex_val_map) {
       vertex_active_map[vertex.first] = true;
     }
   }

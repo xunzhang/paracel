@@ -713,7 +713,8 @@ class paralg {
     return local_comm.treereduce(data, func, rank);
   }
 
-  virtual void solve() = 0;
+  virtual void solve() {}
+  //virtual void solve() = 0;
 
  private:
   class parasrv {

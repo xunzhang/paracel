@@ -288,6 +288,20 @@ public:
       func(v, kv.first, kv.second);
     }
   }
+
+  template <class F>
+  void traverse_by_vertex(F & func) {
+    for(auto & v : adj) {
+      func(v);
+    }
+  }
+
+  std::vector<T> vertex_bag() {
+    std::vector<T> r;
+    for(auto & v : adj) {
+      r.push_back(v.first);
+    }
+  }
   
   void dump2triples(paracel::list_type<std::tuple<T, T, double> > & tpls) {
     tpls.resize(0);
