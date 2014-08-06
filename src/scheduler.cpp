@@ -13,6 +13,7 @@
  *
  */
 #include <mutex>
+#include "utils/ext_utility.hpp"
 #include "utils/comm.hpp"
 #include "load/partition.hpp"
 #include "load/scheduler.hpp"

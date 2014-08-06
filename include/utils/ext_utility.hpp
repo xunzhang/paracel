@@ -111,6 +111,26 @@ slst_type str_split_by_word(paracel::str_type && str, const paracel::str_type & 
   return result;
 }
 
+paracel::str_type str_join(const slst_type & strlst, const paracel::str_type & seps) {
+  paracel::str_type r;
+  for(size_t i = 0; i < strlst.size() - 1; ++i) {
+    r.append(strlst[i]);
+    r.append(seps);
+  }
+  r.append(strlst[strlst.size() - 1]);
+  return r;
+}
+
+paracel::str_type str_join(slst_type && strlst, const paracel::str_type & seps) {
+  paracel::str_type r;
+  for(size_t i = 0; i < strlst.size() - 1; ++i) {
+    r.append(std::move(strlst[i]));
+    r.append(seps);
+  }
+  r.append(std::move(strlst[strlst.size() - 1]));
+  return r;
+}
+
 bool startswith(const paracel::str_type & str, const paracel::str_type & key) {
   return str.find(key) == 0;
 }
