@@ -90,7 +90,13 @@ public:
   }
 
   virtual void opt() {
-    init_partition("/mfs/user/wuhong/plato/data/input/netflix.train", rlst);
+    //init_partition("/mfs/user/wuhong/plato/data/input/netflix.train", rlst);
+    paracel_write("sad", 1.);
+    paracel_write("fat", 3.);
+    auto dd = paracel_readall<double>();
+    for(auto & l : dd) {
+      std::cout << l.first << "|" << l.second << std::endl;
+    }
   }
 
 private:

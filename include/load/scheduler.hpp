@@ -68,6 +68,12 @@ public:
     return (hf1(i) % npx) * npy + hf2(j) % npy;
   }
 
+  template <class A>
+  inline size_t select(A & i) const {
+    paracel::hash_type<A> hf;
+    return hf(i) % npx;
+  }
+
   template <class F = std::function< paracel::list_type<paracel::str_type>(paracel::str_type) > >
   llt_type lines_organize(const paracel::list_type<paracel::str_type> & lines,
       F && parser_func = tmp_parser) {
