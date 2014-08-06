@@ -56,7 +56,8 @@ public:
     auto loads = paracel::files_partition(fname_lst, m_comm.get_size(), pattern);
 	std::cout << "procs " << m_comm.get_rank() << " loads finished" << std::endl;
     // parallel loading lines
-    auto linelst = scheduler.schedule_load(loads);
+    auto linelst = scheduler.structure_load(loads);
+    //auto linelst = scheduler.schedule_load(loads);
     std::cout << "procs " << m_comm.get_rank() << " lines got" << std::endl;
     m_comm.sync();
 	return linelst;
