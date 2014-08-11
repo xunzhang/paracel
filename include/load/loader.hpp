@@ -38,14 +38,14 @@ typedef Eigen::Triplet<double> eigen_triple;
 template <class T = paracel::str_type>
 class loader {
 
-public:
-  
+ public:
+
   loader(T fns, paracel::Comm comm) : filenames(fns), m_comm(comm) {};
-  
+
   loader(T fns, paracel::Comm comm, paracel::str_type pt) : filenames(fns), m_comm(comm), pattern(pt) {};
 
   loader(T fns, paracel::Comm comm, parser_type f, paracel::str_type pt) : filenames(fns), m_comm(comm), parserfunc(f), pattern(pt) {};
-  
+
   loader(T fns, paracel::Comm comm, parser_type f, paracel::str_type pt, bool flag) : filenames(fns), m_comm(comm), parserfunc(f), pattern(pt), mix(flag) {};
 
   paracel::list_type<paracel::str_type> 
@@ -54,36 +54,36 @@ public:
     auto fname_lst = paracel::expand(filenames);
     // generate loads
     auto loads = paracel::files_partition(fname_lst, m_comm.get_size(), pattern);
-	std::cout << "procs " << m_comm.get_rank() << " loads finished" << std::endl;
+    std::cout << "procs " << m_comm.get_rank() << " loads finished" << std::endl;
     // parallel loading lines
     auto linelst = scheduler.structure_load(loads);
     //auto linelst = scheduler.schedule_load(loads);
     std::cout << "procs " << m_comm.get_rank() << " lines got" << std::endl;
     m_comm.sync();
-	return linelst;
+    return linelst;
   }
-  
+
   paracel::list_type<paracel::str_type> 
   fixload() {
     paracel::scheduler scheduler(m_comm, pattern, mix);
     auto fname_lst = paracel::expand(filenames);
     // generate loads
     auto loads = paracel::files_partition(fname_lst, m_comm.get_size(), pattern);
-	std::cout << "procs " << m_comm.get_rank() << " loads finished" << std::endl;
+    std::cout << "procs " << m_comm.get_rank() << " loads finished" << std::endl;
     // parallel loading lines
     auto linelst = scheduler.structure_load(loads);
     std::cout << "procs " << m_comm.get_rank() << " lines got" << std::endl;
     m_comm.sync();
-	return linelst;
+    return linelst;
   }
 
   // fmap case
   void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
-  		Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
-  		paracel::dict_type<size_t, paracel::str_type> & rm, 
-		paracel::dict_type<size_t, paracel::str_type> & cm,
-		paracel::dict_type<size_t, int> & dm,
-		paracel::dict_type<size_t, int> & col_dm) {
+                     Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
+                     paracel::dict_type<size_t, paracel::str_type> & rm, 
+                     paracel::dict_type<size_t, paracel::str_type> & cm,
+                     paracel::dict_type<size_t, int> & dm,
+                     paracel::dict_type<size_t, int> & col_dm) {
 
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst
@@ -109,9 +109,9 @@ public:
 
   // simple fmap case, fsmap case
   void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
-  		Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
-  		paracel::dict_type<size_t, paracel::str_type> & rm,
-		paracel::dict_type<size_t, paracel::str_type> & cm) {
+                     Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
+                     paracel::dict_type<size_t, paracel::str_type> & rm,
+                     paracel::dict_type<size_t, paracel::str_type> & cm) {
     paracel::dict_type<size_t, int> dm;
     paracel::dict_type<size_t, int> col_dm;
     create_matrix(linelst, blk_mtx, rm, cm, dm, col_dm);
@@ -119,9 +119,9 @@ public:
 
   // fvec case, only support row decomposition
   void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
-  		Eigen::MatrixXd & blk_dense_mtx,
-  		paracel::dict_type<size_t, paracel::str_type> & rm) {
-    
+                     Eigen::MatrixXd & blk_dense_mtx,
+                     paracel::dict_type<size_t, paracel::str_type> & rm) {
+
     int csz = 0;
     size_t indx = 0;
     bool flag = true;
@@ -143,12 +143,12 @@ public:
       blk_dense_mtx.row(i) = mtx_llst[i];
     }
   }
-  
+
   // fmap case
   void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-  		paracel::bigraph<paracel::str_type> & grp,
-		paracel::dict_type<size_t, int> & dm,
-		paracel::dict_type<size_t, int> & col_dm) {
+                    paracel::bigraph<paracel::str_type> & grp,
+                    paracel::dict_type<size_t, int> & dm,
+                    paracel::dict_type<size_t, int> & col_dm) {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst
     auto result = scheduler.lines_organize(linelst, parserfunc);
@@ -164,7 +164,7 @@ public:
     scheduler.index_mapping(stf, stf_new, rm, cm, dm, col_dm);
     std::cout << "procs " << m_comm.get_rank() << " index mapping" << std::endl;
     paracel::dict_type<paracel::str_type, 
-    		paracel::dict_type<paracel::str_type, double> > dct;
+        paracel::dict_type<paracel::str_type, double> > dct;
     for(auto & tpl : stf_new) {
       dct[rm[std::get<0>(tpl)]][cm[std::get<1>(tpl)]] = std::get<2>(tpl);  
     }
@@ -173,13 +173,13 @@ public:
 
   // simple fmap case, fsmap case
   void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-                paracel::bigraph<paracel::str_type> & grp) {
+                    paracel::bigraph<paracel::str_type> & grp) {
     paracel::dict_type<size_t, int> dm;
     paracel::dict_type<size_t, int> col_dm;
     create_graph(linelst, grp, dm, col_dm);
   }
 
-private:
+ private:
   T filenames;
   paracel::Comm m_comm;
   parser_type parserfunc;
