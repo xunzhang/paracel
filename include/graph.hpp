@@ -336,6 +336,11 @@ public:
   adjacent(const T & v) {
     return adj[v];
   }
+  
+  paracel::dict_type<T, double>
+  reverse_adjacent(const T & v) {
+    return reverse_adj[v];
+  }
 
   inline size_t outdegree(const T & v) { 
     return adj[v].size(); 

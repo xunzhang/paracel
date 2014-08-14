@@ -134,7 +134,7 @@ class paralg {
     paracel::list_type<paracel::str_type> lines;
     for(auto & fname : fname_lst) {
       std::ifstream f(fname, std::ios::binary);
-      if(!f) { throw std::runtime_error("paracel error in files_load_lines_impl: loader reading failed."); }
+      if(!f) { throw std::runtime_error("paracel error in paracel_loadall: loader reading failed."); }
       paracel::str_type l;
       while(std::getline(f, l)) {
         lines.push_back(l);

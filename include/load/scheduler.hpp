@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <mutex>
 #include <functional>
+#include <time.h>
 #include "paracel_types.hpp"
 #include "utils/comm.hpp"
 #include "utils/decomp.hpp"
@@ -187,7 +188,12 @@ public:
       std::get<2>(tmp) = std::get<2>(tpl);
       stf.push_back(tmp);
     }
-
+    rev_rm.clear();
+    rev_cm.clear();
+    
+    /*
+    clock_t tt;
+    tt = clock();
     if (pattern == "fmap") {
       // cal dm
       // little tricky: default stl map sort is equal to stl set
@@ -197,7 +203,7 @@ public:
         dm[indx] = item;
         indx += 1;
       }
-    
+
       // cal col_dm
       paracel::dict_type<size_t, int> reduce_map;
       for(auto & tpl : stf) {
@@ -208,7 +214,7 @@ public:
           reduce_map[key] += 1;
         }
       }
-    
+
       auto union_func3 = [&] (paracel::dict_type<size_t, int> tmp) {
         for(auto & kv : tmp) {
           auto key = kv.first;
@@ -221,7 +227,10 @@ public:
         }
       };
       m_comm.bcastring(reduce_map, union_func3);
+      std::cout << "debug5" << (clock() - tt) / CLOCKS_PER_SEC << std::endl;
     } // end of if 
+    */
+
   } // index_mapping
   
 private:
