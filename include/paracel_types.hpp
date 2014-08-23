@@ -41,9 +41,9 @@ const int threads_num = 5;
 
 const size_t split_sz = 500;
 
-const std::string seperator = "PARACEL";
+const std::string seperator = "_PARACEL_";
 
-const std::string seperator_inner = "paracel";
+const std::string seperator_inner = "_paracel_";
 
 const std::string default_so_file = "../src/default.so";
 

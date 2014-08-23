@@ -33,17 +33,17 @@ namespace paracel {
 
 class word_count : public paracel::paralg {
 
-public:
+ public:
   word_count(paracel::Comm comm, std::string hosts_dct_str, 
-  	std::string _input, std::string _output, std::string method = "normal",
-	int k = 10, int limit_s = 3, bool ssp_switch = true) : 
-	paracel::paralg(hosts_dct_str, comm, _output, 1, limit_s, ssp_switch),
-	input(_input),
-	learning_method(method),
-	topk(k) {}
+             std::string _input, std::string _output, std::string method = "normal",
+             int k = 10, int limit_s = 3, bool ssp_switch = true) : 
+      paracel::paralg(hosts_dct_str, comm, _output, 1, limit_s, ssp_switch),
+      input(_input),
+      learning_method(method),
+      topk(k) {}
 
   virtual ~word_count() {}
-  
+
   std::vector<std::string> parser(const std::string & line) {
     std::vector<std::string> wl, rl;
     boost::algorithm::split_regex(wl, line, boost::regex("[^-a-zA-Z0-9_]"));
@@ -54,21 +54,21 @@ public:
     }
     return rl;
   }
-  
+
   void normal_learning(const std::vector<std::string> & lines) {
     paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libwc_update.so", "wc_updater");
     for(auto & line : lines) {
       auto word_lst = parser(line);
       for(auto & word : word_lst) {
         if(is_cached(word)) {
-	  paracel_bupdate(word, 1);
-	} else {
-	  if(paracel_contains(word)) {
-	    paracel_bupdate(word, 1); 
-	  } else {
-	    paracel_write(word, 1);
-	  }
-	}
+          paracel_bupdate(word, 1);
+        } else {
+          if(paracel_contains(word)) {
+            paracel_bupdate(word, 1); 
+          } else {
+            paracel_write(word, 1);
+          }
+        }
       } // word_lst
       iter_commit();
     } // lines
@@ -81,10 +81,10 @@ public:
     /*
     // init para
     for(auto & line : lines) {
-      auto word_lst = parser(line);
-      for(auto & word : word_lst) {
-        paracel_write(word, 0); 
-      } // word_lst
+    auto word_lst = parser(line);
+    for(auto & word : word_lst) {
+    paracel_write(word, 0); 
+    } // word_lst
     } // lines
     */
     // init para
@@ -110,6 +110,7 @@ public:
 
   virtual void solve() {
     auto lines = paracel_load(input);
+    std::cout << "load done" << std::endl;
     sync();
     if(learning_method == "normal") {
       set_total_iters(lines.size());
@@ -132,7 +133,7 @@ public:
     }
   }
 
-private:
+ private:
   std::string input;
   std::string learning_method;
   int topk = 10;

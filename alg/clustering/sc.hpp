@@ -41,6 +41,7 @@ class spectral_clustering : public paracel::paralg {
                       int limit_s = 0) : 
       paracel::paralg(hosts_dct_str, comm, _output, _rounds, limit_s, true),
       input(_input),
+      output(_output),
       kclusters(_kclusters),
       mutual_sim(_mutual_sim),
       rounds(_rounds) {}
@@ -55,6 +56,7 @@ class spectral_clustering : public paracel::paralg {
                            f_parser, 
                            "fmap", 
                            true);
+    //std::cout << "blk_W: " << blk_W << std::endl;
     // construct similarity graph: (mutual) k-nearest neighbor graph
     if(mutual_sim) {
       // TODO
@@ -88,11 +90,13 @@ class spectral_clustering : public paracel::paralg {
           blk_W.coeffRef(row_reverse_map[lst[2]], col_reverse_map[lst[1]]) = kv.second;
         }
       }
+      row_reverse_map.clear();
+      col_reverse_map.clear();
     }
     
-    // construct degree-matrix D
+    // construct degree-matrix D, and generate W' = D ^ (-1/2) * W
     std::unordered_map<std::string, double> D;
-    for(size_t k = 0; k < blk_W.rows(); ++k) {
+    for(size_t k = 0; k < (size_t)blk_W.rows(); ++k) {
       std::string name = row_map[k];
       double tmp = 1. / sqrt(blk_W.row(k).sum());
       blk_W.row(k) *= tmp; // W' = D ^ (-1/2) * W
@@ -110,8 +114,29 @@ class spectral_clustering : public paracel::paralg {
       }
     };
     paracel::traverse_matrix(blk_W, rmul_lambda);
+    if(get_worker_id() == 1) {
+      std::cout << blk_W << std::endl;
+    }
+
+    // load blk_W_T
+    int worker_sz = get_worker_size();
+    int rank = get_worker_id();
+    std::unordered_map<std::string, std::vector<std::pair<std::string, double> > > tmp_container;
+    auto pack_smtx_lambda = [&] (int r, int c, double & v) {
+      int col_terma = c / worker_sz;
+      int col_termb = c % worker_sz;
+      tmp_container[std::to_string(r + rank * worker_sz)].push_back(std::make_pair(std::to_string(col_terma + worker_sz * col_termb), v));
+    };
+    paracel::traverse_matrix(blk_W, pack_smtx_lambda);
+    paracel_dump_dict(tmp_container, "blk_W_T_", false);
+    paracel_load_as_matrix(blk_W_T, output + "blk_W_T_*", f_parser, "smap", true);
+    blk_W_T = blk_W_T.transpose();
+    if(get_worker_id() == 1) {
+      std::cout << blk_W_T << std::endl;
+    }
   } // init
 
+  /*
   void cal_eigen_value() {
     size_t local_n = blk_W.rows();
     size_t n = blk_W.cols();
@@ -124,19 +149,21 @@ class spectral_clustering : public paracel::paralg {
       H_dct[id.second] = Eigen::Random(n, local_h_ydim);
     }
   }
+  */
 
   void learning() {}
 
   void dump() {}
 
  private:
-  std::string input;
+  std::string input, output;
   int kclusters;
   bool mutual_sim;
   int k, p;
   int rounds;
 
   Eigen::SparseMatrix<double, Eigen::RowMajor> blk_W;
+  Eigen::SparseMatrix<double, Eigen::RowMajor> blk_W_T;
   std::unordered_map<size_t, std::string> row_map, col_map;
 
 }; // class spectral_clustering
