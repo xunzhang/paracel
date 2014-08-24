@@ -14,6 +14,7 @@
  */
 
 #include <cmath>
+#include <tuple>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -27,6 +28,8 @@
 #include "paracel_types.hpp"
 
 namespace paracel {
+
+typedef Eigen::Triplet<double> eigen_triple;
 
 class spectral_clustering : public paracel::paralg {
  
@@ -56,7 +59,9 @@ class spectral_clustering : public paracel::paralg {
                            f_parser, 
                            "fmap", 
                            true);
-    //std::cout << "blk_W: " << blk_W << std::endl;
+    if(get_worker_id() == 2) {
+      std::cout << "blk_W: " << blk_W << std::endl;
+    }
     // construct similarity graph: (mutual) k-nearest neighbor graph
     if(mutual_sim) {
       // TODO
@@ -114,10 +119,51 @@ class spectral_clustering : public paracel::paralg {
       }
     };
     paracel::traverse_matrix(blk_W, rmul_lambda);
-    if(get_worker_id() == 1) {
+    if(get_worker_id() == 2) {
       std::cout << blk_W << std::endl;
     }
 
+    // generate blk_W_T
+    size_t row_sz = blk_W.rows();
+    auto worker_comm = get_comm();
+    int worker_sz = get_worker_size();
+    int rank = get_worker_id();
+    //std::vector<std::vector<std::tuple<size_t, size_t, double> > > tmp_buf(worker_sz);
+    std::vector<std::vector<std::pair<std::pair<size_t, size_t>, double> > > tmp_buf(worker_sz);
+    worker_comm.allreduce(row_sz);
+    int load_sz = row_sz / worker_sz;
+    auto tricky_lambda = [&] (int r, int c, double & v) {
+      int magic = (c / worker_sz) + worker_sz * (c % worker_sz);
+      size_t A_T_r = c % worker_sz;
+      size_t A_T_c = r % worker_sz + rank * load_sz;
+      //tmp_buf[magic % worker_sz].push_back(std::make_tuple(A_T_r, A_T_c, v));
+      tmp_buf[magic % worker_sz].push_back(std::make_pair(std::make_pair(A_T_r, A_T_c), v));
+    };
+    paracel::traverse_matrix(blk_W, tricky_lambda); // set tmp_buf
+    for(size_t i = 0; i < tmp_buf.size(); ++i) {
+      std::string key = "mtx_A_T_" + std::to_string(i);
+      paracel_bupdate(key, 
+                      tmp_buf[i], 
+                      "/mfs/user/wuhong/paracel/local/lib/libclustering_update.so", 
+                      "local_update_sc");
+    }
+    sync();
+    //auto blk_W_T_tpls = paracel_read<std::vector<std::tuple<size_t, size_t, double> > >("mtx_A_T_" + std::to_string(rank));
+    auto blk_W_T_tpls = paracel_read<std::vector<std::pair<std::pair<size_t, size_t>, double> > >("mtx_A_T_" + std::to_string(rank));
+    std::vector<eigen_triple> nonzero_tpls;
+    for(auto & tpl : blk_W_T_tpls) {
+      //nonzero_tpls.push_back(eigen_triple(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl)));
+      auto temp_pair = std::get<0>(tpl);
+      nonzero_tpls.push_back(eigen_triple(std::get<0>(temp_pair), std::get<1>(temp_pair), std::get<1>(tpl)));
+    }
+    // TODO
+    //blk_W_T.resize(, blk_W.cols());
+    //blk_W_T.setFromTriplets(nonzero_tpls.begin(), nonzero_tpls.end());
+    if(get_worker_id() == 0) {
+      std::cout << blk_W_T << std::endl;
+    }
+
+    /*
     // load blk_W_T
     int worker_sz = get_worker_size();
     int rank = get_worker_id();
@@ -131,9 +177,8 @@ class spectral_clustering : public paracel::paralg {
     paracel_dump_dict(tmp_container, "blk_W_T_", false);
     paracel_load_as_matrix(blk_W_T, output + "blk_W_T_*", f_parser, "smap", true);
     blk_W_T = blk_W_T.transpose();
-    if(get_worker_id() == 1) {
-      std::cout << blk_W_T << std::endl;
-    }
+    */
+
   } // init
 
   /*

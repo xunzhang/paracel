@@ -18,6 +18,8 @@
 
 #include <unordered_map>
 #include <iostream>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 #include "ps.hpp"
 
 namespace paracel {
@@ -99,11 +101,22 @@ public:
     }
   }
 
+  void test() {
+    auto f_parser = paracel::gen_parser(paracel::parser_b, '\t', '|');
+    //std::string fn = "/mfs/user/wuhong/paracel/data/spectral_clustering/demo.txt";
+    std::string fn = "/mfs/user/wuhong/paracel/data/spectral_clustering/demo2.txt";
+    paracel_load_as_matrix(blk_W, fn, f_parser, "fmap", true);
+    if(get_worker_id() == 0) {
+      std::cout << blk_W << std::endl;
+    }
+  }
+
 private:
   std::string input;
   std::string hi_para;
   size_t wid;
   std::unordered_map<std::string, char> rlst;
+  Eigen::SparseMatrix<double, Eigen::RowMajor> blk_W;
 };
 
 }
