@@ -431,17 +431,18 @@ class paralg {
     }
   }
 
+  template <class T>
   void paracel_read_topk(int k, paracel::list_type<
-                              std::pair<paracel::str_type, int> 
+                              std::pair<paracel::str_type, T> 
                               > & result) {
-    paracel::dict_type<paracel::str_type, int> r;
-    auto comp = [](std::pair<paracel::str_type, int> a,
-                   std::pair<paracel::str_type, int> b) {
+    paracel::dict_type<paracel::str_type, T> r;
+    auto comp = [](std::pair<paracel::str_type, T> a,
+                   std::pair<paracel::str_type, T> b) {
       return std::get<1>(a) > std::get<1>(b);
     };
-    paracel::list_type<std::pair<paracel::str_type, int> > s;
+    paracel::list_type<std::pair<paracel::str_type, T> > s;
     auto d = paracel_readall<int>();
-    paracel::list_type<std::pair<paracel::str_type, int> > tmp;
+    paracel::list_type<std::pair<paracel::str_type, T> > tmp;
     for(auto & kv : d) {
       tmp.push_back(std::make_pair(kv.first, kv.second));
     }

@@ -168,6 +168,7 @@ using deque_type = std::deque<T>;
 template <class T>
 using hash_type = std::hash<T>;
 */
+
 template <class T>
 using hash_type = douban::hash<T>;
 

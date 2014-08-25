@@ -36,8 +36,8 @@ class word_count : public paracel::paralg {
  public:
   word_count(paracel::Comm comm, std::string hosts_dct_str, 
              std::string _input, std::string _output, std::string method = "normal",
-             int k = 10, int limit_s = 3, bool ssp_switch = true) : 
-      paracel::paralg(hosts_dct_str, comm, _output, 1, limit_s, ssp_switch),
+             int k = 10) : 
+      paracel::paralg(hosts_dct_str, comm, _output),
       input(_input),
       learning_method(method),
       topk(k) {}
@@ -56,21 +56,11 @@ class word_count : public paracel::paralg {
   }
 
   void normal_learning(const std::vector<std::string> & lines) {
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libwc_update.so", "wc_updater");
     for(auto & line : lines) {
       auto word_lst = parser(line);
       for(auto & word : word_lst) {
-        if(is_cached(word)) {
-          paracel_bupdate(word, 1);
-        } else {
-          if(paracel_contains(word)) {
-            paracel_bupdate(word, 1); 
-          } else {
-            paracel_write(word, 1);
-          }
-        }
+        paracel_bupdate(word, 1, "/mfs/user/wuhong/paracel/local/lib/libwc_update.so", "wc_updater");
       } // word_lst
-      iter_commit();
     } // lines
     sync();
     paracel_read_topk(topk, result);
@@ -78,15 +68,6 @@ class word_count : public paracel::paralg {
 
   void optimized_learning(const std::vector<std::string> & lines) {
     paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libwc_update.so", "wc_updater");
-    /*
-    // init para
-    for(auto & line : lines) {
-    auto word_lst = parser(line);
-    for(auto & word : word_lst) {
-    paracel_write(word, 0); 
-    } // word_lst
-    } // lines
-    */
     // init para
     std::unordered_map<std::string, int> tmp;
     for(auto & line : lines) {
@@ -103,20 +84,17 @@ class word_count : public paracel::paralg {
         paracel_bupdate(word, 1);
       }
     }
-    iter_commit();
     sync();
     paracel_read_topk(topk, result);
   }
 
   virtual void solve() {
     auto lines = paracel_load(input);
-    std::cout << "load done" << std::endl;
+    std::cout << "load done" << lines.size() << std::endl;
     sync();
     if(learning_method == "normal") {
-      set_total_iters(lines.size());
       normal_learning(lines);
     } else if(learning_method == "optimized") {
-      set_total_iters(1);
       optimized_learning(lines);
     } else {
       std::cout << "learning method not supported." << std::endl;

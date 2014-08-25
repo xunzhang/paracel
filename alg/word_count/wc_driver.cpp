@@ -38,10 +38,9 @@ int main(int argc, char *argv[])
   std::string input = pt.parse<std::string>("input");
   std::string output = pt.parse<std::string>("output");
   int topk = pt.parse<int>("topk");
-  int limit_s = pt.parse<int>("limit_s");
   
-  paracel::word_count wc_solver(comm, FLAGS_server_info, input, output, "optimized", topk);
-  //paracel::word_count wc_solver(comm, FLAGS_server_info, input, output, "normal", topk);
+  //paracel::word_count wc_solver(comm, FLAGS_server_info, input, output, "optimized", topk);
+  paracel::word_count wc_solver(comm, FLAGS_server_info, input, output, "normal", topk);
   wc_solver.solve();
   wc_solver.print();
   return 0;

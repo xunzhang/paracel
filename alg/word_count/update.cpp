@@ -21,10 +21,19 @@ using std::vector;
 
 extern "C" {
   extern paracel::update_result wc_updater;
+  extern paracel::update_result wc_update_test;
 }
 
 int local_update(int a, int b) {
   return a + b;
 }
 
+std::vector<std::string> update_test(const std::vector<std::string> & a,
+                                     const std::vector<std::string> & b) {
+  std::vector<std::string> r(a);
+  r.insert(r.end(), b.begin(), b.end());
+  return r;
+}
+
 paracel::update_result wc_updater = paracel::update_proxy(local_update);
+paracel::update_result wc_update_test = paracel::update_proxy(update_test);

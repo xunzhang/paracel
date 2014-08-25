@@ -1,6 +1,5 @@
 {
-  "input" : "/mfs/alg/tmp/jasontmp/user_music_factor_model/artist_album_bias.data",
+  "input" : "/mfs/user/wuhong/paracel/data/word_count/demo.txt",
   "output" : "/mfs/user/wuhong/paracel/data/tmp4/",
-  "topk" : 20,
-  "limit_s" : 0
+  "topk" : 4
 }
