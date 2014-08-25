@@ -227,7 +227,6 @@ public:
         }
       };
       m_comm.bcastring(reduce_map, union_func3);
-      std::cout << "debug5" << (clock() - tt) / CLOCKS_PER_SEC << std::endl;
     } // end of if 
     */
 
