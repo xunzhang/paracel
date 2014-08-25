@@ -169,7 +169,7 @@ class paralg {
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
     set_decomp_info(pattern);
-    assert(lines.size() != 0);
+    //assert(lines.size() != 0);
     return lines;
   }
 

@@ -90,7 +90,7 @@ class word_count : public paracel::paralg {
 
   virtual void solve() {
     auto lines = paracel_load(input);
-    std::cout << "load done" << lines.size() << std::endl;
+    std::cout << "load done" << std::endl;
     sync();
     if(learning_method == "normal") {
       normal_learning(lines);
