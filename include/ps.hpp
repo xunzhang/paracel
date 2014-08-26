@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <functional>
 #include <utility>
+#include <queue>
 
 #include <boost/filesystem.hpp>
 #include <boost/any.hpp>
@@ -431,26 +432,62 @@ class paralg {
     }
   }
 
+  /*
+   * risk: params in server must be the same type
+   */
   template <class T>
   void paracel_read_topk(int k, paracel::list_type<
                               std::pair<paracel::str_type, T> 
                               > & result) {
-    paracel::dict_type<paracel::str_type, T> r;
-    auto comp = [](std::pair<paracel::str_type, T> a,
-                   std::pair<paracel::str_type, T> b) {
-      return std::get<1>(a) > std::get<1>(b);
-    };
-    paracel::list_type<std::pair<paracel::str_type, T> > s;
-    auto d = paracel_readall<int>();
-    paracel::list_type<std::pair<paracel::str_type, T> > tmp;
-    for(auto & kv : d) {
-      tmp.push_back(std::make_pair(kv.first, kv.second));
-    }
-    std::sort(tmp.begin(), tmp.end(), comp);
+    using min_heap = std::priority_queue<std::pair<paracel::str_type, T>, 
+                                        std::vector<std::pair<paracel::str_type, T> >, 
+                                        min_heap_cmp<T> >;
+    min_heap tmplst;
+    auto handler = [&] (const paracel::dict_type<paracel::str_type, T> & d) {
+      for(auto & kv : d) {
+        auto node = paracel::heap_node<paracel::str_type, T>(kv.first, kv.second);
+        tmplst.push(node.val);
+        if((int)tmplst.size() > k) {
+          tmplst.pop();
+        }
+      }
+    }; // handler
+    paracel_readall_handle<T>(handler);
     result.resize(0);
-    for(int i = 0; i < k; ++i) {
-      result.push_back(std::make_pair(std::get<0>(tmp[i]), std::get<1>(tmp[i])));
+    while(!tmplst.empty()) {
+      result.push_back(std::make_pair(tmplst.top().first, tmplst.top().second));
+      tmplst.pop();
     }
+    std::reverse(result.begin(), result.end());
+  }
+
+  template <class T>
+  void paracel_read_topk_with_filter(int k, 
+                                     paracel::list_type<
+                                          std::pair<paracel::str_type, T>
+                                          > & result,
+                                     const paracel::str_type & file_name,
+                                     const paracel::str_type & func_name) {
+    using min_heap = std::priority_queue<std::pair<paracel::str_type, T>,
+                                        std::vector<std::pair<paracel::str_type, T> >,
+                                        min_heap_cmp<T> >;
+    min_heap tmplst;
+    auto handler = [&] (const paracel::dict_type<paracel::str_type, T> & d) {
+      for(auto & kv : d) {
+        auto node = paracel::heap_node<paracel::str_type, T>(kv.first, kv.second);
+        tmplst.push(node.val);
+        if((int)tmplst.size() > k) {
+          tmplst.pop();
+        }
+      }
+    }; // handler
+    paracel_read_special_handle<T>(file_name, func_name, handler);
+    result.resize(0);
+    while(!tmplst.empty()) {
+      result.push_back(std::make_pair(tmplst.top().first, tmplst.top().second));
+      tmplst.pop();
+    }
+    std::reverse(result.begin(), result.end());
   }
 
   template <class V>
@@ -772,6 +809,14 @@ class paralg {
   paracel::dict_type<paracel::str_type, boost::any> cached_para;
   paracel::update_result update_f;
   int npx = 1, npy = 1;
+ private:
+  template <class V>
+  struct min_heap_cmp {
+    inline bool operator() (const std::pair<paracel::str_type, V> & l,
+                            const std::pair<paracel::str_type, V> & r) {
+      return l.second > r.second;
+    }
+  };
 }; // class paralg
 
 } // namespace paracel

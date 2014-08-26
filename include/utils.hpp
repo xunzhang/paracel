@@ -19,6 +19,7 @@
 #include <ctime>
 #include <random>
 #include <string>
+#include <queue>
 
 #include <zmq.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -196,6 +197,14 @@ void traverse_vector(Eigen::SparseVector<double> & v, F & func) {
     func(it.index(), it.value());
   }
 }
+
+template <class K, class V>
+struct heap_node {
+  heap_node(K id, V v) {
+    val = std::pair<K, V>(id, v);
+  }
+  std::pair<K, V> val;
+};
 
 } // namespace paracel
 
