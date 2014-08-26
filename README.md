@@ -1,4 +1,4 @@
-![logo](./blob/develop/logo.png)
+![logo](./logo.png)
 
 Paracel Overview
 ================
