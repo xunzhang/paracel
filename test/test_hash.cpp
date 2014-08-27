@@ -17,6 +17,9 @@ int main(int argc, char *argv[])
     std::cout << hfunc("1") << std::endl;
     std::cout << hfunc("2") << std::endl;
     std::cout << hfunc("3") << std::endl;
+    std::cout << hfunc("4") << std::endl;
+    std::cout << hfunc("5") << std::endl;
+    std::cout << hfunc("6") << std::endl;
 
     std::cout << "---" << std::endl;
   

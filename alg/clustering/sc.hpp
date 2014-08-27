@@ -59,7 +59,7 @@ class spectral_clustering : public paracel::paralg {
                            f_parser, 
                            "fmap", 
                            true);
-    if(get_worker_id() == 2) {
+    if(get_worker_id() == 1) {
       std::cout << "blk_W: " << blk_W << std::endl;
     }
     // construct similarity graph: (mutual) k-nearest neighbor graph
@@ -119,10 +119,105 @@ class spectral_clustering : public paracel::paralg {
       }
     };
     paracel::traverse_matrix(blk_W, rmul_lambda);
-    if(get_worker_id() == 2) {
+    if(get_worker_id() == 0) {
       std::cout << blk_W << std::endl;
     }
+    init_blk_W_T();
 
+  } // init
+
+  // fmap case blk_W
+  // little tricky here
+  void init_blk_W_T() {
+    std::vector<std::string> row_id_seq, col_id_seq;
+    auto sort_lambda = [] (std::pair<size_t, std::string> a, std::pair<size_t, std::string> b) {
+      return a.first < b.first;
+    };
+    // init col_id_seq
+    std::vector<std::pair<size_t, std::string> > row_id_seq_pairs, col_id_seq_pairs;
+    for(auto & kv: col_map) {
+      col_id_seq_pairs.push_back(std::make_pair(kv.first, kv.second));
+    }
+    std::sort(col_id_seq_pairs.begin(), col_id_seq_pairs.end(), sort_lambda);
+    for(auto & data : col_id_seq_pairs) {
+      col_id_seq.push_back(data.second);
+    }
+    col_id_seq_pairs.resize(0);
+
+    // init row_id_seq
+    for(auto & kv : row_map) {
+      row_id_seq_pairs.push_back(std::make_pair(kv.first, kv.second));
+    }
+    std::sort(row_id_seq_pairs.begin(), row_id_seq_pairs.end(), sort_lambda);
+    for(auto & data : row_id_seq_pairs) {
+      row_id_seq.push_back(data.second);
+    }
+    row_id_seq_pairs.resize(0);
+    paracel_write("blk_W_T_usage_" + std::to_string(get_worker_id()), row_id_seq);
+    row_id_seq.resize(0);
+    sync();
+    
+    for(int k = 0; k < get_worker_size(); ++k) {
+      auto tmp_data = paracel_read<std::vector<std::string> >("blk_W_T_usage_" + std::to_string(k));
+      row_id_seq.insert(row_id_seq.end(), tmp_data.begin(), tmp_data.end());
+    }
+    assert(row_id_seq.size() == col_id_seq.size());
+    // init row_col_map, col_row_map
+    std::unordered_map<std::string, std::string> row_col_map, col_row_map;
+    for(size_t i = 0; i < row_id_seq.size(); ++i) {
+      row_col_map[row_id_seq[i]] = col_id_seq[i];
+      col_row_map[col_id_seq[i]] = row_id_seq[i];
+    }
+    row_id_seq.resize(0); col_id_seq.resize(0);
+    std::unordered_map<std::string, std::vector<std::pair<std::string, double> > > tmp_container;
+    auto index_exchange_lambda = [&] (int r, int c, double & v) {
+      std::string rid = row_map[r];
+      std::string cid = col_map[c];
+      tmp_container[row_col_map[rid]].push_back(std::make_pair(col_row_map[cid], v));
+    };
+    paracel::traverse_matrix(blk_W, index_exchange_lambda);
+    paracel_dump_dict(tmp_container, "blk_W_T_", false);
+    auto f_parser = paracel::gen_parser(paracel::parser_b, '\t', '|');
+    paracel_load_as_matrix(blk_W_T, output + "blk_W_T_*", f_parser, "smap", true);
+    blk_W_T = blk_W_T.transpose();
+  }
+ 
+  /*
+  void init_blk_W_T() {
+    auto f_parser = paracel::gen_parser(paracel::parser_b, '\t', '|');
+    // load blk_W_T
+    int worker_sz = get_worker_size();
+    int rank = get_worker_id();
+    size_t row_sz = blk_W.rows();
+    auto worker_comm = get_comm();
+    worker_comm.allreduce(row_sz);
+    int loads = row_sz / worker_sz;
+    std::unordered_map<std::string, std::vector<std::pair<std::string, double> > > tmp_container1, tmp_container2;
+    auto pack_smtx_lambda = [&] (int r, int c, double & v) {
+      int col_terma = c / worker_sz;
+      int col_termb = c % worker_sz;
+      int t_r = r + rank * loads;
+      int row_terma = t_r / worker_sz;
+      int row_termb = t_r % worker_sz;
+      //tmp_container1[std::to_string()].push_back(std::make_pair(col_map[c], v));
+      tmp_container2[col_map[c]].push_back(std::make_pair(row_map[r], v));
+    };
+    paracel::traverse_matrix(blk_W, pack_smtx_lambda);
+    //paracel_dump_dict(tmp_container1, "blk_W_SELF_", false);
+    paracel_dump_dict(tmp_container2, "blk_W_TRANS_", false);
+    //paracel_load_as_matrix(blk_W, output + "blk_W_SELF_*", f_parser, "fmap", true);
+    paracel_load_as_matrix(blk_W_T, output + "blk_W_TRANS_*", f_parser, "fmap", true);
+    blk_W_T = blk_W_T.transpose();
+    if(get_worker_id() == 0) {
+      std::cout << blk_W << std::endl;
+      std::cout << "---" << std::endl;
+      std::cout << blk_W_T << std::endl;
+    }
+  }
+  */
+
+  /*
+  void init_blk_W_T() {
     // generate blk_W_T
     size_t row_sz = blk_W.rows();
     auto worker_comm = get_comm();
@@ -157,29 +252,13 @@ class spectral_clustering : public paracel::paralg {
       nonzero_tpls.push_back(eigen_triple(std::get<0>(temp_pair), std::get<1>(temp_pair), std::get<1>(tpl)));
     }
     // TODO
-    //blk_W_T.resize(, blk_W.cols());
-    //blk_W_T.setFromTriplets(nonzero_tpls.begin(), nonzero_tpls.end());
+    blk_W_T.resize(4, blk_W.cols());
+    blk_W_T.setFromTriplets(nonzero_tpls.begin(), nonzero_tpls.end());
     if(get_worker_id() == 0) {
       std::cout << blk_W_T << std::endl;
     }
-
-    /*
-    // load blk_W_T
-    int worker_sz = get_worker_size();
-    int rank = get_worker_id();
-    std::unordered_map<std::string, std::vector<std::pair<std::string, double> > > tmp_container;
-    auto pack_smtx_lambda = [&] (int r, int c, double & v) {
-      int col_terma = c / worker_sz;
-      int col_termb = c % worker_sz;
-      tmp_container[std::to_string(r + rank * worker_sz)].push_back(std::make_pair(std::to_string(col_terma + worker_sz * col_termb), v));
-    };
-    paracel::traverse_matrix(blk_W, pack_smtx_lambda);
-    paracel_dump_dict(tmp_container, "blk_W_T_", false);
-    paracel_load_as_matrix(blk_W_T, output + "blk_W_T_*", f_parser, "smap", true);
-    blk_W_T = blk_W_T.transpose();
-    */
-
-  } // init
+  }
+  */
 
   /*
   void cal_eigen_value() {

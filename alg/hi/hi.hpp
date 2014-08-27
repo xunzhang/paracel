@@ -104,8 +104,8 @@ public:
   void test() {
     auto f_parser = paracel::gen_parser(paracel::parser_b, '\t', '|');
     //std::string fn = "/mfs/user/wuhong/paracel/data/spectral_clustering/demo.txt";
-    std::string fn = "/mfs/user/wuhong/paracel/data/spectral_clustering/demo2.txt";
-    paracel_load_as_matrix(blk_W, fn, f_parser, "fmap", true);
+    std::string fn = "/mfs/user/wuhong/paracel/data/spectral_clustering/demo.txt";
+    paracel_load_as_matrix(blk_W, fn, f_parser, "smap", true);
     if(get_worker_id() == 0) {
       std::cout << blk_W << std::endl;
     }
