@@ -65,11 +65,11 @@ vector<std::tuple<size_t, size_t, double> > update4sc(const vector<std::tuple<si
   return r;
 }
 */
-vector<std::pair<std::pair<size_t, size_t>, double> > 
-update4sc(const vector<std::pair<std::pair<size_t, size_t>, double> > & a,
-          const vector<std::pair<std::pair<size_t, size_t>, double> > & b) {
-  vector<std::pair<std::pair<size_t, size_t>, double> > r(a);
-  r.insert(r.end(), b.begin(), b.end());
+vector<double> update4sc(const vector<double> & a, const vector<double> & b) {
+  std::vector<double> r;
+  for(size_t i = 0; i < a.size(); ++i) {
+    r.push_back(a[i] + b[i]);
+  }
   return r;
 }
 

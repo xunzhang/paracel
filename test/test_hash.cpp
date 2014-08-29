@@ -36,6 +36,9 @@ int main(int argc, char *argv[])
     std::cout << hfunc("1") % 3 << std::endl;
     std::cout << hfunc("2") % 3 << std::endl;
     std::cout << hfunc("3") % 3 << std::endl;
+    std::cout << hfunc("4") % 3 << std::endl;
+    std::cout << hfunc("5") % 3 << std::endl;
+    std::cout << hfunc("6") % 3 << std::endl;
 
     std::cout << "---" << std::endl;
   
@@ -52,6 +55,9 @@ int main(int argc, char *argv[])
     std::cout << hfunc("1") % 4 << std::endl;
     std::cout << hfunc("2") % 4 << std::endl;
     std::cout << hfunc("3") % 4 << std::endl;
+    std::cout << hfunc("4") % 4 << std::endl;
+    std::cout << hfunc("5") % 4 << std::endl;
+    std::cout << hfunc("6") % 4 << std::endl;
 
     std::cout << "---" << std::endl;
   

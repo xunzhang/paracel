@@ -167,18 +167,20 @@ std::vector<double> evec2vec(const Eigen::VectorXd & ev) {
 }
 
 // Eigen::MatrixXd only support column-major
+// return col seq
 std::vector<double> mat2vec(const Eigen::MatrixXd & m) {
   std::vector<double> v(m.size());
   Eigen::Map<Eigen::MatrixXd>(v.data(), m.rows(), m.cols()) = m;
   return v;
 }
 
+// return row seq
 Eigen::MatrixXd vec2mat(const std::vector<double> & v,
                         size_t rows) {
   size_t cols = v.size() / rows;
-  Eigen::MatrixXd m(rows, cols);
-  m = Eigen::MatrixXd::Map(&v[0], rows, cols);
-  return m;
+  Eigen::MatrixXd m(cols, rows);
+  m = Eigen::MatrixXd::Map(&v[0], cols, rows);
+  return m.transpose();
 }
 
 template <class F>
