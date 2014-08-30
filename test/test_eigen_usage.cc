@@ -1,6 +1,7 @@
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/QR>
 #include "utils.hpp"
 
 int main(int argc, char *argv[])
@@ -60,5 +61,13 @@ int main(int argc, char *argv[])
   W.resize(10, 3);
   W = A * H;
   std::cout << W << std::endl;
+  Eigen::HouseholderQR<Eigen::MatrixXd> qr(W.transpose() * W);
+  //qr.compute(W);
+  Eigen::MatrixXd squareW(2,2);
+  squareW << 1., 2., 3., 4.;
+  std::cout << squareW.inverse() << std::endl;
+  Eigen::MatrixXd R = qr.matrixQR().triangularView<Eigen::Upper>();
+  std::cout << R << std::endl;
+  std::cout << R.inverse() << std::endl;
   return 0;
 }

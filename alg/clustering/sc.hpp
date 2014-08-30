@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/QR>
 
 #include "ps.hpp"
 #include "utils.hpp"
@@ -236,17 +237,10 @@ class spectral_clustering : public paracel::paralg {
     blk_H = Eigen::MatrixXd::Random(C, K);
     blk_W.resize(C, K);
     int rank = get_worker_id();
-    if(rank == 0) {
-      std::cout << blk_H << std::endl;
-    }
-    for(auto & d : global_indx) {
-      std::cout << d << "!!";
-    }
-    std::cout << std::endl;
     for(int iter = 0; iter < 10; ++iter) {
       // blk_A * blk_H
       Eigen::MatrixXd tmp_W = blk_A_T * blk_H;
-      // reduce
+      // reduce blk_W
       std::vector<double> tmp_W_vec = paracel::mat2vec(tmp_W.transpose());
       paracel_bupdate("iter_W", 
                        tmp_W_vec, 
@@ -256,7 +250,7 @@ class spectral_clustering : public paracel::paralg {
       // load and select to create blk_W
       tmp_W_vec = paracel_read<std::vector<double> >("iter_W");
       size_t it_begin, it_end;
-      if(get_worker_id() == 0) {
+      if(rank == 0) {
         it_begin = 0;
       } else {
         it_begin = global_indx[rank - 1] * K;
@@ -264,31 +258,68 @@ class spectral_clustering : public paracel::paralg {
       it_end = global_indx[rank] * K;
       std::vector<double> blk_W_vec(tmp_W_vec.begin() + it_begin, tmp_W_vec.begin() + it_end);
       blk_W = paracel::vec2mat(blk_W_vec, C);
+
       // blk_A_T * blk_W
       Eigen::MatrixXd tmp_H = blk_A.transpose() * blk_W;
-      break;
+      // reduce blk_H
+      std::vector<double> tmp_H_vec = paracel::mat2vec(tmp_H.transpose());
+      paracel_bupdate("iter_H",
+                      tmp_H_vec,
+                      "/mfs/user/wuhong/paracel/local/lib/libclustering_update.so",
+                      "local_update_sc");
+      sync();
+      tmp_H_vec = paracel_read<std::vector<double> >("iter_H");
+      std::vector<double> blk_H_vec(tmp_H_vec.begin() + it_begin, tmp_H_vec.begin() + it_end);
+      blk_H = paracel::vec2mat(blk_H_vec, C);
+      
+      Eigen::MatrixXd global_H = paracel::vec2mat(tmp_H_vec, N); // N * K
+      Eigen::HouseholderQR<Eigen::MatrixXd> qr(global_H.transpose() * global_H);
+      Eigen::MatrixXd R = qr.matrixQR().triangularView<Eigen::Upper>();
+      
+      global_H = global_H * R.inverse(); 
+      size_t start_row_indx;
+      if(rank == 0) {
+        start_row_indx = 0;
+      } else {
+        start_row_indx = global_indx[rank - 1];
+      }
+      blk_H = global_H.block(start_row_indx, 0, C, K);
+    }
+    // last blk_A * blk_H
+    Eigen::MatrixXd tmp_W = blk_A_T * blk_H;
+    // reduce blk_W
+    std::vector<double> tmp_W_vec = paracel::mat2vec(tmp_W.transpose());
+    paracel_bupdate("iter_W", 
+                    tmp_W_vec, 
+                    "/mfs/user/wuhong/paracel/local/lib/libclustering_update.so",
+                    "local_update_sc");
+    sync();
+    // load and select to create blk_W
+    tmp_W_vec = paracel_read<std::vector<double> >("iter_W");
+    size_t it_begin, it_end;
+    if(rank == 0) {
+      it_begin = 0;
+    } else {
+      it_begin = global_indx[rank - 1] * K;
+    }
+    it_end = global_indx[rank] * K;
+    std::vector<double> blk_W_vec(tmp_W_vec.begin() + it_begin, tmp_W_vec.begin() + it_end);
+    blk_W = paracel::vec2mat(blk_W_vec, C);
+
+    if(rank == 1) {
+      std::cout << "---" << std::endl;
+      std::cout << blk_W << std::endl;
+      std::cout << "---" << std::endl;
+      std::cout << blk_H << std::endl;
     }
   }
 
   void qr_iteration() {}
  
-  /*
-  void cal_eigen_value() {
-    size_t local_n = blk_A.rows();
-    size_t n = blk_A.cols();
-    int over_sampling = 10;
-    Eigen::MatrixXd W(local_n, n); // n/np * n
-    std::unordered_map<std::string, Eigen::MatrixXd> H_dct;
-    // random_matrix H
-    int local_h_ydim = (kclusters + over_sampleing) / get_worker_size();
-    for(auto & id : row_map) {
-      H_dct[id.second] = Eigen::Random(n, local_h_ydim);
-    }
-  }
-  */
-
   void learning() {
     random_projection();
+    sync();
+    qr_iteration();
   }
 
   virtual void solve() {
