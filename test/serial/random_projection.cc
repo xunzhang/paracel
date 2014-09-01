@@ -3,8 +3,8 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/QR>
 
-int K = 20;
-int N = 10000;
+int K = 100;
+int N = 1000;
 
 void random_projection(const Eigen::MatrixXd & A) {
   Eigen::MatrixXd H = Eigen::MatrixXd::Random(N, K);
