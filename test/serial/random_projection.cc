@@ -3,13 +3,13 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/QR>
 
-int K = 100;
-int N = 1000;
+int K = 5;
+int N = 6;
 
 void random_projection(const Eigen::MatrixXd & A) {
   Eigen::MatrixXd H = Eigen::MatrixXd::Random(N, K);
   Eigen::MatrixXd W(N, K);
-  for(int iter = 0; iter < 10; ++iter) {
+  for(int iter = 0; iter < 20; ++iter) {
     W = A * H;
     H = A.transpose() * W;
     Eigen::HouseholderQR<Eigen::MatrixXd> qr(H.transpose() * H);
@@ -22,13 +22,15 @@ void random_projection(const Eigen::MatrixXd & A) {
   //std::cout << H << std::endl;
   //std::cout << "---" << std::endl;
   auto result = W * H.transpose();
-  std::cout << result.block(0, 0, 5, 5) << std::endl;
+  std::cout << result << std::endl;
+  //std::cout << result.block(0, 0, 5, 5) << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
   Eigen::MatrixXd mtx = Eigen::MatrixXd::Random(N, N);
-  std::cout << mtx.block(0, 0, 5, 5) << std::endl;
+  std::cout << mtx << std::endl;
+  //std::cout << mtx.block(0, 0, 5, 5) << std::endl;
   std::cout << "---" << std::endl;
   random_projection(mtx);
   return 0;

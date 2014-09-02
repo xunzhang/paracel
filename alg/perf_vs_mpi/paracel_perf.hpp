@@ -22,7 +22,7 @@
 #include "ps.hpp"
 #include "utils.hpp"
 
-#define N 30000000
+#define N 100000000
 
 namespace paracel {
 
