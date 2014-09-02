@@ -4,7 +4,11 @@ install(TARGETS sim_update LIBRARY DESTINATION lib)
 
 add_executable(sim sim_driver.cpp)
 
+set(EXTRA_SO 
+  "/usr/lib/libboost_regex.so")
+
 target_link_libraries(sim ${Boost_LIBRARIES} 
+  ${EXTRA_SO}
   comm
   scheduler)
 install(TARGETS sim RUNTIME DESTINATION bin)

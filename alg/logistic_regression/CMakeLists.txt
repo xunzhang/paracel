@@ -14,8 +14,12 @@ install(TARGETS lg_ssp_method LIBRARY DESTINATION lib)
 
 add_executable(lg lg_driver.cpp)
 
+set(EXTRA_SO
+    "/usr/lib/libboost_regex.so")
+
 target_link_libraries(lg
   ${Boost_LIBRARIES} 
+  ${EXTRA_SO}
   comm scheduler lg_ssp_method)
 
 install(TARGETS lg RUNTIME DESTINATION bin)
