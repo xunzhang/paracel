@@ -74,5 +74,4 @@ add_subdirectory(alg/clustering)
 add_subdirectory(alg/hostname)
 add_subdirectory(alg/max_vertex_value)
 add_subdirectory(alg/perf_vs_mpi)
-add_subdirectory(alg/debug)
 ################################################################################
