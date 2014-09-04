@@ -19,6 +19,7 @@
 
 extern "C" {
   extern paracel::update_result perf_updater;
+  extern paracel::update_result perf_updater2;
 }
 
 std::vector<double> local_update(const std::vector<double> & a, 
@@ -27,4 +28,11 @@ std::vector<double> local_update(const std::vector<double> & a,
   return r;
 }
 
+std::unordered_map<std::string, int> 
+local_update2(const std::unordered_map<std::string, int> & a,
+              const std::unordered_map<std::string, int> & b) {
+  return a;
+}
+
 paracel::update_result perf_updater = paracel::update_proxy(local_update);
+paracel::update_result perf_updater2 = paracel::update_proxy(local_update2);

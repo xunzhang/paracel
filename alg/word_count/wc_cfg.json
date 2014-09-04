@@ -1,5 +1,5 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/data/word_count/demo.txt",
+  "input" : "/mfs/user/wuhong/paracel/data/word_count/*.txt",
   "output" : "/mfs/user/wuhong/paracel/data/tmp4/",
   "topk" : 5
 }

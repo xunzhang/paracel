@@ -41,7 +41,7 @@
 namespace paracel {
 
 using parser_type = std::function<paracel::list_type<paracel::str_type>(paracel::str_type)>;
-
+      
 class paralg {
 
  private:
@@ -462,12 +462,12 @@ class paralg {
   }
 
   template <class T>
-  void paracel_read_topk_with_filter(int k, 
-                                     paracel::list_type<
+  void paracel_read_topk_with_key_filter(int k, 
+                                         paracel::list_type<
                                           std::pair<paracel::str_type, T>
                                           > & result,
-                                     const paracel::str_type & file_name,
-                                     const paracel::str_type & func_name) {
+                                         const paracel::str_type & file_name,
+                                         const paracel::str_type & func_name) {
     using min_heap = std::priority_queue<std::pair<paracel::str_type, T>,
                                         std::vector<std::pair<paracel::str_type, T> >,
                                         min_heap_cmp<T> >;
@@ -489,7 +489,7 @@ class paralg {
     }
     std::reverse(result.begin(), result.end());
   }
-
+  
   template <class V>
   bool paracel_write(const paracel::str_type & key, const V & val, bool replica_flag = true) {
     auto indx = ps_obj->p_ring->get_server(key);
@@ -676,6 +676,22 @@ class paralg {
       os << std::to_string(data[i]) << sep;
     }
     os << std::to_string(data[data.size() - 1]) << '\n';
+    os.close();
+    if(merge && get_worker_id() == 0) {
+      sync();
+      paracel::str_type output_regx = output + filename + "*";
+      files_merge(output_regx, filename);
+    }
+  }
+  
+  void paracel_dump_dict(const paracel::dict_type<paracel::str_type, int> & data,
+                         const paracel::str_type & filename = "result_",
+                         bool merge = false) {
+    std::ofstream os;
+    os.open(paracel::todir(output) + filename + std::to_string(worker_comm.get_rank()), std::ofstream::app);
+    for(auto & kv : data) {
+      os << kv.first << '\t' << kv.second << '\n';
+    }
     os.close();
     if(merge && get_worker_id() == 0) {
       sync();
