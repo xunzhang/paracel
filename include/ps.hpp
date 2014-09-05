@@ -230,6 +230,20 @@ class paralg {
     ld.create_matrix(lines, blk_mtx, row_map, col_map, degree_map, col_degree_map);
     set_decomp_info(pattern);
   }
+  
+  template <class T>
+  void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
+                              paracel::dict_type<size_t, paracel::str_type> & row_map,
+                              const T & fn, 
+                              parser_type & parser,
+                              const paracel::str_type & pattern = "fsmap",
+                              bool mix_flag = false) {
+    paracel::dict_type<size_t, paracel::str_type> col_map;
+    paracel::dict_type<size_t, int> degree_map, col_degree_map;
+    paralg::paracel_load_as_matrix(blk_mtx, 
+                                   row_map, col_map, degree_map, col_degree_map, 
+                                   fn, parser, pattern, mix_flag);
+  }
 
   template <class T>
   void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
