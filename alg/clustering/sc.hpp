@@ -314,6 +314,9 @@ class spectral_clustering : public paracel::paralg {
     }
   }
 
+  void matrix_factorization() {
+  }
+
   void qr_iteration() {}
  
   void learning() {
