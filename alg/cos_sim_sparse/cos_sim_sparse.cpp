@@ -13,6 +13,7 @@
  *
  */
 
+#include <math.h>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -22,6 +23,9 @@
 #include "utils.hpp"
 #include "ps.hpp"
 
+using std::cout;
+using std::endl;
+using std::pair;
 using std::string;
 using std::vector;
 using std::unordered_map;
@@ -49,6 +53,7 @@ class cos_sim_sparse : public paracel::paralg {
   virtual void solve() {
     auto f_parser = paracel::gen_parser(local_parser);
     paracel_load_as_matrix(blk_A_T, row_map, input, f_parser, "smap");
+    normalize();
     
     blk_size = blk_A_T.rows() / 5000; // 0.05MB * n/p = 0.05 * 10000 MB = 500MB
     if(blk_size == 0) {
@@ -62,10 +67,7 @@ class cos_sim_sparse : public paracel::paralg {
       }
       Eigen::MatrixXd part_blk_A_T = Eigen::MatrixXd(blk_A_T).block(k * blk_size, 0, rows, cols);
       Eigen::MatrixXd local_result = part_blk_A_T * blk_A_T.transpose();
-      if(get_worker_id() == 1) {
-        std::cout << local_result << std::endl;
-      }
-      std::vector<double> vec_buff = paracel::mat2vec(local_result);
+      vector<double> vec_buff = paracel::mat2vec(local_result);
       paracel_bupdate("result_" + std::to_string(k), 
                       vec_buff, 
                       "/mfs/user/wuhong/paracel/local/lib/libcos_sim_sparse_update.so", 
@@ -76,19 +78,9 @@ class cos_sim_sparse : public paracel::paralg {
 
   void dump() {
     if(get_worker_id() == 0) {
-      // pull result
-      for(int k = 0; k < blk_size; ++k) {
-        int rows = blk_A_T.rows() / blk_size;
-        if(k == blk_size - 1) {
-          rows += blk_A_T.rows() % blk_size;
-        }
-        auto data = paracel_read<std::vector<double> >("result_" + std::to_string(k));
-        auto blk_mtx_result = paracel::vec2mat(data, rows);
-        std::cout << blk_mtx_result << std::endl;
-        result.push_back(blk_mtx_result);
-      }
+      get_result();
       // dump
-      std::unordered_map<std::string, std::vector<std::pair<std::string, double> > > r;
+      unordered_map<string, vector<pair<string, double> > > r;
       for(size_t k = 0; k < result.size(); ++k) {
         for(size_t i = 0; i < (size_t)result[k].rows(); ++i) {
           for(size_t j = 0; j < (size_t)result[k].cols(); ++j) {
@@ -101,11 +93,53 @@ class cos_sim_sparse : public paracel::paralg {
   }
 
  private:
+  void get_result() {
+    // pull result
+    for(int k = 0; k < blk_size; ++k) {
+      int rows = blk_A_T.rows() / blk_size;
+      if(k == blk_size - 1) {
+        rows += blk_A_T.rows() % blk_size;
+      }
+      auto data = paracel_read<vector<double> >("result_" + std::to_string(k));
+      auto blk_mtx_result = paracel::vec2mat(data, rows);
+      result.push_back(blk_mtx_result);
+    }
+  }
+
+  void normalize() {
+    Eigen::SparseMatrix<double, Eigen::RowMajor> blk_A;
+    unordered_map<size_t, string> A_rm;
+    auto f_parser = paracel::gen_parser(local_parser);
+    paracel_load_as_matrix(blk_A, A_rm, input, f_parser, "fmap");
+
+    vector<double> wgt(blk_A.rows(), 0);
+    auto lambda = [&] (int i, int j, double & v) {
+      wgt[i] += v * v;
+    };
+    paracel::traverse_matrix(blk_A, lambda);
+    for(size_t i = 0; i < wgt.size(); ++i) {
+      paracel_write("wgt_" + A_rm[i], 1. / sqrt(wgt[i]));
+    }
+    wgt.resize(0);
+    A_rm.clear();
+    blk_A.resize(0, 0);
+    sync();
+
+    auto wgt_map = paracel_read_special<double>("/mfs/user/wuhong/paracel/local/lib/libcos_sim_sparse_update.so",
+                                                "cos_sim_sparse_filter");
+    auto norm_lambda = [&] (int i, int j, double & v) {
+      v *= wgt_map["wgt_" + row_map[i]];
+    };
+    paracel::traverse_matrix(blk_A_T, norm_lambda);
+    sync();
+  }
+
+ private:
   string input, output;
   Eigen::SparseMatrix<double, Eigen::RowMajor> blk_A_T;
   unordered_map<size_t, string> row_map;
   int blk_size = 0;
-  std::vector<Eigen::MatrixXd> result;
+  vector<Eigen::MatrixXd> result;
 }; // class cos_sim_sparse 
 
 } // namespace paracel

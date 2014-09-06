@@ -15,9 +15,11 @@
 
 #include <vector>
 #include "proxy.hpp"
+#include "utils.hpp"
 
 extern "C" {
   extern paracel::update_result cos_sim_sparse_updater;
+  extern paracel::filter_with_key_result cos_sim_sparse_filter;
 }
 
 std::vector<double> local_update(const std::vector<double> & a, 
@@ -29,4 +31,13 @@ std::vector<double> local_update(const std::vector<double> & a,
   return r;
 }
 
+bool filter(const std::string & key) {
+  std::string s = "wgt_";
+  if(paracel::startswith(key, s)) {
+    return true;
+  }
+  return false;
+}
+
 paracel::update_result cos_sim_sparse_updater = paracel::update_proxy(local_update);
+paracel::filter_with_key_result cos_sim_sparse_filter = paracel::filter_with_key_proxy(filter);
