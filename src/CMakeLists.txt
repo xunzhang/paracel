@@ -1,11 +1,11 @@
-add_library(comm SHARED comm.cpp)
-install(TARGETS comm LIBRARY DESTINATION lib)
+add_library(comm STATIC comm.cpp)
+install(TARGETS comm ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
 
-add_library(scheduler SHARED scheduler.cpp)
-install(TARGETS scheduler LIBRARY DESTINATION lib)
+add_library(scheduler STATIC scheduler.cpp)
+install(TARGETS scheduler ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
 
-add_library(default SHARED default.cpp)
-install(TARGETS default LIBRARY DESTINATION lib)
+add_library(default STATIC default.cpp)
+install(TARGETS default ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
 
 set(EXTRA_SO 
     "/usr/lib/libboost_regex.so")

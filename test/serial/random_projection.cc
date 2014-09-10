@@ -4,9 +4,9 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/QR>
 
-int M = 1000;
-int N = 800;
-int K = 400;
+int M = 100;
+int N = 80;
+int K = 10;
 
 double loss(const Eigen::MatrixXd & A, const Eigen::MatrixXd & result) {
   return sqrt((A - result).squaredNorm() / (A.rows() * A.cols()));
@@ -42,11 +42,9 @@ int main(int argc, char *argv[])
   auto result = random_projection(mtx);
   std::cout << loss(mtx, result) << std::endl;
 
-  /*
   std::cout << "~~~" << std::endl;
   Eigen::MatrixXd mmtx(3, 3);
   mmtx << 1., 2., 3., 4., 5., 6., 7., 8., 9;
   std::cout << sqrt(mmtx.squaredNorm() / 9) << std::endl;
-  */
   return 0;
 }

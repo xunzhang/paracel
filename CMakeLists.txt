@@ -2,17 +2,17 @@
 cmake_minimum_required(VERSION 2.8.9)
 ##############################--g++4.7-plus--###################################
 if(EXISTS "gentoo_rules.cmake")
-  find_program(CXX NAMES g++-4.8 g++-4.7.2 g++-4.7.1 g++-4.7 g++)
+  find_program(CXX NAMES g++-4.8.1 g++-4.7.2 g++-4.7.1 g++-4.7 g++)
   execute_process(COMMAND sed -i 
 	"s|CMAKE_CXX_COMPILER [^ ]*|CMAKE_CXX_COMPILER ${CXX}|g" 
 	"gentoo_rules.cmake")
-  find_program(CC NAMES gcc-4.8 gcc-4.7.2 gcc-4.7.1 gcc-4.7 gcc)
+  find_program(CC NAMES gcc-4.8.1 gcc-4.7.2 gcc-4.7.1 gcc-4.7 gcc)
   execute_process(COMMAND sed -i 
 	"s|CMAKE_C_COMPILER [^ ]*|CMAKE_C_COMPILER ${CC}|g"
 	"gentoo_rules.cmake")
 else()
-  find_program(CMAKE_CXX_COMPILER NAMES g++-4.8 g++-4.7.2 g++-4.7.1 g++-4.7 g++)
-  find_program(CMAKE_C_COMPILER NAMES gcc-4.8 gcc-4.7.2 gcc-4.7.1 gcc-4.7 gcc)
+  find_program(CMAKE_CXX_COMPILER NAMES g++-4.8.1 g++-4.7.2 g++-4.7.1 g++-4.7 g++)
+  find_program(CMAKE_C_COMPILER NAMES gcc-4.8.1 gcc-4.7.2 gcc-4.7.1 gcc-4.7 gcc)
 endif()
 ################################################################################
 project(paracel CXX C)
@@ -20,7 +20,7 @@ project(paracel CXX C)
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -O2")
   set(CMAKE_CXX_FLAGS_DEBUG "-Wall -std=c++11 -O0 -g -fno-inline")
-  set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3 -march=native -ffast-math")
+  set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3 -march=native -ffast-math -static-libstdc++")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES RELEASE)
@@ -63,16 +63,4 @@ set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/local")
 install(PROGRAMS prun.py DESTINATION "${PROJECT_SOURCE_DIR}/local/bin")
 ################################################################################
 add_subdirectory(src)
-add_subdirectory(alg/word_count)
-add_subdirectory(alg/logistic_regression)
-add_subdirectory(alg/matrix_factorization)
-add_subdirectory(alg/similarity)
-add_subdirectory(alg/hi)
-add_subdirectory(alg/cbr)
-add_subdirectory(alg/pagerank)
-add_subdirectory(alg/clustering)
-add_subdirectory(alg/hostname)
-add_subdirectory(alg/max_vertex_value)
-add_subdirectory(alg/perf_vs_mpi)
-add_subdirectory(alg/cos_sim_sparse)
 ################################################################################

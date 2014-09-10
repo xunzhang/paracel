@@ -1,4 +1,5 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/data/cos_sim_sparse/demo.txt",
-  "output" : "/mfs/user/wuhong/paracel/data/cos_sim_sparse_result/"
+  "input" : "/mfs/user/wuhong/paracel/data/netflix/train/debug_fmt",
+  "output" : "/mfs/user/wuhong/paracel/data/cos_sim_sparse_result/",
+  "topk" : 10
 }
