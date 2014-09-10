@@ -3,13 +3,8 @@ target_link_libraries(cbr_update ${CMAKE_DL_LIBS})
 install(TARGETS cbr_update LIBRARY DESTINATION lib)
 
 add_executable(cbr cbr_driver.cpp)
-
-set(EXTRA_SO
-    "/usr/lib/libboost_regex.so")
-
 target_link_libraries(cbr
   ${Boost_LIBRARIES}
-  ${EXTRA_SO}
   comm scheduler)
 
 install(TARGETS cbr RUNTIME DESTINATION bin)
