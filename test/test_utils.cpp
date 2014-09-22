@@ -10,5 +10,9 @@ int main(int agrc, char *argv[])
       std::cout << v.first << " : " << v.second << std::endl;
     } 
   }
+
+  paracel::str_type s2 = "39352476";
+  auto v = paracel::str_split(s2, '|');
+  std::cout << v.size() << " | " << v[0] << std::endl;
   return 0;
 }
