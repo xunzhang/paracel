@@ -60,5 +60,16 @@ set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/local")
 install(PROGRAMS prun.py DESTINATION "${PROJECT_SOURCE_DIR}/local/bin")
 ################################################################################
 add_subdirectory(src)
+add_subdirectory(alg/word_count)
+add_subdirectory(alg/logistic_regression)
+add_subdirectory(alg/matrix_factorization)
+add_subdirectory(alg/similarity)
+add_subdirectory(alg/hi)
+add_subdirectory(alg/cbr)
+add_subdirectory(alg/pagerank)
+add_subdirectory(alg/clustering)
+add_subdirectory(alg/hostname)
+add_subdirectory(alg/max_vertex_value)
+add_subdirectory(alg/perf_vs_mpi)
+add_subdirectory(alg/cos_sim_sparse)
 ################################################################################
-

@@ -13,6 +13,7 @@
  *
  */
 
+#include <time.h>
 #include <cmath>
 #include <tuple>
 #include <vector>
@@ -215,6 +216,7 @@ class spectral_clustering : public paracel::paralg {
     C = blk_A.rows();
     N = blk_A.cols(); 
     K = kclusters + over_sampling;
+    K = 3;
     paracel_write("global_C_indx_" + std::to_string(get_worker_id()), C);
     global_indx.resize(0);
     sync();
@@ -316,15 +318,16 @@ class spectral_clustering : public paracel::paralg {
   // compute then return H' * H, where H is a n by k dense matrix
   // H_blk: columns block of H'(rows block of H)
   Eigen::MatrixXd 
-  mm_kxn_dense_by_nxk_dense(const Eigen::MatrixXd & H_blk) {
-    Eigen::MatrixXd local_result = H_blk * H_blk.transpose();
+  parallel_mm_kxn_dense_by_nxk_dense(const Eigen::MatrixXd & H_blk,
+                                     const std::string & keyname) {
+    Eigen::MatrixXd local_result = H_blk.transpose() * H_blk;
     std::vector<double> local_result_vec = paracel::mat2vec(local_result.transpose()); 
-    paracel_bupdate("HtH",
+    paracel_bupdate(keyname,
                     local_result_vec,
                     "/mfs/user/wuhong/paracel/local/lib/libclustering_update.so",
                     "local_update_sc");
     sync();
-    local_result_vec = paracel_read<std::vector<double> >("H'H");
+    local_result_vec = paracel_read<std::vector<double> >(keyname);
     return paracel::vec2mat(local_result_vec, K);
   }
 
@@ -333,8 +336,9 @@ class spectral_clustering : public paracel::paralg {
   // return rows block of mA * mH
   // A_blk: columns block of mA, H_blk: rows block of mH
   Eigen::MatrixXd 
-  mm_nxn_sparse_by_nxk_dense(const Eigen::SparseMatrix<double, Eigen::RowMajor> & A_blk,
-                             const Eigen::MatrixXd & H_blk) {
+  parallel_mm_nxn_sparse_by_nxk_dense(const Eigen::SparseMatrix<double, Eigen::RowMajor> & A_blk,
+                                      const Eigen::MatrixXd & H_blk,
+                                      const std::string & keyname) {
     int blk_size = A_blk.rows() / get_worker_size(); 
     int np = get_worker_size();
     int rk = get_worker_id();
@@ -347,13 +351,13 @@ class spectral_clustering : public paracel::paralg {
       Eigen::MatrixXd part_A_blk = Eigen::MatrixXd(A_blk).block(k * blk_size, 0, rows, cols);
       Eigen::MatrixXd local_result = part_A_blk * H_blk;
       std::vector<double> local_result_vec = paracel::mat2vec(local_result.transpose());
-      paracel_bupdate("AH_or_AtW_" + std::to_string(k),
+      paracel_bupdate(keyname + std::to_string(k),
                       local_result_vec,
                       "/mfs/user/wuhong/paracel/local/lib/libclustering_update.so",
                       "local_update_sc");
     } // end for
     sync();
-    auto data = paracel_read<std::vector<double> >("AH_Or_AtW_" + std::to_string(rk));
+    auto data = paracel_read<std::vector<double> >(keyname + std::to_string(rk));
     int rows = blk_size;
     if(rk == np - 1) {
       rows += A_blk.rows() % np;
@@ -361,14 +365,50 @@ class spectral_clustering : public paracel::paralg {
     return paracel::vec2mat(data, rows);
   }
 
-  void matrixix_factorization() {
+  void matrix_factorization(const Eigen::SparseMatrix<double, Eigen::RowMajor> & A_blk,
+                            const Eigen::SparseMatrix<double, Eigen::RowMajor> & At_blk) {
+    //srand((unsigned)time(NULL));
+    Eigen::MatrixXd H_blk = Eigen::MatrixXd::Random(C, K);
+    sync();
+    Eigen::MatrixXd W_blk(C, K);
+    for(int iter = 0; iter < 1; ++iter) {
+      // W = A * H * inv(H' * H)
+      Eigen::MatrixXd HtH = parallel_mm_kxn_dense_by_nxk_dense(H_blk, "HtH");
+      if(get_worker_id() == 0) {
+        std::cout << "debug1.25" << HtH.inverse() << std::endl;
+      }
+      Eigen::MatrixXd AH_blk = parallel_mm_nxn_sparse_by_nxk_dense(At_blk, H_blk, "AH_");
+      if(get_worker_id() == 0) {
+        std::cout << "debug1" << AH_blk << std::endl;
+      }
+      W_blk = AH_blk * HtH.inverse();
+      if(get_worker_id() == 0) {
+        std::cout << "---" << std::endl;
+        std::cout << "debug" <<  HtH << std::endl;
+        std::cout << "---" << std::endl;
+        std::cout << "debug1.5" << W_blk << std::endl;
+      }
+      // H = A' * W * inv(W' * W)
+      Eigen::MatrixXd WtW = parallel_mm_kxn_dense_by_nxk_dense(W_blk, "WtW");
+      Eigen::MatrixXd AtW_blk = parallel_mm_nxn_sparse_by_nxk_dense(A_blk, W_blk, "AtW_");
+      H_blk = AtW_blk * WtW.inverse();
+    }
+    sync();
+    std::cout << "!!!" << std::endl;
+    std::cout << A_blk << std::endl;
+    std::cout << "---" << std::endl;
+    std::cout << "MF result: " << W_blk * H_blk.transpose() << std::endl;
   }
 
   void qr_iteration() {}
  
   void learning() {
-    matrix_factorization();
     //random_projection();
+    if(get_worker_id() == 0) {
+      std::cout << "star" << blk_A << std::endl;
+      std::cout << "~~~~~" << std::endl;
+    }
+    matrix_factorization(blk_A, blk_A_T);
     sync();
     qr_iteration();
   }
