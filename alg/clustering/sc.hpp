@@ -206,12 +206,14 @@ class spectral_clustering : public paracel::paralg {
     paracel::traverse_matrix(blk_A, rmul_lambda);
 
     init_blk_A_T();
-    
+
+/*
     if(get_worker_id() == 0) {
       std::cout << blk_A << std::endl;
       std::cout << "---" << std::endl;
       std::cout << blk_A_T << std::endl;
     }
+*/
 
     C = blk_A.rows();
     N = blk_A.cols(); 
@@ -235,7 +237,7 @@ class spectral_clustering : public paracel::paralg {
   } // init
   
   void random_projection() {
-    blk_H = Eigen::MatrixXd::Random(C, K);
+    //blk_H = Eigen::MatrixXd::Random(C, K);
     blk_W.resize(C, K);
     int rank = get_worker_id();
     for(int iter = 0; iter < 10; ++iter) {
@@ -307,12 +309,6 @@ class spectral_clustering : public paracel::paralg {
     std::vector<double> blk_W_vec(tmp_W_vec.begin() + it_begin, tmp_W_vec.begin() + it_end);
     blk_W = paracel::vec2mat(blk_W_vec, C);
 
-    if(rank == 1) {
-      std::cout << "---" << std::endl;
-      std::cout << blk_W << std::endl;
-      std::cout << "---" << std::endl;
-      std::cout << blk_H << std::endl;
-    }
   }
 
   // compute then return H' * H, where H is a n by k dense matrix
@@ -320,6 +316,7 @@ class spectral_clustering : public paracel::paralg {
   Eigen::MatrixXd 
   parallel_mm_kxn_dense_by_nxk_dense(const Eigen::MatrixXd & H_blk,
                                      const std::string & keyname) {
+    std::cout.precision(20);
     Eigen::MatrixXd local_result = H_blk.transpose() * H_blk;
     std::vector<double> local_result_vec = paracel::mat2vec(local_result.transpose()); 
     paracel_bupdate(keyname,
@@ -327,8 +324,8 @@ class spectral_clustering : public paracel::paralg {
                     "/mfs/user/wuhong/paracel/local/lib/libclustering_update.so",
                     "local_update_sc");
     sync();
-    local_result_vec = paracel_read<std::vector<double> >(keyname);
-    return paracel::vec2mat(local_result_vec, K);
+    std::vector<double> local_result_vec_new = paracel_read<std::vector<double> >(keyname);
+    return paracel::vec2mat(local_result_vec_new, K);
   }
 
   // compute mA * mH, where mA is a n by n sparse matrix 
@@ -368,46 +365,38 @@ class spectral_clustering : public paracel::paralg {
   void matrix_factorization(const Eigen::SparseMatrix<double, Eigen::RowMajor> & A_blk,
                             const Eigen::SparseMatrix<double, Eigen::RowMajor> & At_blk) {
     //srand((unsigned)time(NULL));
+    std::cout.precision(20);
     Eigen::MatrixXd H_blk = Eigen::MatrixXd::Random(C, K);
     sync();
     Eigen::MatrixXd W_blk(C, K);
-    for(int iter = 0; iter < 1; ++iter) {
+    for(int iter = 0; iter < 10; ++iter) {
       // W = A * H * inv(H' * H)
       Eigen::MatrixXd HtH = parallel_mm_kxn_dense_by_nxk_dense(H_blk, "HtH");
-      if(get_worker_id() == 0) {
-        std::cout << "debug1.25" << HtH.inverse() << std::endl;
-      }
+      sync();
       Eigen::MatrixXd AH_blk = parallel_mm_nxn_sparse_by_nxk_dense(At_blk, H_blk, "AH_");
-      if(get_worker_id() == 0) {
-        std::cout << "debug1" << AH_blk << std::endl;
-      }
       W_blk = AH_blk * HtH.inverse();
-      if(get_worker_id() == 0) {
-        std::cout << "---" << std::endl;
-        std::cout << "debug" <<  HtH << std::endl;
-        std::cout << "---" << std::endl;
-        std::cout << "debug1.5" << W_blk << std::endl;
-      }
+      sync();
       // H = A' * W * inv(W' * W)
       Eigen::MatrixXd WtW = parallel_mm_kxn_dense_by_nxk_dense(W_blk, "WtW");
-      Eigen::MatrixXd AtW_blk = parallel_mm_nxn_sparse_by_nxk_dense(A_blk, W_blk, "AtW_");
+      sync();
+      Eigen::MatrixXd AtW_blk = parallel_mm_nxn_sparse_by_nxk_dense(A_blk.transpose(), W_blk, "AtW_");
       H_blk = AtW_blk * WtW.inverse();
     }
+    if(get_worker_id() == 1) {
+      std::cout << W_blk * H_blk.transpose() << std::endl;
+    }
     sync();
-    std::cout << "!!!" << std::endl;
-    std::cout << A_blk << std::endl;
-    std::cout << "---" << std::endl;
-    std::cout << "MF result: " << W_blk * H_blk.transpose() << std::endl;
   }
 
   void qr_iteration() {}
  
   void learning() {
     //random_projection();
-    if(get_worker_id() == 0) {
+    if(get_worker_id() == 1) {
       std::cout << "star" << blk_A << std::endl;
       std::cout << "~~~~~" << std::endl;
     }
+    sync();
     matrix_factorization(blk_A, blk_A_T);
     sync();
     qr_iteration();
