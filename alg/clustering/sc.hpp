@@ -23,6 +23,8 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 #include <eigen3/Eigen/QR>
+#include <eigen3/Eigen/Cholesky>
+#include <eigen3/Eigen/SVD>
 
 #include "ps.hpp"
 #include "utils.hpp"
@@ -235,7 +237,8 @@ class spectral_clustering : public paracel::paralg {
       std::cout << "K " << K << std::endl;
     }
   } // init
-  
+ 
+/* 
   void random_projection() {
     //blk_H = Eigen::MatrixXd::Random(C, K);
     blk_W.resize(C, K);
@@ -310,6 +313,7 @@ class spectral_clustering : public paracel::paralg {
     blk_W = paracel::vec2mat(blk_W_vec, C);
 
   }
+*/
 
   // compute then return H' * H, where H is a n by k dense matrix
   // H_blk: columns block of H'(rows block of H)
@@ -363,12 +367,13 @@ class spectral_clustering : public paracel::paralg {
   }
 
   void matrix_factorization(const Eigen::SparseMatrix<double, Eigen::RowMajor> & A_blk,
-                            const Eigen::SparseMatrix<double, Eigen::RowMajor> & At_blk) {
+                            const Eigen::SparseMatrix<double, Eigen::RowMajor> & At_blk,
+                            Eigen::MatrixXd & W_blk,
+                            Eigen::MatrixXd & H_blk) {
     //srand((unsigned)time(NULL));
     std::cout.precision(20);
-    Eigen::MatrixXd H_blk = Eigen::MatrixXd::Random(C, K);
+    H_blk = Eigen::MatrixXd::Random(C, K);
     sync();
-    Eigen::MatrixXd W_blk(C, K);
     for(int iter = 0; iter < 10; ++iter) {
       // W = A * H * inv(H' * H)
       Eigen::MatrixXd HtH = parallel_mm_kxn_dense_by_nxk_dense(H_blk, "HtH");
@@ -382,24 +387,50 @@ class spectral_clustering : public paracel::paralg {
       Eigen::MatrixXd AtW_blk = parallel_mm_nxn_sparse_by_nxk_dense(A_blk.transpose(), W_blk, "AtW_");
       H_blk = AtW_blk * WtW.inverse();
     }
-    if(get_worker_id() == 1) {
-      std::cout << W_blk * H_blk.transpose() << std::endl;
-    }
+    std::cout << W_blk << std::endl;
+    std::cout << H_blk.transpose() << std::endl;
     sync();
   }
 
-  void qr_iteration() {}
+  // QR of M (n by k here) is equivalent to the Cholesky decomposition of M'M = L'L
+  // where q = -M * L^ (-1), r = -L
+  void qr_iteration(const Eigen::MatrixXd & M_blk,
+                    const std::string & keyname,
+                    Eigen::MatrixXd & q,
+                    Eigen::MatrixXd & r) {
+    Eigen::MatrixXd MtM = parallel_mm_kxn_dense_by_nxk_dense(M_blk, keyname);
+    sync();
+    Eigen::LLT<Eigen::MatrixXd> lltOfA(MtM);
+    Eigen::MatrixXd L = lltOfA.matrixL();
+    r = -L.transpose();
+    //q = -M * L.inverse(); // here L.inverse is equal to L^(-1)
+  }
  
   void learning() {
+  
+    Eigen::MatrixXd blk_W; // C * K
+    Eigen::MatrixXd blk_H; // C * K
+    Eigen::MatrixXd q_W, r_W; // N * K, K * K
+    Eigen::MatrixXd q_H, r_H; // N * K, K * K
+    
     //random_projection();
-    if(get_worker_id() == 1) {
-      std::cout << "star" << blk_A << std::endl;
-      std::cout << "~~~~~" << std::endl;
+    if(get_worker_id() == 0) {
+      std::cout << "blk_A: " << blk_A << std::endl;
     }
     sync();
-    matrix_factorization(blk_A, blk_A_T);
+    
+    matrix_factorization(blk_A, blk_A_T, blk_W, blk_H);
     sync();
-    qr_iteration();
+
+    qr_iteration(blk_W, "WtW_qr", q_W, r_W);
+    qr_iteration(blk_H, "HtH_qr", q_H, r_H);
+    sync();
+
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(r_W * r_H.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
+    //Eigen::MatrixXd sigma = svd.singularValues(); // rank * 1
+    Eigen::MatrixXd U_r = svd.matrixU();
+    //Eigen::MatrixXd Vr = svd.matrixV();
+    Eigen::MatrixXd U = q_W * U_r;
   }
 
   virtual void solve() {
@@ -424,8 +455,6 @@ class spectral_clustering : public paracel::paralg {
   size_t N;
   size_t C;
   size_t K;
-  Eigen::MatrixXd blk_H; // C * K
-  Eigen::MatrixXd blk_W; // C * K
   std::vector<size_t> global_indx;
 
 }; // class spectral_clustering

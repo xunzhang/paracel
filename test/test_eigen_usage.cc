@@ -2,6 +2,7 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 #include <eigen3/Eigen/QR>
+#include <eigen3/Eigen/Cholesky>
 #include "utils.hpp"
 
 int main(int argc, char *argv[])
@@ -69,5 +70,30 @@ int main(int argc, char *argv[])
   Eigen::MatrixXd R = qr.matrixQR().triangularView<Eigen::Upper>();
   std::cout << R << std::endl;
   std::cout << R.inverse() << std::endl;
+
+  Eigen::MatrixXd AA(3,3);
+  AA << 4,-1,2, -1,6,0, 2,0,5;
+  std::cout << "The matrix AA is" << std::endl << AA << std::endl;
+  Eigen::LLT<Eigen::MatrixXd> lltOfA(AA); // compute the Cholesky decomposition of A
+  Eigen::MatrixXd L = lltOfA.matrixL(); // retrieve factor L  in the decomposition
+  // The previous two lines can also be written as "L = A.llt().matrixL()"
+  std::cout << "The Cholesky factor L is" << std::endl << -L << std::endl;
+  std::cout << "To check this, let us compute L * L.transpose()" << std::endl;
+  std::cout << L * L.transpose() << std::endl;
+  std::cout << "This should equal the matrix A" << std::endl;
+
+  Eigen::MatrixXd ma = Eigen::MatrixXd::Random(3,2);
+  std::cout << "Here is the matrix m:" << std::endl << ma << std::endl;
+  Eigen::JacobiSVD<Eigen::MatrixXd> svd(ma, Eigen::ComputeThinU | Eigen::ComputeThinV);
+  Eigen::MatrixXd SIGMA = svd.singularValues();
+  Eigen::MatrixXd U = svd.matrixU();
+  Eigen::MatrixXd V = svd.matrixV();
+  std::cout << SIGMA.rows() << SIGMA.cols() << U.rows() << U.cols() << V.rows() << V.cols() << std::endl;
+  Eigen::MatrixXd tttmmmppp = U * SIGMA;
+  std::cout << tttmmmppp * V.transpose() << std::endl;
+  std::cout << "Its singular values are:" << std::endl << SIGMA << std::endl;
+  std::cout << "Its left singular vectors are the columns of the thin U matrix:" << std::endl << U << std::endl;
+  std::cout << "Its right singular vectors are the columns of the thin V matrix:" << std::endl << V << std::endl;
+
   return 0;
 }
