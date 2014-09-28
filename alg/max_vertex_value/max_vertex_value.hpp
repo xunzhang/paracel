@@ -70,7 +70,7 @@ class max_vertex_value : public paracel::paralg {
     sync();
     // following supersteps
     while(1) {
-      int local_halt_flag = 1;
+      size_t local_halt_flag = 1;
       // following supersteps
       for(auto & kv : vertex_active_map) {
         std::string v = kv.first;

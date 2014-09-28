@@ -84,7 +84,7 @@ class spectral_clustering : public paracel::paralg {
     row_id_seq.resize(0);
     sync();
     
-    for(int k = 0; k < get_worker_size(); ++k) {
+    for(size_t k = 0; k < get_worker_size(); ++k) {
       auto tmp_data = paracel_read<std::vector<std::string> >("blk_A_T_usage_" + std::to_string(k));
       row_id_seq.insert(row_id_seq.end(), tmp_data.begin(), tmp_data.end());
     }
@@ -137,7 +137,7 @@ class spectral_clustering : public paracel::paralg {
     paracel_write("exchange_P_" + std::to_string(get_worker_id()), P);
     P.resize(0);
     sync();
-    for(int k = 0; k < get_worker_size(); ++k) {
+    for(size_t k = 0; k < get_worker_size(); ++k) {
       auto tmp_P = paracel_read<std::vector<size_t> >("exchange_P_" + std::to_string(k));
       P.insert(P.end(), tmp_P.begin(), tmp_P.end());
     }
@@ -225,7 +225,7 @@ class spectral_clustering : public paracel::paralg {
     global_indx.resize(0);
     sync();
     size_t accum = 0;
-    for(int k = 0; k < get_worker_size(); ++k) {
+    for(size_t k = 0; k < get_worker_size(); ++k) {
       size_t indx = paracel_read<size_t>("global_C_indx_" + std::to_string(k));
       accum += indx;
       global_indx.push_back(accum); 
@@ -371,10 +371,22 @@ class spectral_clustering : public paracel::paralg {
                             Eigen::MatrixXd & W_blk,
                             Eigen::MatrixXd & H_blk) {
     //srand((unsigned)time(NULL));
-    std::cout.precision(20);
-    H_blk = Eigen::MatrixXd::Random(C, K);
+    size_t accum_rows = 0;
+    size_t total_rows = 0;
+    for(size_t k = 0; k < get_worker_size(); ++k) {
+      size_t _rows = paracel_read<size_t>("global_C_indx_" + std::to_string(k));
+      if(k < get_worker_id()) {
+        accum_rows += _rows;
+      }
+      total_rows += _rows;
+    }
+    Eigen::MatrixXd H_global = Eigen::MatrixXd::Random(total_rows, K);
+    H_blk = H_global.block(accum_rows, 0, C, K);
+    if(get_worker_id() == 1) {
+      std::cout << "init H" << H_blk << std::endl;
+    }
     sync();
-    for(int iter = 0; iter < 10; ++iter) {
+    for(int iter = 0; iter < 20; ++iter) {
       // W = A * H * inv(H' * H)
       Eigen::MatrixXd HtH = parallel_mm_kxn_dense_by_nxk_dense(H_blk, "HtH");
       sync();
@@ -396,22 +408,22 @@ class spectral_clustering : public paracel::paralg {
   // where q = -M * L^ (-1), r = -L
   void qr_iteration(const Eigen::MatrixXd & M_blk,
                     const std::string & keyname,
-                    Eigen::MatrixXd & q,
+                    Eigen::MatrixXd & q_blk,
                     Eigen::MatrixXd & r) {
     Eigen::MatrixXd MtM = parallel_mm_kxn_dense_by_nxk_dense(M_blk, keyname);
     sync();
     Eigen::LLT<Eigen::MatrixXd> lltOfA(MtM);
     Eigen::MatrixXd L = lltOfA.matrixL();
     r = -L.transpose();
-    //q = -M * L.inverse(); // here L.inverse is equal to L^(-1)
+    q_blk = -M_blk * L.transpose().inverse(); // here L.inverse is equal to L^(-1)
   }
  
   void learning() {
   
     Eigen::MatrixXd blk_W; // C * K
     Eigen::MatrixXd blk_H; // C * K
-    Eigen::MatrixXd q_W, r_W; // N * K, K * K
-    Eigen::MatrixXd q_H, r_H; // N * K, K * K
+    Eigen::MatrixXd q_W_blk, r_W; // N * K, K * K
+    Eigen::MatrixXd q_H_blk, r_H; // N * K, K * K
     
     //random_projection();
     if(get_worker_id() == 0) {
@@ -420,17 +432,27 @@ class spectral_clustering : public paracel::paralg {
     sync();
     
     matrix_factorization(blk_A, blk_A_T, blk_W, blk_H);
+    if(get_worker_id() == 0) {
+      std::cout << "blk_W: " << blk_W << std::endl;
+      std::cout << "blk_H: " << blk_H << std::endl;
+      std::cout << "approximate: " << blk_W * blk_H.transpose() << std::endl;
+    }
     sync();
 
-    qr_iteration(blk_W, "WtW_qr", q_W, r_W);
-    qr_iteration(blk_H, "HtH_qr", q_H, r_H);
+    qr_iteration(blk_W, "WtW_qr", q_W_blk, r_W);
+    qr_iteration(blk_H, "HtH_qr", q_H_blk, r_H);
     sync();
 
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(r_W * r_H.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
-    //Eigen::MatrixXd sigma = svd.singularValues(); // rank * 1
     Eigen::MatrixXd U_r = svd.matrixU();
+    //Eigen::MatrixXd sigma = svd.singularValues(); // rank * 1
     //Eigen::MatrixXd Vr = svd.matrixV();
-    Eigen::MatrixXd U = q_W * U_r;
+    Eigen::MatrixXd U_blk = q_W_blk * U_r;
+    if(get_worker_id() == 0) {
+      std::cout << "r_W * r_H': " << r_W * r_H.transpose() << std::endl;
+      std::cout << "U_r: " << U_r << std::endl;
+      std::cout << "U_blk: " << U_blk << std::endl;
+    }
   }
 
   virtual void solve() {

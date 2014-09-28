@@ -150,7 +150,7 @@ class paralg {
     auto fname_lst = paracel::expand(fn);
     auto loads = paracel::files_partition(fname_lst, get_worker_size(), "linesplit");
     // sequential_load
-    for(int i = 0; i < get_worker_size(); ++i) {
+    for(size_t i = 0; i < get_worker_size(); ++i) {
       paracel::list_type<paracel::str_type> result;
       while(loads[i]) {
         auto lines = loads[i].get();
@@ -616,7 +616,7 @@ class paralg {
     return worker_comm.get_rank();
   }
 
-  inline int get_worker_size() {
+  inline size_t get_worker_size() {
     return worker_comm.get_size();
   }
 
