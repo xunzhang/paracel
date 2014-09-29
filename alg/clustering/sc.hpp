@@ -14,6 +14,7 @@
  */
 
 #include <time.h>
+#include <assert.h>
 #include <cmath>
 #include <tuple>
 #include <vector>
@@ -220,7 +221,7 @@ class spectral_clustering : public paracel::paralg {
     C = blk_A.rows();
     N = blk_A.cols(); 
     K = kclusters + over_sampling;
-    K = 3;
+    K = 4;
     paracel_write("global_C_indx_" + std::to_string(get_worker_id()), C);
     global_indx.resize(0);
     sync();
@@ -446,16 +447,24 @@ class spectral_clustering : public paracel::paralg {
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(r_W * r_H.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
     Eigen::MatrixXd U_r = svd.matrixU();
     //Eigen::MatrixXd sigma = svd.singularValues(); // rank * 1
-    //Eigen::MatrixXd Vr = svd.matrixV();
+    Eigen::MatrixXd V_r = svd.matrixV();
     Eigen::MatrixXd U_blk = q_W_blk * U_r;
-    if(get_worker_id() == 0) {
-      std::cout << "r_W * r_H': " << r_W * r_H.transpose() << std::endl;
-      std::cout << "U_r: " << U_r << std::endl;
-      std::cout << "U_blk: " << U_blk << std::endl;
+    Eigen::MatrixXd V_blk = q_H_blk * V_r;
+    std::vector<int> klargest_eigv_indx;
+    for(int c = 0; c < U_blk.cols(); ++c) {
+      double diff = U_blk.row(0)[c] - V_blk.row(0)[c];
+      std::cout << diff << std::endl;
+      if(diff > -0.0001 && diff < 0.0001) {
+        klargest_eigv_indx.push_back(c);
+      }
+      if(klargest_eigv_indx.size() == (size_t)kclusters) {
+        break;
+      }
     }
+    assert(klargest_eigv_indx.size() == (size_t)kclusters);
   }
 
-  virtual void solve() {
+  void solve() {
     init();
     sync();
     learning();
