@@ -71,8 +71,11 @@ int main(int argc, char *argv[])
   std::cout << R << std::endl;
   std::cout << R.inverse() << std::endl;
 
-  Eigen::MatrixXd AA(3,3);
-  AA << 4,-1,2, -1,6,0, 2,0,5;
+  Eigen::MatrixXd AA(3, 3);
+  AA <<  0.872871, -0.574833, -0.304016,
+      -0.574833, 0.827987, 0.120067,
+      -0.304016, 0.120067, 0.297787;
+  //AA << 4,-1,2, -1,6,0, 2,0,5;
   std::cout << "The matrix AA is" << std::endl << AA << std::endl;
   Eigen::LLT<Eigen::MatrixXd> lltOfA(AA); // compute the Cholesky decomposition of A
   Eigen::MatrixXd L = lltOfA.matrixL(); // retrieve factor L  in the decomposition

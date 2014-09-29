@@ -421,47 +421,53 @@ class spectral_clustering : public paracel::paralg {
  
   void learning() {
   
+    // firstly, do matrix factorization
     Eigen::MatrixXd blk_W; // C * K
     Eigen::MatrixXd blk_H; // C * K
     Eigen::MatrixXd q_W_blk, r_W; // N * K, K * K
     Eigen::MatrixXd q_H_blk, r_H; // N * K, K * K
-    
-    //random_projection();
-    if(get_worker_id() == 0) {
-      std::cout << "blk_A: " << blk_A << std::endl;
-    }
-    sync();
-    
     matrix_factorization(blk_A, blk_A_T, blk_W, blk_H);
-    if(get_worker_id() == 0) {
-      std::cout << "blk_W: " << blk_W << std::endl;
-      std::cout << "blk_H: " << blk_H << std::endl;
-      std::cout << "approximate: " << blk_W * blk_H.transpose() << std::endl;
-    }
     sync();
-
     qr_iteration(blk_W, "WtW_qr", q_W_blk, r_W);
     qr_iteration(blk_H, "HtH_qr", q_H_blk, r_H);
     sync();
+    /*
+    random_projection();
+    sync();
+    */
 
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(r_W * r_H.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
-    Eigen::MatrixXd U_r = svd.matrixU();
+    // secondly, do qr decomposition then get k largest eigen vectors of A
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(r_W * r_H.transpose(), 
+                                          Eigen::ComputeThinU | Eigen::ComputeThinV);
     //Eigen::MatrixXd sigma = svd.singularValues(); // rank * 1
+    Eigen::MatrixXd U_r = svd.matrixU();
     Eigen::MatrixXd V_r = svd.matrixV();
     Eigen::MatrixXd U_blk = q_W_blk * U_r;
     Eigen::MatrixXd V_blk = q_H_blk * V_r;
     std::vector<int> klargest_eigv_indx;
     for(int c = 0; c < U_blk.cols(); ++c) {
       double diff = U_blk.row(0)[c] - V_blk.row(0)[c];
-      std::cout << diff << std::endl;
-      if(diff > -0.0001 && diff < 0.0001) {
+      if(diff > -1e-10 && diff < 1e-10) {
         klargest_eigv_indx.push_back(c);
       }
       if(klargest_eigv_indx.size() == (size_t)kclusters) {
         break;
       }
     }
-    assert(klargest_eigv_indx.size() == (size_t)kclusters);
+    //assert(klargest_eigv_indx.size() == (size_t)kclusters);
+
+    // create y_mtx using k largest eigen vectors of A
+    Eigen::MatrixXd y_mtx(U_blk.rows(), klargest_eigv_indx.size());
+    for(int r = 0; r < y_mtx.rows(); ++r) {
+      for(int c = 0; c < (int)klargest_eigv_indx.size(); ++c) {
+        y_mtx.row(r)[c] = U_blk.row(r)[klargest_eigv_indx[c]];
+      }
+    }
+    if(get_worker_id() == 0) {
+      std::cout << klargest_eigv_indx.size() << std::endl;
+      std::cout << kclusters << std::endl;
+      std::cout << y_mtx << std::endl;
+    }
   }
 
   void solve() {
