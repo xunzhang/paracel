@@ -52,7 +52,10 @@ class spectral_clustering : public paracel::paralg {
       output(_output),
       kclusters(_kclusters),
       mutual_sim(_mutual_sim),
-      rounds(_rounds) {}
+      rounds(_rounds) {
+    rank = get_worker_id();
+    np = get_worker_size();
+  }
   
   // fmap case blk_A
   // little tricky here
@@ -81,11 +84,11 @@ class spectral_clustering : public paracel::paralg {
       row_id_seq.push_back(data.second);
     }
     row_id_seq_pairs.resize(0);
-    paracel_write("blk_A_T_usage_" + std::to_string(get_worker_id()), row_id_seq);
+    paracel_write("blk_A_T_usage_" + std::to_string(rank), row_id_seq);
     row_id_seq.resize(0);
     sync();
     
-    for(size_t k = 0; k < get_worker_size(); ++k) {
+    for(size_t k = 0; k < np; ++k) {
       auto tmp_data = paracel_read<std::vector<std::string> >("blk_A_T_usage_" + std::to_string(k));
       row_id_seq.insert(row_id_seq.end(), tmp_data.begin(), tmp_data.end());
     }
@@ -120,7 +123,6 @@ class spectral_clustering : public paracel::paralg {
                            "fmap", 
                            true);
     // init exchange matrix P 
-    std::vector<size_t> P;
     std::unordered_map<std::string, size_t> reverse_col_map;
     for(auto & kv : col_map) {
       reverse_col_map[kv.second] = kv.first;
@@ -135,10 +137,10 @@ class spectral_clustering : public paracel::paralg {
       }
     }
     reverse_col_map.clear();
-    paracel_write("exchange_P_" + std::to_string(get_worker_id()), P);
+    paracel_write("exchange_P_" + std::to_string(rank), P);
     P.resize(0);
     sync();
-    for(size_t k = 0; k < get_worker_size(); ++k) {
+    for(size_t k = 0; k < np; ++k) {
       auto tmp_P = paracel_read<std::vector<size_t> >("exchange_P_" + std::to_string(k));
       P.insert(P.end(), tmp_P.begin(), tmp_P.end());
     }
@@ -210,32 +212,26 @@ class spectral_clustering : public paracel::paralg {
 
     init_blk_A_T();
 
-/*
-    if(get_worker_id() == 0) {
+    if(rank == 0) {
       std::cout << blk_A << std::endl;
       std::cout << "---" << std::endl;
       std::cout << blk_A_T << std::endl;
+      std::cout << "---" << std::endl;
     }
-*/
 
     C = blk_A.rows();
     N = blk_A.cols(); 
     K = kclusters + over_sampling;
     K = 4;
-    paracel_write("global_C_indx_" + std::to_string(get_worker_id()), C);
+    paracel_write("global_C_indx_" + std::to_string(rank), C);
     global_indx.resize(0);
+    global_indx.push_back(0);
     sync();
     size_t accum = 0;
-    for(size_t k = 0; k < get_worker_size(); ++k) {
+    for(size_t k = 0; k < np; ++k) {
       size_t indx = paracel_read<size_t>("global_C_indx_" + std::to_string(k));
       accum += indx;
       global_indx.push_back(accum); 
-    }
-
-    if(get_worker_id() == 0) {
-      std::cout << "C " << C << std::endl;
-      std::cout << "N " << N << std::endl;
-      std::cout << "K " << K << std::endl;
     }
   } // init
  
@@ -321,7 +317,6 @@ class spectral_clustering : public paracel::paralg {
   Eigen::MatrixXd 
   parallel_mm_kxn_dense_by_nxk_dense(const Eigen::MatrixXd & H_blk,
                                      const std::string & keyname) {
-    std::cout.precision(20);
     Eigen::MatrixXd local_result = H_blk.transpose() * H_blk;
     std::vector<double> local_result_vec = paracel::mat2vec(local_result.transpose()); 
     paracel_bupdate(keyname,
@@ -341,13 +336,11 @@ class spectral_clustering : public paracel::paralg {
   parallel_mm_nxn_sparse_by_nxk_dense(const Eigen::SparseMatrix<double, Eigen::RowMajor> & A_blk,
                                       const Eigen::MatrixXd & H_blk,
                                       const std::string & keyname) {
-    int blk_size = A_blk.rows() / get_worker_size(); 
-    int np = get_worker_size();
-    int rk = get_worker_id();
-    for(int k = 0; k < np; ++k) {
+    int blk_size = A_blk.rows() / np; 
+    for(size_t k = 0; k < np; ++k) {
       int cols = A_blk.cols();
       int rows = blk_size;
-      if(k == np - 1) {
+      if(k == (np - 1)) {
         rows += A_blk.rows() % np;
       }
       Eigen::MatrixXd part_A_blk = Eigen::MatrixXd(A_blk).block(k * blk_size, 0, rows, cols);
@@ -359,9 +352,9 @@ class spectral_clustering : public paracel::paralg {
                       "local_update_sc");
     } // end for
     sync();
-    auto data = paracel_read<std::vector<double> >(keyname + std::to_string(rk));
+    auto data = paracel_read<std::vector<double> >(keyname + std::to_string(rank));
     int rows = blk_size;
-    if(rk == np - 1) {
+    if(rank == np - 1) {
       rows += A_blk.rows() % np;
     }
     return paracel::vec2mat(data, rows);
@@ -374,7 +367,7 @@ class spectral_clustering : public paracel::paralg {
     //srand((unsigned)time(NULL));
     size_t accum_rows = 0;
     size_t total_rows = 0;
-    for(size_t k = 0; k < get_worker_size(); ++k) {
+    for(size_t k = 0; k < np; ++k) {
       size_t _rows = paracel_read<size_t>("global_C_indx_" + std::to_string(k));
       if(k < get_worker_id()) {
         accum_rows += _rows;
@@ -383,9 +376,6 @@ class spectral_clustering : public paracel::paralg {
     }
     Eigen::MatrixXd H_global = Eigen::MatrixXd::Random(total_rows, K);
     H_blk = H_global.block(accum_rows, 0, C, K);
-    if(get_worker_id() == 1) {
-      std::cout << "init H" << H_blk << std::endl;
-    }
     sync();
     for(int iter = 0; iter < 20; ++iter) {
       // W = A * H * inv(H' * H)
@@ -400,8 +390,6 @@ class spectral_clustering : public paracel::paralg {
       Eigen::MatrixXd AtW_blk = parallel_mm_nxn_sparse_by_nxk_dense(A_blk.transpose(), W_blk, "AtW_");
       H_blk = AtW_blk * WtW.inverse();
     }
-    std::cout << W_blk << std::endl;
-    std::cout << H_blk.transpose() << std::endl;
     sync();
   }
 
@@ -445,8 +433,15 @@ class spectral_clustering : public paracel::paralg {
     Eigen::MatrixXd U_blk = q_W_blk * U_r;
     Eigen::MatrixXd V_blk = q_H_blk * V_r;
     std::vector<int> klargest_eigv_indx;
+    sync();
+
+    for(int r = 0; r < U_blk.rows(); ++r) {
+      paracel_write("related_U_row_" + P[global_indx[rank] + r], paracel::evec2vec(U_blk.row(r)));
+    }
+    sync();
+    auto related_U_row = paracel_read<std::vector<double> >("related_U_row_" + global_indx[rank]);
     for(int c = 0; c < U_blk.cols(); ++c) {
-      double diff = U_blk.row(0)[c] - V_blk.row(0)[c];
+      double diff = related_U_row[c] - V_blk.row(0)[c];
       if(diff > -1e-10 && diff < 1e-10) {
         klargest_eigv_indx.push_back(c);
       }
@@ -463,9 +458,9 @@ class spectral_clustering : public paracel::paralg {
         y_mtx.row(r)[c] = U_blk.row(r)[klargest_eigv_indx[c]];
       }
     }
-    if(get_worker_id() == 0) {
-      std::cout << klargest_eigv_indx.size() << std::endl;
-      std::cout << kclusters << std::endl;
+    if(rank == 0) {
+      std::cout << "klargest_eigv_indx.size(): " << klargest_eigv_indx.size() << std::endl;
+      std::cout << "kclusters: " << kclusters << std::endl;
       std::cout << y_mtx << std::endl;
     }
   }
@@ -489,10 +484,12 @@ class spectral_clustering : public paracel::paralg {
   Eigen::SparseMatrix<double, Eigen::RowMajor> blk_A_T; // N * C
   Eigen::SparseMatrix<double, Eigen::RowMajor> exchange_P;
   std::unordered_map<size_t, std::string> row_map, col_map;
+  std::vector<size_t> P;
+  size_t rank, np;
   size_t N;
   size_t C;
   size_t K;
-  std::vector<size_t> global_indx;
+  std::vector<size_t> global_indx; // global_indx.size() = np + 1
 
 }; // class spectral_clustering
 
