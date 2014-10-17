@@ -113,7 +113,7 @@ if __name__ == '__main__':
                       help = 'mesos case: memory size of each task of workers')
     optpar.add_option('--hostfile',
                       action = 'store', type = 'string', dest = 'hostfile',
-                      help = 'mp case: hostfile for mpirun for workers')
+                      help = 'mpi case: hostfile for mpirun for workers')
     optpar.add_option('-c', '--cfg_file',
                       action = 'store', type = 'string', dest = 'config',
                       help = 'config file in json fmt, for alg usage')
