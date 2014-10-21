@@ -452,7 +452,7 @@ class spectral_clustering : public paracel::paralg {
     //assert(klargest_eigv_indx.size() == (size_t)kclusters);
 
     // create y_mtx using k largest eigen vectors of A
-    Eigen::MatrixXd y_mtx(U_blk.rows(), klargest_eigv_indx.size());
+    y_mtx.resize(U_blk.rows(), klargest_eigv_indx.size());
     for(int r = 0; r < y_mtx.rows(); ++r) {
       for(int c = 0; c < (int)klargest_eigv_indx.size(); ++c) {
         y_mtx.row(r)[c] = U_blk.row(r)[klargest_eigv_indx[c]];
@@ -463,6 +463,8 @@ class spectral_clustering : public paracel::paralg {
       std::cout << "kclusters: " << kclusters << std::endl;
       std::cout << y_mtx << std::endl;
     }
+
+    // kmeans process
   }
 
   void solve() {
@@ -490,6 +492,7 @@ class spectral_clustering : public paracel::paralg {
   size_t C;
   size_t K;
   std::vector<size_t> global_indx; // global_indx.size() = np + 1
+  Eigen::MatrixXd y_mtx;
 
 }; // class spectral_clustering
 

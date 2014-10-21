@@ -22,7 +22,7 @@
 #include "ps.hpp"
 #include "utils.hpp"
 
-#define N 20000000
+#define N 30000000
 
 namespace paracel {
 
@@ -42,7 +42,7 @@ class perf : public paracel::paralg {
       }
       */
       for(size_t i = 0; i < N; ++i) {
-        data3["搁浅的勋章" + std::to_string(i)] = 1;
+        data3[std::to_string(i)] = 1;
       }
     }
   
@@ -54,15 +54,15 @@ class perf : public paracel::paralg {
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
     std::cout << "paracel_write time for 300MB data is: " << elapsed.count() << std::endl;
+    //auto result = paracel_read<std::vector<double> >("key4write");
     auto result = paracel_read<std::unordered_map<std::string, int> >("key4write");
-    //std::cout << "data: " << result[0] << "|" << result.size() << std::endl;
     start = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(start - end);
     std::cout << "paracel_read time for 300MB data is: " << elapsed.count() << std::endl;
     paracel_bupdate("key4bupdate", 
-                    data3, 
+                    data3,
                     "/mfs/user/wuhong/paracel/local/lib/libperf_update.so", 
-                    "perf_updater");
+                    "perf_updater2");
     sync();
     end = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
