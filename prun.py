@@ -87,18 +87,18 @@ if __name__ == '__main__':
     optpar.add_option('-p', '--snum', default = 1,
                       action = 'store', type = 'int', dest = 'parasrv_num',
                       help = 'number of parameter servers')
-    optpar.add_option('--m_server', default = 'local',
+    optpar.add_option('--m_server',
                       action = 'store', type = 'string', dest = 'method_server',
                       help = 'running method for parameter servers. If not given, set with the same value of -m or --method', metavar = 'local | mesos | mpi')
-    optpar.add_option('--ppn_server', default = 1,
+    optpar.add_option('--ppn_server',
                       action = 'store', type = 'int', dest = 'ppn_server',
                       help = 'mesos case: procs number per node of parameter servers. If not given, set with the same value of --ppn')
-    optpar.add_option('--mem_limit_server', default = 200,
+    optpar.add_option('--mem_limit_server',
                       action = 'store', type = 'int', dest = 'mem_limit_server',
                       help = 'mesos case: memory size of each task in parameter servers. If not given, set with the same value of --mem_limit')
     optpar.add_option('--hostfile_server',
                       action = 'store', type = 'string', dest = 'hostfile_server',
-                      help = 'mpi case: hostfile for mpirun of parameter servers')
+                      help = 'mpi case: hostfile for mpirun of parameter servers. If not given, set with the same value of --hostfile')
     optpar.add_option('-w', '--wnum', default = 1,
                       action = 'store', type = 'int', dest = 'worker_num',
                       help = 'number of workers for learning')
@@ -126,14 +126,17 @@ if __name__ == '__main__':
     if options.worker_num:
         nworker = options.worker_num
 
-    unified_starter = init_starter(options.method, str(options.mem_limit), str(options.ppn), options.hostfile)
+    if not options.method_server:
+        options.method_server = options.method
+    if not options.ppn_server:
+        options.ppn_server = options.ppn
+    if not options.mem_limit_server:
+        options.mem_limit_server = options.mem_limit
+    if not options.hostfile_server:
+        options.hostfile_server = options.hostfile
     
-    if options.method_server:
-        server_starter = init_starter(options.method_server, str(options.mem_limit_server), str(options.ppn_server), options.hostfile_server)
-    else:
-        server_starter = unified_starter 
-    
-    worker_starter = unified_starter
+    server_starter = init_starter(options.method_server, str(options.mem_limit_server), str(options.ppn_server), options.hostfile_server)
+    worker_starter = init_starter(options.method, str(options.mem_limit), str(options.ppn), options.hostfile)
     
     #initport = random.randint(30000, 65000)
     #initport = get_free_port()
