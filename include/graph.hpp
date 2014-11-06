@@ -23,9 +23,6 @@
 
 namespace paracel {
 
-template <class T>
-using bag_type = paracel::list_type<T>;
-
 // (size_t, size_t, double) type undirected graph
 class undirected_graph {
 public:
@@ -75,7 +72,7 @@ public:
   
   inline size_t e() { return e_sz; }
   
-  bag_type<std::pair<size_t, double> > adjacent(size_t v) { return adj[v]; }
+  paracel::list_type<std::pair<size_t, double> > adjacent(size_t v) { return adj[v]; }
   
   inline size_t degree(size_t v) { return adj[v].size(); }
   
@@ -104,7 +101,7 @@ public:
 private:
   size_t v_sz = 0; 
   size_t e_sz = 0;
-  bag_type<bag_type<std::pair<size_t, double> > > adj;
+  paracel::list_type<paracel::list_type<std::pair<size_t, double> > > adj;
 };
 
 /*
@@ -195,7 +192,7 @@ public:
   
   inline size_t e() { return e_sz; }
   
-  bag_type<std::pair<size_t, double> > adjacent(size_t v) { return adj[v]; }
+  paracel::list_type<std::pair<size_t, double> > adjacent(size_t v) { return adj[v]; }
   
   inline size_t outdegree(size_t v) { return adj[v].size(); }
 
@@ -216,8 +213,8 @@ public:
 private:
   size_t v_sz = 0; 
   size_t e_sz = 0;
-  bag_type<bag_type<std::pair<size_t, double> > > adj;
-  bag_type<bag_type<std::pair<size_t, double> > > reverse_adj;
+  paracel::list_type<paracel::list_type<std::pair<size_t, double> > > adj;
+  paracel::list_type<paracel::list_type<std::pair<size_t, double> > > reverse_adj;
 };
 */
 

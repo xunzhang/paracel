@@ -25,5 +25,20 @@ int main(int argc, char *argv[])
   std::vector<char> tmp3{'a', 'b', 'c'};
   paracel::hash_type< std::vector<char> > csfunc2;
   std::cout << csfunc2(tmp3) << std::endl;
+
+  std::cout << "---" << std::endl;
+
+  paracel::bag_type<int> bg;
+  bg.put(1); bg.put(3); bg.put(5);
+  auto bg_lambda = [] (int item) { 
+    std::cout << item << std::endl;
+  };
+  bg.traverse(bg_lambda);
+  auto bg_cp = bg.get();
+  std::cout << bg_cp.size() << std::endl;
+  bg_cp.traverse(bg_lambda);
+
+  paracel::bag_type<int> bg2(bg);
+  bg2.traverse(bg_lambda);
   return 0;
 }

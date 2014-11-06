@@ -215,6 +215,33 @@ using kernel_type = typename std::remove_cv<
 			typename std::remove_reference<T>::type
 			>::type;
 
+template <class T>
+class bag_type {  
+ public:
+  bag_type() {}
+  bag_type(std::vector<T> cc) {
+    c.resize(0);
+    for(size_t i = 0; i < cc.size(); ++i) {
+      c.push_back(cc[i]);
+    }
+  }
+  void put(const T & item) { c.push_back(item); }
+  inline bool is_empty() { return c.size() == 0; }
+  inline size_t size() { return c.size(); }
+  bag_type get() {
+    bag_type<T> bg(c);
+    return bg;
+  }
+  template <class F>
+  void traverse(F & func) {
+    for(size_t i = 0; i < c.size(); ++i) {
+      func(c[i]);
+    }
+  }
+ private:
+  std::vector<T> c;
+}; // class bag_type
+
 } // namespace paracel
 
 #endif
