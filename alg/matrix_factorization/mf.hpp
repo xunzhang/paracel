@@ -124,31 +124,61 @@ class matrix_factorization: public paracel::paralg {
     std::cout << "usr_bag size: " << usr_bag.size() << std::endl;
     std::cout << "item bag size: " << item_bag.size() << std::endl;
     paracel::dict_type<paracel::str_type, paracel::list_type<double> > local_W_dct, local_H_dct;
-    paracel::dict_type<paracel::str_type, double> local_usr_bias_dct, local_item_bias_dct;
+    paracel::dict_type<paracel::str_type, double> local_ub_dct, local_ib_dct;
     for(auto & kv : usr_bag) {
       auto uid = kv.first;
       std::string W_key = "W_" + uid;
       std::string ub_key = "usr_bias_" + uid;
-      paracel_write(W_key, W[uid]);
-      paracel_write(ub_key, usr_bias[uid]);
+      local_W_dct[W_key] = W[uid];
+      //paracel_write(W_key, W[uid]);
+      local_ub_dct[ub_key] = usr_bias[uid];
+      //paracel_write(ub_key, usr_bias[uid]);
       paracel_bupdate(uid + "_u_cnt", 1);
     }
+    paracel_write_multi(local_W_dct);
+    paracel_write_multi(local_ub_dct);
     for(auto & kv : item_bag) {
       auto iid = kv.first;
       std::string H_key = "H_" + iid;
       std::string ib_key = "item_bias_" + iid;
-      paracel_write(H_key, H[iid]);
-      paracel_write(ib_key, item_bias[iid]);
+      local_H_dct[H_key] = H[iid];
+      //paracel_write(H_key, H[iid]);
+      local_ib_dct[ib_key] = item_bias[iid];
+      //paracel_write(ib_key, item_bias[iid]);
       paracel_bupdate(iid + "_i_cnt", 1);
     }
+    paracel_write_multi(local_H_dct);
+    paracel_write_multi(local_ib_dct);
     std::cout << "init push done" << std::endl;
     sync();
+    paracel::list_type<paracel::str_type> tmp_wgtx_lst, tmp_wgty_lst;
+    paracel::list_type<double> tmp_x_cnt, tmp_y_cnt;
+    for(auto & kv : usr_bag) {
+      tmp_wgtx_lst.push_back(kv.first + "_u_cnt");
+    }
+    for(auto & kv : item_bag) {
+      tmp_wgty_lst.push_back(kv.first + "_i_cnt");
+    }
+    paracel_read_multi(tmp_wgtx_lst, tmp_x_cnt);
+    paracel_read_multi(tmp_wgty_lst, tmp_y_cnt);
+    size_t indx_cnt = 0;
+    for(auto & kv : usr_bag) {
+      wgtx_map[kv.first] = 1. / static_cast<double>(tmp_x_cnt[indx_cnt]);
+      indx_cnt += 1;
+    }
+    indx_cnt = 0;
+    for(auto & kv : item_bag) {
+      wgty_map[kv.first] = 1. / static_cast<double>(tmp_y_cnt[indx_cnt]);
+      indx_cnt += 1;
+    }
+    /*
     for(auto & kv : usr_bag) {
       wgtx_map[kv.first] = 1. / static_cast<double>(paracel_read<int>(kv.first + "_u_cnt"));
     }
     for(auto & kv : item_bag) {
       wgty_map[kv.first] = 1. / static_cast<double>(paracel_read<int>(kv.first + "_i_cnt"));
     }
+    */
     sync();
     std::cout << "init done" << std::endl;
   }

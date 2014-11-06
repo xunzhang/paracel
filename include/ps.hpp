@@ -637,6 +637,13 @@ class paralg {
   }
   */
 
+  // TODO
+  template <class V>
+  void paracel_bupdate_multi(const paracel::list_type<paracel::str_type> & key,
+                             const paracel::list_type<V> & delta,
+                             const paracel::str_type & file_name,
+                             const paracel::str_type & func_name) {}
+
   // set invoke cnts
   void set_total_iters(int n) {
     total_iters = n;
@@ -677,6 +684,16 @@ class paralg {
   bool paracel_contains(const paracel::str_type & key) {
     auto indx = ps_obj->p_ring->get_server(key);
     return (ps_obj->kvm[indx]).contains(key);
+  }
+
+  bool paracel_remove(const paracel::str_type & key) {
+    auto indx = ps_obj->p_ring->get_server(key);
+    return ps_obj->kvm[indx].remove(key);
+  }
+
+  bool paracel_remove_multi(const paracel::list_type<paracel::str_type> & key_lst) {
+    // TODO
+    return true;
   }
 
   // TODO
