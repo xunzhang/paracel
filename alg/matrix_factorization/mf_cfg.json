@@ -1,9 +1,9 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/data/netflix/train/train_sorted_fmt",
-  "output" : "/mfs/user/wuhong/paracel/data/netflix_output/",
+  "input" : "/mfs/user/wuhong/paracel/data/book_interest/book_interest_train",
+  "output" : "/mfs/user/wuhong/paracel/data/book_interest_result/",
   "k" : 100,
   "alpha" : 0.001,
   "beta" : 0.001,
-  "rounds" : 2,
+  "rounds" : 5,
   "limit_s" : 0 
 }

@@ -56,7 +56,16 @@ class matrix_factorization: public paracel::paralg {
   virtual ~matrix_factorization() {}
 
   inline double estimate(const std::string & uid, const std::string & iid) {
-    return miu + usr_bias[uid] + item_bias[iid] + paracel::dot_product(W[uid], H[iid]);
+    double predict = 0.;
+    double tmp = miu + usr_bias[uid] + item_bias[iid] + paracel::dot_product(W[uid], H[iid]);
+    if(tmp > 5.) {
+      predict = 5.;
+    } else if(tmp < 1.) {
+      predict = 1.;
+    } else {
+      predict = tmp;
+    }
+    return predict;
   }
 
   double cal_rmse() {
@@ -112,6 +121,10 @@ class matrix_factorization: public paracel::paralg {
     id = get_worker_id();
     paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libmf_update.so",
                              "cnt_updater");
+    std::cout << "usr_bag size: " << usr_bag.size() << std::endl;
+    std::cout << "item bag size: " << item_bag.size() << std::endl;
+    paracel::dict_type<paracel::str_type, paracel::list_type<double> > local_W_dct, local_H_dct;
+    paracel::dict_type<paracel::str_type, double> local_usr_bias_dct, local_item_bias_dct;
     for(auto & kv : usr_bag) {
       auto uid = kv.first;
       std::string W_key = "W_" + uid;

@@ -393,6 +393,28 @@ class paralg {
     return val;
   }
 
+  template<class V>
+  bool paracel_read_multi(const paracel::list_type<paracel::str_type> & keys,
+                          paracel::list_type<V> & vals) {
+    if(ssp_switch) {
+      // TODO
+    }
+    paracel::dict_type<paracel::str_type, size_t> indx_map;
+    paracel::list_type<paracel::list_type<paracel::str_type> > lst_lst(ps_obj->srv_sz);
+    vals.resize(keys.size());
+    for(size_t k = 0; k < keys.size(); ++k) {
+      lst_lst[ps_obj->p_ring->get_server(keys[k])].push_back(keys[k]);
+      indx_map[keys[k]] = k;
+    }
+    for(size_t k = 0; k < lst_lst.size(); ++k) {
+      auto lst = ps_obj->kvm[k].pull_multi<V>(lst_lst[k]);
+      for(size_t i = 0; i < lst.size(); ++i) {
+        vals[indx_map[lst_lst[k][i]]] = lst[i];
+      }
+    }
+    return true;
+  }
+
   // TODO
   template<class V>
   paracel::dict_type<paracel::str_type, V> paracel_readall() {
@@ -526,9 +548,17 @@ class paralg {
         cached_para[kv.first] = boost::any_cast<V>(kv.second);
       }
     }
-    bool r = false;
+    bool r = true;
+    paracel::list_type<paracel::dict_type<paracel::str_type, V> > dct_lst(ps_obj->srv_sz);
     for(auto & kv : dct) {
-      r = ps_obj->kvm[ps_obj->p_ring->get_server(kv.first)].push(kv.first, kv.second); 
+      dct_lst[ps_obj->p_ring->get_server(kv.first)][kv.first] = kv.second;
+    }
+    for(size_t k = 0; k < dct_lst.size(); ++k) {
+      if(dct_lst[k].size() != 0) {
+        if(ps_obj->kvm[k].push_multi(dct_lst[k]) == false) {
+          r = false;
+        }
+      }
     }
     return r;
   }
