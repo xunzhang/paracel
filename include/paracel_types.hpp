@@ -225,6 +225,14 @@ class bag_type {
       c.push_back(cc[i]);
     }
   }
+  typedef typename std::vector<T>::iterator iterator;
+  typedef typename std::vector<T>::const_iterator const_iterator;
+  iterator begin() { return c.begin(); }
+  const_iterator begin() const { return c.begin(); }
+  const_iterator cbegin() const { return c.cbegin(); }
+  iterator end() { return c.end(); }
+  const_iterator end() const {return c.end();}
+  const_iterator cend() const {return c.cend();}
   void put(const T & item) { c.push_back(item); }
   inline bool is_empty() { return c.size() == 0; }
   inline size_t size() { return c.size(); }

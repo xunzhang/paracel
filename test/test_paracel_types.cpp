@@ -40,5 +40,9 @@ int main(int argc, char *argv[])
 
   paracel::bag_type<int> bg2(bg);
   bg2.traverse(bg_lambda);
+
+  for(auto & i : bg2) {
+    std::cout << i << std::endl;
+  }
   return 0;
 }
