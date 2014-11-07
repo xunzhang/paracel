@@ -26,8 +26,8 @@ namespace paracel {
 
 // (size_t, size_t, double) type undirected graph
 class undirected_graph {
+
 public:
-  
   undirected_graph(size_t v_sz) {
     this->v_sz = v_sz;
     adj.resize(v_sz);
@@ -272,11 +272,14 @@ public:
 
 template <class G, class T, class F>
 class DFS {
+
  public:
   DFS(G graph, T src, F lambda) {
     dfs(graph, src, lambda);
   }
+  
   inline bool visited(const T & v) { return marked.count(v); }
+ 
  private:
   void dfs(G & graph, const T & v, F & func) {
     marked[v] = true;
@@ -288,6 +291,7 @@ class DFS {
       }
     }
   } // dfs
+ 
  private:
   paracel::dict_type<T, bool> marked;
 }; // class DFS
@@ -295,11 +299,14 @@ class DFS {
 // specialization DFS for undirected_graph
 template <class F>
 class DFS<paracel::undirected_graph, size_t, F> {
+ 
  public:
   DFS(paracel::undirected_graph graph, size_t src, F lambda) {
     dfs(graph, src, lambda);
   }
+  
   inline bool visited(size_t v) { return marked.count(v); }
+ 
  private:
   void dfs(paracel::undirected_graph graph, size_t v, F & func) {
     marked[v] = true;
@@ -310,19 +317,25 @@ class DFS<paracel::undirected_graph, size_t, F> {
       }
     }
   } // dfs
+ 
  private:
   paracel::dict_type<size_t, bool> marked;
 }; // specialization class DFS
 
 template <class G, class T, class F>
 class BFS {
+
  public:
   BFS(G graph, T src, F func) {
     bfs(graph, src, func);
   }
+  
   inline bool visited(const T & v) { return marked.count(v); }
+  
   inline T edgeTo(const T & v) { return edge_to[v]; }
+  
   inline int dist(const T & v) { return dist_to[v]; }
+ 
  private:
   void bfs(G & grp, const T & v, F & func) {
     std::queue<T> q;
@@ -347,6 +360,7 @@ class BFS {
       }
     }
   }
+ 
  private:
   paracel::dict_type<T, bool> marked;
   paracel::dict_type<T, T> edge_to;
