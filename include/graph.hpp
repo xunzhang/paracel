@@ -25,6 +25,7 @@
 namespace paracel {
 
 // (size_t, size_t, double) type undirected graph
+// index of undirected graph here must be from 0 to N-1
 class undirected_graph {
 
 public:
@@ -87,6 +88,14 @@ public:
       }
     }
     return max;
+  }
+  
+  std::vector<size_t> vertex_bag() {
+    std::vector<size_t> r;
+    for(auto i = 0; i < adj.size(); ++i) {
+      r.push_back(i);
+    }
+    return r;
   }
   
   inline int selfloops() {
@@ -188,6 +197,7 @@ public:
     for(auto & v : adj) {
       r.push_back(v.first);
     }
+    return r;
   }
   
   void dump2triples(paracel::list_type<std::tuple<T, T, double> > & tpls) {
@@ -366,6 +376,43 @@ class BFS {
   paracel::dict_type<T, T> edge_to;
   paracel::dict_type<T, int> dist_to;
 }; // class BFS
+
+template <class G, class T>
+class connected_components {
+ 
+ public:
+  connected_components(G graph) {
+    paracel::list_type<T> vertexes = graph.vertex_bag();
+    auto handler_lambda = [&] (const T & v) {
+      identifier[v] = count;
+      marked[v] = true;
+    };
+    for(auto & v : vertexes) {
+      if(!marked.count(v)) {
+        paracel::DFS<G, T, decltype(handler_lambda)> dfs_solver(graph, v, handler_lambda);
+        count += 1;
+      }
+    }
+  }
+
+  bool is_connected(const T & v, const T & w) {
+    return identifier(v) == identifier(w);
+  }
+
+  inline int cnt() { return count; }
+
+  int id(const T & v) {
+    if(!identifier.count(v)) {
+      return -1;
+    }
+    return identifier[v];
+  }
+
+ private:
+  int count = 0;
+  paracel::dict_type<T, int> identifier;
+  paracel::dict_type<T, bool> marked;
+}; // class Connected_Components
 
 } // namespace paracel
 

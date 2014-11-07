@@ -231,5 +231,37 @@ int main(int argc, char *argv[])
     std::cout << "dist_to 4 " << bfs_o2.dist(4) << std::endl;
     std::cout << "dist_to 5 " << bfs_o2.dist(5) << std::endl;
   }
+  {
+    paracel::list_type<std::pair<size_t, size_t> > edges;
+    edges.emplace_back(std::make_pair(0, 5));
+    edges.emplace_back(std::make_pair(4, 3));
+    edges.emplace_back(std::make_pair(0, 1));
+    edges.emplace_back(std::make_pair(9, 12));
+    edges.emplace_back(std::make_pair(6, 4));
+    edges.emplace_back(std::make_pair(5, 4));
+    edges.emplace_back(std::make_pair(0, 2));
+    edges.emplace_back(std::make_pair(11, 12));
+    edges.emplace_back(std::make_pair(9, 10));
+    edges.emplace_back(std::make_pair(0, 6));
+    edges.emplace_back(std::make_pair(7, 8));
+    edges.emplace_back(std::make_pair(9, 11));
+    edges.emplace_back(std::make_pair(5, 3));
+    paracel::undirected_graph grp(edges);
+    paracel::connected_components<paracel::undirected_graph, size_t> cc_o(grp);
+    std::cout << "cnt of cc: " << cc_o.cnt() << std::endl;
+    std::cout << "identifier of 0: " << cc_o.id(0) << std::endl;
+    std::cout << "identifier of 1: " << cc_o.id(1) << std::endl;
+    std::cout << "identifier of 2: " << cc_o.id(2) << std::endl;
+    std::cout << "identifier of 3: " << cc_o.id(3) << std::endl;
+    std::cout << "identifier of 4: " << cc_o.id(4) << std::endl;
+    std::cout << "identifier of 5: " << cc_o.id(5) << std::endl;
+    std::cout << "identifier of 6: " << cc_o.id(6) << std::endl;
+    std::cout << "identifier of 7: " << cc_o.id(7) << std::endl;
+    std::cout << "identifier of 8: " << cc_o.id(8) << std::endl;
+    std::cout << "identifier of 9: " << cc_o.id(9) << std::endl;
+    std::cout << "identifier of 10: " << cc_o.id(10) << std::endl;
+    std::cout << "identifier of 11: " << cc_o.id(11) << std::endl;
+    std::cout << "identifier of 12: " << cc_o.id(12) << std::endl;
+  }
   return 0;
 }
