@@ -99,10 +99,13 @@ public:
     return cnt / 2;
   }
 
-private:
+ private:
   size_t v_sz = 0; 
   size_t e_sz = 0;
   paracel::list_type<paracel::list_type<std::pair<size_t, double> > > adj;
+ 
+ public:
+  MSGPACK_DEFINE(v_sz, e_sz, adj);
 };
 
 template <class T = paracel::str_type>
