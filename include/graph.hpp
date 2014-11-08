@@ -92,7 +92,7 @@ public:
   
   std::vector<size_t> vertex_bag() {
     std::vector<size_t> r;
-    for(auto i = 0; i < adj.size(); ++i) {
+    for(size_t i = 0; i < adj.size(); ++i) {
       r.push_back(i);
     }
     return r;
@@ -118,20 +118,20 @@ public:
 };
 
 template <class T = paracel::str_type>
-class bigraph {
+class digraph {
 
 public:
-  bigraph() {}
+  digraph() {}
 
-  bigraph(paracel::dict_type<T, paracel::dict_type<T, double> > edge_info) {
+  digraph(paracel::dict_type<T, paracel::dict_type<T, double> > edge_info) {
     construct_from_dict(edge_info);
   }
   
-  bigraph(paracel::list_type<std::tuple<T, T> > tpls) {
+  digraph(paracel::list_type<std::tuple<T, T> > tpls) {
     construct_from_tuples(tpls);
   }
   
-  bigraph(paracel::list_type<std::tuple<T, T, double> > tpls) {
+  digraph(paracel::list_type<std::tuple<T, T, double> > tpls) {
     construct_from_triples(tpls);
   }
 
@@ -217,7 +217,7 @@ public:
     }
   }
   
-  bigraph reverse() {
+  digraph reverse() {
     std::swap(adj, reverse_adj);
   }
 
@@ -279,6 +279,9 @@ public:
  public:
   MSGPACK_DEFINE(v_sz, e_sz, adj, reverse_adj);
 };
+
+template <class T = std::string>
+using bigraph = paracel::digraph<T>;
 
 template <class G, class T, class F>
 class DFS {

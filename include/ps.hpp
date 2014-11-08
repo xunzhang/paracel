@@ -184,7 +184,7 @@ class paralg {
   }
 
   template <class T>
-  void paracel_load_as_graph(paracel::bigraph<> & grp,
+  void paracel_load_as_graph(paracel::digraph<> & grp,
                              paracel::dict_type<size_t, int> & degree_map,
                              paracel::dict_type<size_t, int> & col_degree_map,
                              const T & fn, 
@@ -202,7 +202,7 @@ class paralg {
   }
 
   template <class T>
-  void paracel_load_as_graph(paracel::bigraph<> & grp,
+  void paracel_load_as_graph(paracel::digraph<> & grp,
                              const T & fn, 
                              parser_type & parser,
                              const paracel::str_type & pattern = "fmap",

@@ -120,7 +120,7 @@ class max_vertex_value : public paracel::paralg {
 
  private:
   std::string input;
-  paracel::bigraph<std::string> grp;
+  paracel::digraph<std::string> grp;
   std::unordered_map<std::string, double> vertex_val_map;
   std::unordered_map<std::string, std::unordered_map<std::string, double> > vertex_adj_edge_val_map;
   std::unordered_map<std::string, bool> vertex_active_map;

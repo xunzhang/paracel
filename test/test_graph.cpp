@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[])
 {
-  { // test for bigraph
+  { // test for digraph
     paracel::list_type<std::tuple<size_t, size_t, double> > tpls;
     tpls.emplace_back(std::make_tuple(0, 0, 3.));
     tpls.emplace_back(std::make_tuple(0, 2, 5.));
@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
     tpls.emplace_back(std::make_tuple(2, 3, 1.));
     tpls.emplace_back(std::make_tuple(3, 1, 3.));
     tpls.emplace_back(std::make_tuple(3, 3, 1.));
-    paracel::bigraph<size_t> grp(tpls);
-    paracel::bigraph<size_t> grp2;
+    paracel::digraph<size_t> grp(tpls);
+    paracel::digraph<size_t> grp2;
     std::cout << "duck" << grp2.v() << std::endl;
     grp2.construct_from_triples(tpls);
     // traverse
@@ -147,16 +147,16 @@ int main(int argc, char *argv[])
     tpls.emplace_back(std::make_tuple(6, 4, 1.));
     tpls.emplace_back(std::make_tuple(6, 9, 1.));
     tpls.emplace_back(std::make_tuple(7, 6, 1.));
-    paracel::bigraph<size_t> grp(tpls);
+    paracel::digraph<size_t> grp(tpls);
     auto lambda = [] (size_t a) {
       std::cout << a << std::endl;
     };
     std::cout << "~" << std::endl;
-    paracel::DFS<paracel::bigraph<size_t>, size_t, decltype(lambda)> dfs_o1(grp, 0, lambda);
+    paracel::DFS<paracel::digraph<size_t>, size_t, decltype(lambda)> dfs_o1(grp, 0, lambda);
     std::cout << "~" << std::endl;
-    paracel::DFS<paracel::bigraph<size_t>, size_t, decltype(lambda)> dfs_o2(grp, 1, lambda);
+    paracel::DFS<paracel::digraph<size_t>, size_t, decltype(lambda)> dfs_o2(grp, 1, lambda);
     std::cout << "~" << std::endl;
-    paracel::DFS<paracel::bigraph<size_t>, size_t, decltype(lambda)> dfs_o3(grp, 6, lambda);
+    paracel::DFS<paracel::digraph<size_t>, size_t, decltype(lambda)> dfs_o3(grp, 6, lambda);
     std::cout << "~" << std::endl;
     paracel::list_type<std::pair<size_t, size_t> > edges;
     edges.emplace_back(std::make_pair(0, 5));
@@ -187,12 +187,12 @@ int main(int argc, char *argv[])
     tpls.emplace_back(std::make_tuple(4, 3, 1.));
     tpls.emplace_back(std::make_tuple(3, 5, 1.));
     tpls.emplace_back(std::make_tuple(0, 2, 1.));
-    paracel::bigraph<size_t> grp(tpls);
+    paracel::digraph<size_t> grp(tpls);
     auto lambda = [] (size_t a) {
       std::cout << a << std::endl;
     };
     std::cout << "~" << std::endl;
-    paracel::BFS<paracel::bigraph<size_t>, size_t, decltype(lambda)> bfs_o1(grp, 0, lambda);
+    paracel::BFS<paracel::digraph<size_t>, size_t, decltype(lambda)> bfs_o1(grp, 0, lambda);
     std::cout << "~" << std::endl;
     std::cout << "edgeTo 0 " << bfs_o1.edgeTo(0) << std::endl;
     std::cout << "edgeTo 1 " << bfs_o1.edgeTo(1) << std::endl;

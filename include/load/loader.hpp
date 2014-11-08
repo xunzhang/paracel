@@ -146,7 +146,7 @@ class loader {
 
   // fmap case
   void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-                    paracel::bigraph<paracel::str_type> & grp,
+                    paracel::digraph<paracel::str_type> & grp,
                     paracel::dict_type<size_t, int> & dm,
                     paracel::dict_type<size_t, int> & col_dm) {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
@@ -173,7 +173,7 @@ class loader {
 
   // simple fmap case, fsmap case
   void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-                    paracel::bigraph<paracel::str_type> & grp) {
+                    paracel::digraph<paracel::str_type> & grp) {
     paracel::dict_type<size_t, int> dm;
     paracel::dict_type<size_t, int> col_dm;
     create_graph(linelst, grp, dm, col_dm);

@@ -172,7 +172,7 @@ class pagerank : public paracel::paralg {
   std::string input;
   int rounds;
   double damping_factor;
-  paracel::bigraph<std::string> local_graph;
+  paracel::digraph<std::string> local_graph;
   std::unordered_map<std::string, double> kvmap;
   std::unordered_map<
       std::string, 

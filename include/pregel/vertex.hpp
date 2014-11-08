@@ -133,7 +133,7 @@ class vertex {
 
  protected:
   paralg *pt;
-  paracel::bigraph<std::string> grp;
+  paracel::digraph<std::string> grp;
   std::unordered_map<std::string, VertexVal> vertex_val_map;
   std::unordered_map<std::string, std::unordered_map<std::string, double> > vertex_adj_edge_val_map;
   std::unordered_map<std::string, bool> vertex_active_map;

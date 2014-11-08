@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     }
 
     // graph test
-    paracel::bigraph<paracel::str_type> grp;
+    paracel::digraph<paracel::str_type> grp;
     ld.create_graph(linelst, grp);
     auto local_f = [&] (const paracel::str_type & a , 
     			const paracel::str_type & b, 
