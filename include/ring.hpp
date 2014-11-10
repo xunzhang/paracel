@@ -93,7 +93,7 @@ public:
   }
 
 private:
-  int replicas = 6;
+  int replicas = 32;
   paracel::list_type<paracel::hash_return_type> srv_hashring;
   paracel::dict_type<paracel::hash_return_type, T> srv_hashring_dct;
 };
