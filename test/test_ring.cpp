@@ -1,7 +1,9 @@
 #include <vector>
 #include <string>
+#include <fstream>
 #include <iostream>
 #include "ring.hpp"
+#include "utils.hpp"
 int main(int argc, char *argv[])
 { 
   {
@@ -53,6 +55,37 @@ int main(int argc, char *argv[])
     std::cout << ring.get_server(key9) << std::endl;
     std::string key10("p[3:,]_1");
     std::cout << ring.get_server(key10) << std::endl;
+  }
+  {
+    std::vector<int> server_names;
+    for(size_t i = 0; i < 100; ++i) {
+      server_names.push_back(i);
+    }
+    paracel::ring<int> ring(server_names);
+    std::ifstream f("/home2/jasonzhao/tmp/track_factors");
+    std::string line_buf;
+    std::unordered_set<std::string> keys;
+    while(std::getline(f, line_buf)) {
+      auto tmp = paracel::str_split(line_buf, '\t');
+      keys.insert(tmp[0]);
+
+    }
+    f.close();
+    std::unordered_map<int, int> debug;
+    for(int i = 0; i < 100; ++i) {
+      debug[i] = 0;
+    }
+    for(auto & tid : keys) {
+      for(auto & ttid : keys) {
+        for(int k = 0; k < 4; ++k) {
+          std::string key = tid + "_" + ttid + "_" + std::to_string(k);
+          debug[ring.get_server(key)] += 1;
+        }
+      }
+    }
+    for(int i = 0; i < 100; ++i) {
+      std::cout << "server " << i << " get " << debug[i] << " keys" << std::endl;
+    }
   }
   return 0;
 }
