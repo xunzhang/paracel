@@ -75,13 +75,14 @@ int main(int argc, char *argv[])
     for(int i = 0; i < 100; ++i) {
       debug[i] = 0;
     }
+    std::cout << keys.size() << std::endl;
     for(auto & tid : keys) {
-      for(auto & ttid : keys) {
+      //for(auto & ttid : keys) {
         for(int k = 0; k < 4; ++k) {
-          std::string key = tid + "_" + ttid + "_" + std::to_string(k);
+          std::string key = tid + "_" + std::to_string(k);
           debug[ring.get_server(key)] += 1;
         }
-      }
+      //}
     }
     for(int i = 0; i < 100; ++i) {
       std::cout << "server " << i << " get " << debug[i] << " keys" << std::endl;

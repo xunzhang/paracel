@@ -24,85 +24,137 @@
 
 namespace paracel {
 
-// (size_t, size_t, double) type undirected graph
-// index of undirected graph here must be from 0 to N-1
+template <class T = size_t>
 class undirected_graph {
 
-public:
-  undirected_graph(size_t v_sz) {
-    this->v_sz = v_sz;
-    adj.resize(v_sz);
-  }
+ public:
+  undirected_graph() {}
   
-  undirected_graph(paracel::list_type<std::pair<size_t, size_t> > & edges) {
-    for(auto & edge : edges) {
-      if(edge.first > v_sz) v_sz = edge.first;
-      if(edge.second > v_sz) v_sz = edge.second;
-    }
-    v_sz += 1;
-    adj.resize(v_sz);
-    for(auto & edge : edges) {
-      add_edge(edge.first, edge.second);
-    }
+  undirected_graph(paracel::dict_type<T, paracel::dict_type<T, double> > edge_info) {
+    construct_from_dict(edge_info);
   }
 
-  undirected_graph(paracel::list_type<std::tuple<size_t, size_t, double> > & tpls) {
-    for(auto & tpl : tpls) {
-      if(std::get<0>(tpl) > v_sz) v_sz = std::get<0>(tpl);
-      if(std::get<1>(tpl) > v_sz) v_sz = std::get<1>(tpl);
+  undirected_graph(paracel::list_type<std::tuple<T, T> > tpls) {
+    construct_from_tuples(tpls);
+  }
+
+  undirected_graph(paracel::list_type<std::tuple<T, T, double> > & tpls) {
+    construct_from_triples(tpls);
+  }
+
+ private:
+  void construct_from_dict(const paracel::dict_type<T, paracel::dict_type<T, double> > & edge_info) {
+    for(auto & edge : edge_info) {
+      for(auto & kv : edge.second) {
+        add_edge(edge.first, kv.first, kv.second);
+      }
     }
-    v_sz += 1;
-    adj.resize(v_sz);
+  } 
+
+  void construct_from_tuples(const paracel::list_type<std::tuple<T, T> > & tpls) {
+    for(auto & tpl : tpls) {
+      add_edge(std::get<0>(tpl), std::get<1>(tpl));
+    }
+  }
+      
+  void construct_from_triples(paracel::list_type<std::tuple<T, T, double> > & tpls) {
     for(auto & tpl : tpls) {
       add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
     }
   }
 
-  void add_edge(size_t v, size_t w) {
-    adj[v].emplace_back(std::make_pair(w, 1.));
-    adj[w].emplace_back(std::make_pair(v, 1.));
-    e_sz += 1;
+ public:
+  void add_edge(const T & v, const T & w) {
+    add_edge(v, w, 1.);
   }
 
-  void add_edge(size_t v, size_t w, double wgt) { 
-    adj[v].emplace_back(std::make_pair(w, wgt));
-    adj[w].emplace_back(std::make_pair(v, wgt));
+  void add_edge(const T & v, const T & w, double wgt) { 
+    adj[v][w] = wgt;
+    adj[w][v] = wgt;
     e_sz += 1;
+    v_sz = adj.size();
   }
 
-  inline size_t v() { return v_sz; }
+  paracel::dict_type<T, paracel::dict_type<T, double> > get_data() {
+    return adj;
+  }
+
+  template <class F>
+  void traverse(F & func) {
+    for(auto & v : adj) {
+      for(auto & kv : v.second) {
+        func(v.first, kv.first, kv.second);
+      }
+    }
+  }
+
+  template <class F>
+  void traverse(const T & v, F & func) {
+    if(!adj.count(v)) { return; }
+    for(auto & kv : adj[v]) {
+      func(v, kv.first, kv.second);
+    }
+  }
+
+  template <class F>
+  void traverse_by_vertex(F & func) {
+    for(auto & v : adj) {
+      func(v);
+    }
+  }
+
+  inline size_t v() { 
+    return v_sz; 
+  }
   
-  inline size_t e() { return e_sz; }
+  inline size_t e() { 
+    return e_sz; 
+  }
   
-  paracel::list_type<std::pair<size_t, double> > adjacent(size_t v) { return adj[v]; }
+  paracel::dict_type<T, double> adjacent(size_t v) { 
+    paracel::dict_type<T, double> empty_result;
+    if(adj.count(v)) {
+      return adj[v];
+    }
+    return empty_result;
+  }
   
-  inline size_t degree(size_t v) { return adj[v].size(); }
+  inline size_t degree(const T & v) { 
+    if(adj.count(v)) {
+      return adj[v].size();
+    }
+    return 0;
+  }
   
-  inline double avg_degree() { return 2. * e_sz / v_sz; }
+  inline double avg_degree() { 
+    return 2. * e_sz / v_sz; 
+  }
   
   inline size_t max_degree() {
     size_t max = 0;
-    for(size_t v = 0; v < v_sz; ++v) {
-      if(degree(v) > max) {
-        max = degree(v);
+    for(auto & v : adj) {
+      if(degree(v.first) > max) {
+        max = degree(v.first);
       }
     }
     return max;
   }
   
-  std::vector<size_t> vertex_bag() {
-    std::vector<size_t> r;
-    for(size_t i = 0; i < adj.size(); ++i) {
-      r.push_back(i);
+  std::vector<T> vertex_bag() {
+    std::vector<T> r;
+    for(auto & v : adj) {
+      r.push_back(v.first);
     }
     return r;
   }
   
   inline int selfloops() {
     int cnt = 0;
-    for(size_t v = 0; v < v_sz; ++v) {
-      for(auto & ww : adj[v]) {
-        if(v == std::get<0>(ww)) { cnt ++; }
+    for(auto & v : adj) {
+      for(auto & kv : v.second) {
+        if(v.first == kv.first) {
+          cnt += 1;
+        }
       }
     }
     return cnt / 2;
@@ -111,7 +163,8 @@ public:
  private:
   size_t v_sz = 0; 
   size_t e_sz = 0;
-  paracel::list_type<paracel::list_type<std::pair<size_t, double> > > adj;
+  //paracel::list_type<paracel::list_type<std::pair<size_t, double> > > adj;
+  paracel::dict_type<T, paracel::dict_type<T, double> > adj;
  
  public:
   MSGPACK_DEFINE(v_sz, e_sz, adj);
@@ -308,32 +361,6 @@ class DFS {
  private:
   paracel::dict_type<T, bool> marked;
 }; // class DFS
-
-// specialization DFS for undirected_graph
-template <class F>
-class DFS<paracel::undirected_graph, size_t, F> {
- 
- public:
-  DFS(paracel::undirected_graph graph, size_t src, F lambda) {
-    dfs(graph, src, lambda);
-  }
-  
-  inline bool visited(size_t v) { return marked.count(v); }
- 
- private:
-  void dfs(paracel::undirected_graph graph, size_t v, F & func) {
-    marked[v] = true;
-    func(v);
-    for(auto & pr : graph.adjacent(v)) {
-      if(!marked.count(pr.first)) {
-        dfs(graph, pr.first, func);
-      }
-    }
-  } // dfs
- 
- private:
-  paracel::dict_type<size_t, bool> marked;
-}; // specialization class DFS
 
 template <class G, class T, class F>
 class BFS {
