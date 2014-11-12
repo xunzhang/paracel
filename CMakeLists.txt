@@ -55,9 +55,8 @@ link_libraries(${Boost_LIBRARIES} ${GFlags_LIBRARIES} ${MsgpackC_LIBRARIES}
 ##############################--make-output--###################################
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
-set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/local")
 ############################--install-path--####################################
-install(PROGRAMS prun.py DESTINATION "${PROJECT_SOURCE_DIR}/local/bin")
+install(PROGRAMS prun.py DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
 ################################################################################
 add_subdirectory(src)
 add_subdirectory(alg/word_count)
