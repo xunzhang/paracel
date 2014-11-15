@@ -1,0 +1,5 @@
+{
+  "input" : "/mfs/user/wuhong/paracel/data/dtr/test.csv",
+  "output" : "/mfs/user/wuhong/paracel/data/dtr_result/",
+  "height" : 2
+}

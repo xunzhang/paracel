@@ -71,4 +71,5 @@ add_subdirectory(alg/hostname)
 add_subdirectory(alg/max_vertex_value)
 add_subdirectory(alg/perf_vs_mpi)
 add_subdirectory(alg/cos_sim_sparse)
+add_subdirectory(alg/decision_tree_rec)
 ################################################################################

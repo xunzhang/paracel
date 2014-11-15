@@ -19,7 +19,6 @@
 #include <utility>
 #include <queue>
 #include <algorithm>
-#include <msgpack.hpp>
 #include "paracel_types.hpp"
 
 namespace paracel {
@@ -111,7 +110,7 @@ class undirected_graph {
     return e_sz; 
   }
   
-  paracel::dict_type<T, double> adjacent(size_t v) { 
+  paracel::dict_type<T, double> adjacent(const T & v) { 
     paracel::dict_type<T, double> empty_result;
     if(adj.count(v)) {
       return adj[v];
@@ -144,6 +143,14 @@ class undirected_graph {
     std::vector<T> r;
     for(auto & v : adj) {
       r.push_back(v.first);
+    }
+    return r;
+  }
+
+  std::unordered_set<T> vertex_set() {
+    std::unordered_set<T> r;
+    for(auto & v : adj) {
+      r.insert(v.first);
     }
     return r;
   }
@@ -249,6 +256,14 @@ public:
     std::vector<T> r;
     for(auto & v : adj) {
       r.push_back(v.first);
+    }
+    return r;
+  }
+  
+  std::unordered_set<T> vertex_set() {
+    std::unordered_set<T> r;
+    for(auto & v : adj) {
+      r.insert(v.first);
     }
     return r;
   }
@@ -436,6 +451,13 @@ class connected_components {
       return -1;
     }
     return identifier[v];
+  }
+
+  template <class F>
+  void handleCC(F & func) {
+    for(auto & kv : identifier) {
+      func(kv.first, kv.second);
+    }
   }
 
  private:
