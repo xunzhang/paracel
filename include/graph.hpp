@@ -19,6 +19,7 @@
 #include <utility>
 #include <queue>
 #include <algorithm>
+#include <fstream>
 #include "paracel_types.hpp"
 
 namespace paracel {
@@ -220,9 +221,14 @@ public:
 
   void add_edge(const T & v, const T & w, double wgt) {  
     adj[v][w] = wgt;
-    reverse_adj[w][v] = wgt;
+    //reverse_adj[w][v] = wgt;
+    //if(!adj.count(w)) {
+    //  paracel::dict_type<paracel::str_type, double> empty;
+    //  adj[w] = empty;
+    //}
     e_sz += 1; // suppose no repeat
-    v_sz = std::max(adj.size(), reverse_adj.size());
+    v_sz = adj.size();
+    //v_sz = std::max(adj.size(), reverse_adj.size());
   }
   
   paracel::dict_type<T, paracel::dict_type<T, double> > get_data() {
@@ -284,10 +290,12 @@ public:
       }
     }
   }
-  
+ 
+  /*
   digraph reverse() {
     std::swap(adj, reverse_adj);
   }
+  */
 
   inline size_t v() { 
     return v_sz; 
@@ -302,10 +310,12 @@ public:
     return adj[v];
   }
   
+  /*
   paracel::dict_type<T, double>
   reverse_adjacent(const T & v) {
     return reverse_adj[v];
   }
+  */
 
   inline size_t outdegree(const T & v) { 
     return adj[v].size(); 
@@ -343,10 +353,93 @@ public:
   size_t v_sz = 0; 
   size_t e_sz = 0;
   paracel::dict_type<T, paracel::dict_type<T, double> > adj;
-  paracel::dict_type<T, paracel::dict_type<T, double> > reverse_adj;
+  //paracel::dict_type<T, paracel::dict_type<T, double> > reverse_adj;
  public:
-  MSGPACK_DEFINE(v_sz, e_sz, adj, reverse_adj);
-};
+  MSGPACK_DEFINE(v_sz, e_sz, adj);
+  //MSGPACK_DEFINE(v_sz, e_sz, adj, reverse_adj);
+}; // class digraph
+
+// continuous index from 0 to N-1
+class bigraph_continuous {
+ 
+ public:
+  bigraph_continuous(int n) {
+    int v_sz = n;
+    adj.resize(v_sz);
+    e_sz = 0;
+  }
+
+  bigraph_continuous(const std::string & filename) {
+    v_sz = 0;
+    e_sz = 0;
+    std::ifstream f(filename);
+    if(!f) { throw std::runtime_error("open file error.\n"); }
+    std::string line;
+    std::getline(f, line);
+    v_sz = std::stoi(line);
+    adj.resize(v_sz);
+    while(std::getline(f, line)) {
+      auto lst = paracel::str_split(line, ',');
+      add_edge(std::stoi(lst[0]), std::stoi(lst[1]), std::stod(lst[2]));
+    }
+    f.close();
+  }
+
+  void add_edge(int src, int dst, double rating) {
+    adj[src].put(std::make_pair(dst, rating));
+    e_sz += 1;
+  }
+
+  int v() { 
+    return v_sz; 
+  }
+
+  int e() { 
+    return e_sz; 
+  }
+
+  paracel::bag_type<std::pair<int, double> >
+  adjacent(int v) {
+    return adj[v];
+  }
+
+  inline int outdegree(int v) {
+    return adj[v].size();
+  }
+
+  inline int indegree(int v) {
+    int cnt = 0;
+    for(auto & v_bag : adj) {
+      for(auto & item : v_bag) {
+        if(item.first == v) {
+          cnt += 1;
+        }
+      }
+    }
+    return cnt;
+  }
+
+  template <class F>
+  void traverse(F & func) {
+    for(size_t i = 0; i < v_sz; ++i) {
+      for(auto & item : adj[i]) {
+        func(i, item.first, item.second);
+      }
+    }
+  }
+
+  template <class F>
+  void traverse(int v, F & func) {
+    for(auto & item : adj[v]) {
+      func(v, item.first, item.second);
+    }
+  }
+
+ private:
+  int v_sz;
+  int e_sz;
+  paracel::list_type<paracel::bag_type<std::pair<int, double> >  > adj;
+}; // class bigraph_continuous
 
 template <class T = std::string>
 using bigraph = paracel::digraph<T>;

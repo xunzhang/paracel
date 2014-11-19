@@ -32,11 +32,12 @@ int main(int argc, char *argv[])
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   paracel::json_parser pt(FLAGS_cfg_file);
-  std::string input = pt.parse<std::string>("input");
+  std::string input1 = pt.parse<std::string>("input1");
+  std::string input2 = pt.parse<std::string>("input2");
   std::string output = pt.parse<std::string>("output");
   int height = pt.parse<int>("height");
 
-  paracel::recommendation_decision_tree rdt_solver(comm, FLAGS_server_info, input, output, height);
+  paracel::recommendation_decision_tree rdt_solver(comm, FLAGS_server_info, input1, input2, output, height);
   rdt_solver.solve();
   return 0;
 }
