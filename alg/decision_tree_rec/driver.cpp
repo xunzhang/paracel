@@ -36,8 +36,11 @@ int main(int argc, char *argv[])
   std::string input2 = pt.parse<std::string>("input2");
   std::string output = pt.parse<std::string>("output");
   int height = pt.parse<int>("height");
+  bool depth_term = pt.parse<bool>("depth_termination");
+  bool alpha_term = pt.parse<bool>("alpha_termination");
+  int alpha = pt.parse<int>("alpha");
 
-  paracel::recommendation_decision_tree rdt_solver(comm, FLAGS_server_info, input1, input2, output, height);
+  paracel::recommendation_decision_tree rdt_solver(comm, FLAGS_server_info, input1, input2, output, height, depth_term, alpha_term, alpha);
   rdt_solver.solve();
   return 0;
 }

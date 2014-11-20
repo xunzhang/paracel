@@ -21,6 +21,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <algorithm>
+#include <queue>
 #include <eigen3/Eigen/Sparse>
 #include "ps.hpp"
 #include "utils.hpp"
@@ -33,8 +34,14 @@ class recommendation_decision_tree : public paralg {
  public:
   recommendation_decision_tree(paracel::Comm comm, std::string hosts_dct_str,
                                std::string input1, std::string input2, std::string output, 
-                               int height) : 
-    paracel::paralg(hosts_dct_str, comm, output, 1, 0, false), input1(input1), input2(input2), height(height) {
+                               int height, bool depth_termination, bool alpha_termination, int _alpha) : 
+   paracel::paralg(hosts_dct_str, comm, output, 1, 0, false), 
+   input1(input1), 
+   input2(input2), 
+   height(height), 
+   with_depth(depth_termination), 
+   with_alpha(alpha_termination), 
+   alpha(_alpha) {
     bigraph_u = new bigraph_continuous(input1);
     bigraph_i = new bigraph_continuous(input2); 
     for(int i = 0; i < bigraph_u->v(); ++i) {
@@ -54,11 +61,28 @@ class recommendation_decision_tree : public paralg {
 
   // build a decision tree under node t representing user set S_t
   void generate_decision_tree(const std::unordered_set<int> & S_t) {
+    if(with_depth) {
+      if(level == height) {
+        std::cout << level << "|" << height << std::endl;
+        leaf_user_lst.push_back(S_t);
+        return;
+      }
+    }
+    if(with_alpha) {
+      auto accum_lambda = [&] (int init, int v) {
+        return init + bigraph_u->adjacent(v).size();
+      };
+      int accum = std::accumulate(S_t.begin(), S_t.end(), 0, accum_lambda);
+      if(accum < alpha) {
+        std::cout << accum << std::endl;
+        leaf_user_lst.push_back(S_t);
+        return;
+      }
+    }
     
     int item_sz = bigraph_i->v();
     std::vector<double> err(item_sz, 0.), sum_all(item_sz, 0.), sum2_all(item_sz, 0.);
     std::vector<int> nall(item_sz, 0);
-    int complexity = 0;
 
     for(int i = 0; i < item_sz; ++i) {
       for(auto & pair : bigraph_i->adjacent(i)) {
@@ -73,16 +97,10 @@ class recommendation_decision_tree : public paralg {
 
     // splitting item selection:
     for(int i = 0; i < item_sz; ++i) {
-      /*
-      bool flag = false;
-      for(size_t indx = 0; indx < result.size(); ++indx) {
-        if(result[indx] == i) {
-          flag = true;
-          break;
-        }
+      if(std::find(result.begin(), result.end(), i) != result.end()) {
+        err[i] = DBL_MAX;
+        continue;
       }
-      if(flag) { continue; }
-      */
       std::vector<double> sum_tL(item_sz, 0.), sum2_tL(item_sz, 0.);
       std::vector<double> sum_tH(item_sz, 0.), sum2_tH(item_sz, 0.);
       std::vector<int> n_tL(item_sz, 0), n_tH(item_sz, 0);
@@ -97,7 +115,6 @@ class recommendation_decision_tree : public paralg {
           flag_H = true;
         }
         for(auto & pair_inside: bigraph_u->adjacent(u)) {
-          //complexity += 1;
           int j = pair_inside.first; double r_uj = pair_inside.second;
           if(flag_L) {
             sum_tL[j] += r_uj;
@@ -121,71 +138,73 @@ class recommendation_decision_tree : public paralg {
         err[i] += e2_tL + e2_tH + e2_tU;
       }
       //std::cout << i << " 's err is: " << err[i] << std::endl;
-      //std::cout << "complexity: " << complexity << std::endl;
     } // i
-    
+
     std::cout << err.size() << std::endl;
     auto result_it = std::minmax_element(err.begin(), err.end());
     int partition_id = result_it.first - err.begin();
+    std::cout << "debug: " << level << std::endl; 
     std::cout << partition_id << " with min error: " << err[partition_id] 
         << " and max error: " << err[result_it.second - err.begin()] << std::endl;
+    result.push_back(partition_id);
 
-/*
+    auto contain_lambda = [&] (std::pair<int, double> pr) {
+      return pr.first == partition_id;
+    };
+
     // creation of t's subtrees
-    if(level != height - 1) {
-      std::unordered_set<std::string> L, H, U;
-      for(auto & u : S_t) {
-        if(!graph_u.adjacent(u).count(partition_id)) {
-          U.insert(u);
+    std::unordered_set<int> L, H, U;
+    for(auto & u : S_t) {
+      auto it = std::find_if(bigraph_u->adjacent(u).begin(), bigraph_u->adjacent(u).end(), contain_lambda);
+      if(it == bigraph_u->adjacent(u).end()) {
+        U.insert(u);
+      } else {
+        if((*it).second >= 4.) {
+          L.insert(u);
         } else {
-          if(graph_u.adjacent(u)[partition_id] >= 4.) {
-            L.insert(u);
-          } else {
-            H.insert(u);
-          }
+          H.insert(u);
         }
       }
-      for(auto & debug : L) {
-        std::cout << debug << std::endl;
-      }
-      std::cout << "---" << std::endl;
-      for(auto & debug : H) {
-        std::cout << debug << std::endl;
-      }
-      std::cout << "---" << std::endl;
-      for(auto & debug : U) {
-        std::cout << debug << std::endl;
-      }
-      std::cout << "---" << std::endl;
-      // recursively call
-      generate_decision_tree(L);
-      generate_decision_tree(H);
-      generate_decision_tree(U);
     }
-*/
+    q.push(L);
+    q.push(H);
+    q.push(U);
   }
 
-
   void solve() {
-    generate_decision_tree(users);
-    /*
+    int cnt = 0;
+    int last_cnt = 0;
+    q.push(users);
+    while(!q.empty()) {
+      auto st = q.front();
+      q.pop();
+      generate_decision_tree(st);
+      if((cnt - last_cnt) == 0 || (cnt - last_cnt) == pow(3, level)) {
+        last_cnt = cnt;
+        level += 1;
+      }
+      cnt += 1;
+    } // while
     for(auto & r : result) {
-      std::cout << r << std::endl;
+      std::cout << "result: " << r << std::endl;
     }
-    */
+    //gen_recommendation();
   }
 
  private:
   std::string input1, input2, output;
   int height = 0;
+  bool with_depth;
+  bool with_alpha;
+  int alpha = 0;
   int level = 0;
   paracel::bigraph_continuous *bigraph_u;
   paracel::bigraph_continuous *bigraph_i;
   std::unordered_set<int> users;
-  std::vector<std::string> result;
- private:
-  Eigen::SparseMatrix<double, Eigen::RowMajor> A;
-  std::unordered_map<size_t, std::string> row_map;
+  std::queue<std::unordered_set<int> > q;
+  std::vector<int> result;
+  std::vector<std::unordered_set<int> > leaf_user_lst;
+  std::vector<std::vector<int> > rec_item_lst;
 }; // class recommendation_decision_tree
 
 } // namespace paracel
