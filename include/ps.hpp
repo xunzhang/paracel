@@ -185,8 +185,6 @@ class paralg {
 
   template <class T>
   void paracel_load_as_graph(paracel::digraph<> & grp,
-                             paracel::dict_type<size_t, int> & degree_map,
-                             paracel::dict_type<size_t, int> & col_degree_map,
                              const T & fn, 
                              parser_type & parser,
                              const paracel::str_type & pattern = "fmap",
@@ -197,18 +195,42 @@ class paralg {
     paracel::list_type<paracel::str_type> lines = ld.fixload();
     sync();
     // create graph 
-    ld.create_graph(lines, grp, degree_map, col_degree_map);
+    ld.create_graph(lines, grp);
     set_decomp_info(pattern);
   }
 
-  template <class T>
-  void paracel_load_as_graph(paracel::digraph<> & grp,
+  template <class T, class G>
+  void paracel_load_as_graph(paracel::bigraph<G> & grp,
                              const T & fn, 
                              parser_type & parser,
                              const paracel::str_type & pattern = "fmap",
                              bool mix_flag = false) {
-    paralg::paracel_load_as_graph(grp, dm, col_dm,
-                                  fn, parser, pattern, mix_flag);
+    // TODO: check pattern 
+    // load lines
+    paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
+    paracel::list_type<paracel::str_type> lines = ld.fixload();
+    sync();
+    // create graph 
+    ld.create_graph(lines, grp);
+    set_decomp_info(pattern);
+  }
+
+  template <class T>
+  void paracel_load_as_graph(paracel::bigraph_continuous & grp,
+                             paracel::dict_type<int, int> & row_map,
+                             paracel::dict_type<int, int> & col_map,
+                             const T & fn, 
+                             parser_type & parser,
+                             const paracel::str_type & pattern = "fmap",
+                             bool mix_flag = false) {
+    // TODO: check pattern 
+    // load lines
+    paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
+    paracel::list_type<paracel::str_type> lines = ld.fixload();
+    sync();
+    // create graph 
+    ld.create_graph(lines, grp, row_map, col_map);
+    set_decomp_info(pattern);
   }
 
   template <class T>

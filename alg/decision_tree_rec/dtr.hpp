@@ -47,6 +47,12 @@ class recommendation_decision_tree : public paralg {
     for(int i = 0; i < bigraph_u->v(); ++i) {
       users.insert(i);
     }
+    auto parser_lambda = [] (const std::string & line) {
+      return paracel::str_split(line, ',');
+    };
+    auto f_parser = paracel::gen_parser(parser_lambda);
+    paracel_load_as_graph(local_bigraph_i, row_map, col_map, input2, f_parser, "fmap", false);
+    std::cout << local_bigraph_i.v() << std::endl;
   }
 
   virtual ~recommendation_decision_tree() {
@@ -200,6 +206,8 @@ class recommendation_decision_tree : public paralg {
   int level = 0;
   paracel::bigraph_continuous *bigraph_u;
   paracel::bigraph_continuous *bigraph_i;
+  paracel::bigraph_continuous local_bigraph_i;
+  std::unordered_map<int, int> row_map, col_map;
   std::unordered_set<int> users;
   std::queue<std::unordered_set<int> > q;
   std::vector<int> result;

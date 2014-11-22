@@ -77,7 +77,7 @@ class loader {
     return linelst;
   }
 
-  // fmap case
+  // fmap case only
   void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
                      Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
                      paracel::dict_type<size_t, paracel::str_type> & rm, 
@@ -144,11 +144,8 @@ class loader {
     }
   }
 
-  // fmap case
   void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-                    paracel::digraph<paracel::str_type> & grp,
-                    paracel::dict_type<size_t, int> & dm,
-                    paracel::dict_type<size_t, int> & col_dm) {
+                    paracel::digraph<paracel::str_type> & grp) {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst
     auto result = scheduler.lines_organize(linelst, parserfunc);
@@ -158,25 +155,68 @@ class loader {
     auto stf = scheduler.exchange(result);
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
-    // mapping inds to ids, get rmap, cmap, std_new...
-    paracel::list_type<std::tuple<size_t, size_t, double> > stf_new;
-    paracel::dict_type<size_t, paracel::str_type> rm, cm;
-    scheduler.index_mapping(stf, stf_new, rm, cm, dm, col_dm);
-    std::cout << "procs " << m_comm.get_rank() << " index mapping" << std::endl;
-    paracel::dict_type<paracel::str_type, 
-        paracel::dict_type<paracel::str_type, double> > dct;
-    for(auto & tpl : stf_new) {
-      dct[rm[std::get<0>(tpl)]][cm[std::get<1>(tpl)]] = std::get<2>(tpl);  
+    paracel::dict_type<paracel::str_type, paracel::dict_type<paracel::str_type, double> > dct;
+    for(auto & tpl : stf) {
+      dct[std::get<0>(tpl)][std::get<1>(tpl)] = std::get<2>(tpl);  
     }
     grp.construct_from_dict(dct);
   }
 
-  // simple fmap case, fsmap case
   void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-                    paracel::digraph<paracel::str_type> & grp) {
-    paracel::dict_type<size_t, int> dm;
-    paracel::dict_type<size_t, int> col_dm;
-    create_graph(linelst, grp, dm, col_dm);
+                    paracel::bigraph<paracel::str_type> & grp) {
+    paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
+    // hash lines into slotslst
+    auto result = scheduler.lines_organize(linelst, parserfunc);
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    // alltoall exchange
+    auto stf = scheduler.exchange(result);
+    std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
+    m_comm.sync();
+    paracel::dict_type<paracel::str_type, paracel::dict_type<paracel::str_type, double> > dct;
+    for(auto & tpl : stf) {
+      dct[std::get<0>(tpl)][std::get<1>(tpl)] = std::get<2>(tpl);  
+    }
+    grp.construct_from_dict(dct);
+  }
+
+  void create_graph(const paracel::list_type<paracel::str_type> & linelst,
+                    paracel::bigraph<int> & grp) {
+    paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
+    // hash lines into slotslst
+    auto result = scheduler.lines_organize(linelst, parserfunc);
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    // alltoall exchange
+    auto stf = scheduler.exchange(result);
+    std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
+    m_comm.sync();
+    paracel::dict_type<int, paracel::dict_type<int, double> > dct;
+    for(auto & tpl : stf) {
+      dct[std::stoi(std::get<0>(tpl))][std::stoi(std::get<1>(tpl))] = std::get<2>(tpl);  
+    }
+    grp.construct_from_dict(dct);
+  }
+
+  void create_graph(const paracel::list_type<paracel::str_type> & linelst,
+                    paracel::bigraph_continuous & grp,
+                    paracel::dict_type<int, int> & rm,
+                    paracel::dict_type<int, int> & cm) {
+    paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
+    // hash lines into slotslst
+    auto result = scheduler.lines_organize(linelst, parserfunc);
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    // alltoall exchange
+    auto stf = scheduler.exchange(result);
+    std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
+    m_comm.sync();
+    paracel::list_type<std::tuple<int, int, double> > stf_new;
+    scheduler.index_mapping(stf, stf_new, rm, cm);
+    grp.resize(stf_new.size());
+    for(auto & tpl : stf_new) {
+      grp.add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl)); 
+    } 
   }
 
  private:

@@ -232,6 +232,56 @@ public:
 
   } // index_mapping
   
+  void index_mapping(const lt_type & slotslst, 
+      paracel::list_type<std::tuple<int, int, double> > & stf, 
+      paracel::dict_type<int, int> & rm,
+      paracel::dict_type<int, int> & cm) {
+    
+    int rk = m_comm.get_rank();
+    int rowcolor = rk / npy;
+    int colcolor = rk % npy;
+    auto col_comm = m_comm.split(colcolor);
+    auto row_comm = m_comm.split(rowcolor);
+    paracel::list_type<int> rows, cols;
+    for(auto & tpl : slotslst) {
+      rows.push_back(std::stoi(std::get<0>(tpl)));
+      cols.push_back(std::stoi(std::get<1>(tpl)));
+    }
+    paracel::set_type<int> new_rows, new_cols;
+    auto union_func1 = [&] (paracel::list_type<int> tmp) {
+      for(auto & item : tmp) { 
+        new_rows.insert(item); 
+      }
+    };
+    auto union_func2 = [&] (paracel::list_type<int> tmp) {
+      for(auto & item : tmp) { 
+        new_cols.insert(item); 
+      }
+    };
+    row_comm.bcastring(rows, union_func1);
+    col_comm.bcastring(cols, union_func2);
+    paracel::dict_type<int, int> rev_rm, rev_cm;
+    int indx = 0;
+    for(auto & item : new_rows) {
+      rm[indx] = item;
+      rev_rm[item] = indx;
+      indx += 1;
+    }
+    indx = 0;
+    for(auto & item : new_cols) {
+      cm[indx] = item;
+      rev_cm[item] = indx;
+      indx += 1;
+    }
+    for(auto & tpl : slotslst) {
+      std::tuple<int, int, double> tmp;
+      std::get<0>(tmp) = rev_rm[std::stoi(std::get<0>(tpl))];
+      std::get<1>(tmp) = rev_cm[std::stoi(std::get<1>(tpl))];
+      std::get<2>(tmp) = std::get<2>(tpl);
+      stf.push_back(tmp);
+    }
+  } // index_mapping
+  
 private:
   int randint(int l, int u) {
     srand((unsigned)time(NULL));
