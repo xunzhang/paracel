@@ -41,7 +41,7 @@
 namespace paracel {
 
 using parser_type = std::function<paracel::list_type<paracel::str_type>(paracel::str_type)>;
-      
+
 class paralg {
 
  private:
@@ -197,6 +197,7 @@ class paralg {
     // create graph 
     ld.create_graph(lines, grp);
     set_decomp_info(pattern);
+    lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
 
   template <class T, class G>
@@ -210,9 +211,11 @@ class paralg {
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
     sync();
+    while(1) {;}
     // create graph 
     ld.create_graph(lines, grp);
     set_decomp_info(pattern);
+    lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
 
   template <class T>
@@ -231,6 +234,7 @@ class paralg {
     // create graph 
     ld.create_graph(lines, grp, row_map, col_map);
     set_decomp_info(pattern);
+    lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
 
   template <class T>
@@ -251,6 +255,7 @@ class paralg {
     // create sparse matrix
     ld.create_matrix(lines, blk_mtx, row_map, col_map, degree_map, col_degree_map);
     set_decomp_info(pattern);
+    lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
   
   template <class T>
@@ -309,6 +314,7 @@ class paralg {
     // create sparse matrix
     ld.create_matrix(lines, blk_dense_mtx, row_map);
     set_decomp_info(pattern);
+    lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
 
   // simple interface

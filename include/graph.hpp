@@ -518,6 +518,7 @@ class bigraph_continuous {
   }
 
   void add_edge(int src, int dst, double rating) {
+    if(src >= (int)adj.size()) { adj.resize(src + 1); }
     adj[src].put(std::make_pair(dst, rating));
     e_sz += 1;
   }

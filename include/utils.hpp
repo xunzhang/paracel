@@ -208,6 +208,10 @@ struct heap_node {
   std::pair<K, V> val;
 };
 
+void cheat_to_os() {
+  std::vector<int> var(100000000);
+}
+
 } // namespace paracel
 
 #endif

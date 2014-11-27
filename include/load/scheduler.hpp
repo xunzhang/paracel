@@ -297,7 +297,7 @@ private:
   paracel::Comm m_comm;
   int npx;
   int npy;
-};
+}; // class scheduler
 
 } // namespace parael
 #endif

@@ -33,26 +33,33 @@ class recommendation_decision_tree : public paralg {
 
  public:
   recommendation_decision_tree(paracel::Comm comm, std::string hosts_dct_str,
-                               std::string input1, std::string input2, std::string output, 
+                               std::string input1, std::string input2, std::string input3, 
+                               std::string output, 
                                int height, bool depth_termination, bool alpha_termination, int _alpha) : 
    paracel::paralg(hosts_dct_str, comm, output, 1, 0, false), 
    input1(input1), 
-   input2(input2), 
+   input2(input2),
+   input3(input3),
    height(height), 
    with_depth(depth_termination), 
    with_alpha(alpha_termination), 
    alpha(_alpha) {
-    bigraph_u = new bigraph_continuous(input1);
-    bigraph_i = new bigraph_continuous(input2); 
-    for(int i = 0; i < bigraph_u->v(); ++i) {
-      users.insert(i);
-    }
+    //bigraph_u = new bigraph_continuous(input1);
+    //bigraph_i = new bigraph_continuous(input2); 
+    //for(int i = 0; i < bigraph_u->v(); ++i) {
+    //  users.insert(i);
+    //}
     auto parser_lambda = [] (const std::string & line) {
       return paracel::str_split(line, ',');
     };
     auto f_parser = paracel::gen_parser(parser_lambda);
-    paracel_load_as_graph(local_bigraph_i, row_map, col_map, input2, f_parser, "fmap", false);
-    std::cout << local_bigraph_i.v() << std::endl;
+    paracel_load_as_graph(local_bigraph_i, input3, f_parser, "fmap", false);
+    //paracel_load_as_graph(local_bigraph_i, row_map, col_map, input3, f_parser, "fmap", false);
+    std::cout << local_bigraph_i.v() << "|" << row_map.size() << "|" << col_map.size() << std::endl;
+    //local_bigraph_i.resize(0);
+    row_map.clear();
+    col_map.clear();
+    while(1) {;}
   }
 
   virtual ~recommendation_decision_tree() {
@@ -102,16 +109,17 @@ class recommendation_decision_tree : public paralg {
     }
 
     // splitting item selection:
-    for(int i = 0; i < item_sz; ++i) {
-      if(std::find(result.begin(), result.end(), i) != result.end()) {
-        err[i] = DBL_MAX;
+    for(int i = 0; i < (int)local_bigraph_i.v(); ++i) {
+      int o_i = row_map[i];
+      if(std::find(result.begin(), result.end(), o_i) != result.end()) {
+        err[o_i] = DBL_MAX;
         continue;
       }
       std::vector<double> sum_tL(item_sz, 0.), sum2_tL(item_sz, 0.);
       std::vector<double> sum_tH(item_sz, 0.), sum2_tH(item_sz, 0.);
       std::vector<int> n_tL(item_sz, 0), n_tH(item_sz, 0);
 
-      for(auto & pair : bigraph_i->adjacent(i)) {
+      for(auto & pair : bigraph_i->adjacent(o_i)) {
         bool flag_L = false, flag_H = false;
         int u = pair.first; double r = pair.second;
         if(!S_t.count(u)) { continue; }
@@ -134,24 +142,31 @@ class recommendation_decision_tree : public paralg {
           }
         } // pair_inside 
       } // pair
-      // calculate err[i]
+      // calculate err[o_i]
       for(int ii = 0; ii < item_sz; ++ii) {
         double e2_tL = foo(sum2_tL[ii], sum_tL[ii], n_tL[ii]);
         double e2_tH = foo(sum2_tH[ii], sum_tH[ii], n_tH[ii]);
         double e2_tU = foo((sum2_all[ii] - sum2_tL[ii] - sum2_tH[ii]), 
                            ((sum_all[ii] - sum_tL[ii] - sum_tH[ii])), 
                            (nall[ii] - n_tL[ii] - n_tH[ii]));
-        err[i] += e2_tL + e2_tH + e2_tU;
+        err[o_i] += e2_tL + e2_tH + e2_tU;
       }
-      //std::cout << i << " 's err is: " << err[i] << std::endl;
     } // i
-
+    
     std::cout << err.size() << std::endl;
+
+    for(int i = 0; i < item_sz; ++i) {
+      get_comm().allreduce(err[i]);
+    }
+    
     auto result_it = std::minmax_element(err.begin(), err.end());
     int partition_id = result_it.first - err.begin();
+
     std::cout << "debug: " << level << std::endl; 
-    std::cout << partition_id << " with min error: " << err[partition_id] 
-        << " and max error: " << err[result_it.second - err.begin()] << std::endl;
+    std::cout << partition_id << " with min error: " 
+        << err[partition_id] << " and max error: " 
+        << err[result_it.second - err.begin()] << std::endl;
+
     result.push_back(partition_id);
 
     auto contain_lambda = [&] (std::pair<int, double> pr) {
@@ -198,7 +213,7 @@ class recommendation_decision_tree : public paralg {
   }
 
  private:
-  std::string input1, input2, output;
+  std::string input1, input2, input3, output;
   int height = 0;
   bool with_depth;
   bool with_alpha;
@@ -206,7 +221,8 @@ class recommendation_decision_tree : public paralg {
   int level = 0;
   paracel::bigraph_continuous *bigraph_u;
   paracel::bigraph_continuous *bigraph_i;
-  paracel::bigraph_continuous local_bigraph_i;
+  paracel::bigraph<int> local_bigraph_i;
+  //paracel::bigraph_continuous local_bigraph_i;
   std::unordered_map<int, int> row_map, col_map;
   std::unordered_set<int> users;
   std::queue<std::unordered_set<int> > q;
