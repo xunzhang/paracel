@@ -44,17 +44,16 @@ class recommendation_decision_tree : public paralg {
    with_depth(depth_termination), 
    with_alpha(alpha_termination), 
    alpha(_alpha) {
-    //bigraph_u = new bigraph_continuous(input1);
-    //bigraph_i = new bigraph_continuous(input2); 
-    //for(int i = 0; i < bigraph_u->v(); ++i) {
-    //  users.insert(i);
-    //}
+    bigraph_u = new bigraph_continuous(input1);
+    bigraph_i = new bigraph_continuous(input2); 
+    for(int i = 0; i < bigraph_u->v(); ++i) {
+      users.insert(i);
+    }
     auto parser_lambda = [] (const std::string & line) {
       return paracel::str_split(line, ',');
     };
     auto f_parser = paracel::gen_parser(parser_lambda);
     paracel_load_as_graph(local_bigraph_i, row_map, col_map, input3, f_parser, "fmap", false);
-    std::cout << local_bigraph_i.v() << "|" << row_map.size() << "|" << col_map.size() << std::endl;
   }
 
   virtual ~recommendation_decision_tree() {
@@ -107,7 +106,6 @@ class recommendation_decision_tree : public paralg {
     for(int i = 0; i < (int)local_bigraph_i.v(); ++i) {
       int o_i = row_map[i];
       if(std::find(result.begin(), result.end(), o_i) != result.end()) {
-        err[o_i] = DBL_MAX;
         continue;
       }
       std::vector<double> sum_tL(item_sz, 0.), sum2_tL(item_sz, 0.);
@@ -146,22 +144,28 @@ class recommendation_decision_tree : public paralg {
                            (nall[ii] - n_tL[ii] - n_tH[ii]));
         err[o_i] += e2_tL + e2_tH + e2_tU;
       }
+      paracel_write("err_" + std::to_string(o_i), err[o_i]);
     } // i
-    
-    std::cout << err.size() << std::endl;
+    sync();
 
     for(int i = 0; i < item_sz; ++i) {
-      get_comm().allreduce(err[i]);
+      double tmp_v = paracel_read<double>("err_" + std::to_string(i));
+      if(tmp_v == 0.) {
+        err[i] = DBL_MAX;
+      }
+      err[i] = tmp_v;
     }
-    
+    sync();
+
     auto result_it = std::minmax_element(err.begin(), err.end());
     int partition_id = result_it.first - err.begin();
+    paracel_write("err_" + std::to_string(partition_id), DBL_MAX);
 
-    std::cout << "debug: " << level << std::endl; 
-    std::cout << partition_id << " with min error: " 
+    if(get_worker_id() == 0) {
+      std::cout << partition_id << " with min error: " 
         << err[partition_id] << " and max error: " 
         << err[result_it.second - err.begin()] << std::endl;
-
+    }
     result.push_back(partition_id);
 
     auto contain_lambda = [&] (std::pair<int, double> pr) {
@@ -172,10 +176,16 @@ class recommendation_decision_tree : public paralg {
     std::unordered_set<int> L, H, U;
     for(auto & u : S_t) {
       auto it = std::find_if(bigraph_u->adjacent(u).begin(), bigraph_u->adjacent(u).end(), contain_lambda);
+      if(get_worker_id() == 0) {
+        std::cout << "offset " << it - bigraph_u->adjacent(u).begin() << std::endl;
+      }
       if(it == bigraph_u->adjacent(u).end()) {
         U.insert(u);
       } else {
         if((*it).second >= 4.) {
+          if(get_worker_id() == 0) {
+            std::cout << "L " << u << std::endl;
+          }
           L.insert(u);
         } else {
           H.insert(u);
@@ -195,14 +205,17 @@ class recommendation_decision_tree : public paralg {
       auto st = q.front();
       q.pop();
       generate_decision_tree(st);
+      sync();
       if((cnt - last_cnt) == 0 || (cnt - last_cnt) == pow(3, level)) {
         last_cnt = cnt;
         level += 1;
       }
       cnt += 1;
     } // while
-    for(auto & r : result) {
-      std::cout << "result: " << r << std::endl;
+    if(get_worker_id() == 0) {
+      for(auto & r : result) {
+        std::cout << "result: " << r << std::endl;
+      }
     }
     //gen_recommendation();
   }
