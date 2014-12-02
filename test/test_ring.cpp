@@ -6,6 +6,7 @@
 #include "utils.hpp"
 int main(int argc, char *argv[])
 { 
+  /*
   {
     std::vector<int> server_names{1, 2, 3};
     paracel::ring<int> ring(server_names);
@@ -32,6 +33,7 @@ int main(int argc, char *argv[])
     // char* is unhashable
     //std::cout << ring.get_server("world") << std::endl;
   }
+  */
   {
     std::vector<std::string> server_names{"balin1", "beater5", "beater7"};
     paracel::ring<std::string> ring(server_names);
@@ -56,6 +58,7 @@ int main(int argc, char *argv[])
     std::string key10("p[3:,]_1");
     std::cout << ring.get_server(key10) << std::endl;
   }
+  /*
   {
     std::vector<int> server_names;
     for(size_t i = 0; i < 100; ++i) {
@@ -88,5 +91,6 @@ int main(int argc, char *argv[])
       std::cout << "server " << i << " get " << debug[i] << " keys" << std::endl;
     }
   }
+  */
   return 0;
 }

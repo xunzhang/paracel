@@ -14,11 +14,13 @@
  */
 #ifndef FILE_ec8e1787_f407_c643_5d12_b8c93bdb52bb_HPP 
 #define FILE_ec8e1787_f407_c643_5d12_b8c93bdb52bb_HPP 
+
 #include <sstream>
 #include <algorithm> // std::sort, std::find
 #include <functional>
 #include "paracel_types.hpp"
 #include "utils/hash.hpp"
+#include "utils.hpp"
 
 namespace paracel {
 
@@ -74,7 +76,7 @@ public:
       if(iter != srv_hashring.end()) {
         srv_hashring.erase(iter);
       }
-    } 
+    }
   }
 
   // TODO: relief load of srv_hashring_dct[srv_hashring[0]]
@@ -83,13 +85,15 @@ public:
     //std::hash<P> hfunc;
     paracel::hash_type<P> hfunc;
     auto key = hfunc(skey);
+    auto server = srv_hashring[paracel::bsearch(srv_hashring, key)];
+    return srv_hashring_dct[server];
+    /*
     for(size_t i = 0; i < srv_hashring.size(); ++i) {
       auto server = srv_hashring[i];
-      if(key <= server) {
-        return srv_hashring_dct[server];
-      }
+      if(key <= server) { return srv_hashring_dct[server]; }
     }
     return srv_hashring_dct[srv_hashring[0]];
+    */
   }
 
 private:

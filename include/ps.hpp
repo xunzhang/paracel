@@ -685,6 +685,10 @@ class paralg {
     return worker_comm.get_size();
   }
 
+  inline size_t get_server_size() {
+    return ps_obj->srv_sz;
+  }
+
   void sync() {
     worker_comm.sync();
   }

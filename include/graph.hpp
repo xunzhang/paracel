@@ -530,6 +530,7 @@ class bigraph_continuous {
   }
 
   int v() { 
+    v_sz = adj.size();
     return v_sz; 
   }
 
@@ -560,7 +561,7 @@ class bigraph_continuous {
 
   template <class F>
   void traverse(F & func) {
-    for(size_t i = 0; i < v_sz; ++i) {
+    for(int i = 0; i < v_sz; ++i) {
       for(auto & item : adj[i]) {
         func(i, item.first, item.second);
       }
