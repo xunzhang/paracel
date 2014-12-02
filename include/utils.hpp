@@ -212,6 +212,23 @@ void cheat_to_os() {
   std::vector<int> var(100000000);
 }
 
+template <class T>
+size_t bsearch(std::vector<T> data, T key) {
+  size_t s = 0, e = data.size() - 1;
+  size_t m;
+  while(s <= e) {
+    m =  s + (e - s) / 2;
+    if(data[m] < key) {
+      s = m + 1;
+    } else if(data[m] > key) {
+      e = m - 1;
+    } else {
+      return m;
+    }
+  }
+  return data[m] < key ? m + 1 : m;
+}
+
 } // namespace paracel
 
 #endif
