@@ -85,7 +85,7 @@ public:
     //std::hash<P> hfunc;
     paracel::hash_type<P> hfunc;
     auto key = hfunc(skey);
-    auto server = srv_hashring[paracel::bsearch(srv_hashring, key)];
+    auto server = srv_hashring[paracel::ring_bsearch(srv_hashring, key)];
     return srv_hashring_dct[server];
     /*
     for(size_t i = 0; i < srv_hashring.size(); ++i) {
