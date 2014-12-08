@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <fstream>
 #include "paracel_types.hpp"
+#include "utils.hpp"
 
 namespace paracel {
 
