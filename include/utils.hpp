@@ -20,6 +20,7 @@
 #include <random>
 #include <string>
 #include <queue>
+#include <fstream>
 
 #include <zmq.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -213,7 +214,8 @@ void cheat_to_os() {
 }
 
 template <class T>
-size_t bsearch(std::vector<T> data, T key) {
+size_t ring_bsearch(std::vector<T> data, T key) {
+  if(key < data[0] || key > data[data.size()-1]) { return 0; }
   size_t s = 0, e = data.size() - 1;
   size_t m;
   while(s <= e) {
@@ -227,6 +229,26 @@ size_t bsearch(std::vector<T> data, T key) {
     }
   }
   return data[m] < key ? m + 1 : m;
+}
+
+template <class T, class F>
+std::vector<T> tail(const std::string & filename, 
+                    int k,
+                    F & func) {
+  std::vector<T> result, buffer;
+  buffer.resize(k);
+  int cur = 0;
+  std::ifstream f(filename);
+  std::string line;
+  while(std::getline(f, line)) {
+    if(cur == k) { cur = 0; }
+    buffer[cur] = func(line);
+    cur += 1;
+  }
+  f.close();
+  for(int i = cur; i < k; ++i) { result.push_back(buffer[i]); }
+  for(int i = 0; i < cur; ++i) { result.push_back(buffer[i]); }
+  return result;
 }
 
 } // namespace paracel
