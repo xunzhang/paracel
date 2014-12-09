@@ -49,11 +49,13 @@ class recommendation_decision_tree : public paralg {
     for(int i = 0; i < bigraph_u->v(); ++i) {
       users.insert(i);
     }
+
     auto parser_lambda = [] (const std::string & line) {
       return paracel::str_split(line, ',');
     };
     auto f_parser = paracel::gen_parser(parser_lambda);
     paracel_load_as_graph(local_bigraph_i, row_map, col_map, input3, f_parser, "fmap", false);
+    std::cout << "done " << std::endl;
   }
 
   virtual ~recommendation_decision_tree() {
@@ -139,8 +141,8 @@ class recommendation_decision_tree : public paralg {
       for(int ii = 0; ii < item_sz; ++ii) {
         double e2_tL = foo(sum2_tL[ii], sum_tL[ii], n_tL[ii]);
         double e2_tH = foo(sum2_tH[ii], sum_tH[ii], n_tH[ii]);
-        double e2_tU = foo((sum2_all[ii] - sum2_tL[ii] - sum2_tH[ii]), 
-                           ((sum_all[ii] - sum_tL[ii] - sum_tH[ii])), 
+        double e2_tU = foo((sum2_all[ii] - sum2_tL[ii] - sum2_tH[ii]),
+                           ((sum_all[ii] - sum_tL[ii] - sum_tH[ii])),
                            (nall[ii] - n_tL[ii] - n_tH[ii]));
         err[o_i] += e2_tL + e2_tH + e2_tU;
       }
@@ -149,11 +151,7 @@ class recommendation_decision_tree : public paralg {
     sync();
 
     for(int i = 0; i < item_sz; ++i) {
-      double tmp_v = paracel_read<double>("err_" + std::to_string(i));
-      if(tmp_v == 0.) {
-        err[i] = DBL_MAX;
-      }
-      err[i] = tmp_v;
+      err[i] = paracel_read<double>("err_" + std::to_string(i));
     }
     sync();
 
@@ -162,6 +160,7 @@ class recommendation_decision_tree : public paralg {
     paracel_write("err_" + std::to_string(partition_id), DBL_MAX);
 
     if(get_worker_id() == 0) {
+      std::cout << "debug: " << level << std::endl; 
       std::cout << partition_id << " with min error: " 
         << err[partition_id] << " and max error: " 
         << err[result_it.second - err.begin()] << std::endl;
@@ -175,11 +174,9 @@ class recommendation_decision_tree : public paralg {
     // creation of t's subtrees
     std::unordered_set<int> L, H, U;
     for(auto & u : S_t) {
-      auto it = std::find_if(bigraph_u->adjacent(u).begin(), bigraph_u->adjacent(u).end(), contain_lambda);
-      if(get_worker_id() == 0) {
-        std::cout << "offset " << it - bigraph_u->adjacent(u).begin() << std::endl;
-      }
-      if(it == bigraph_u->adjacent(u).end()) {
+      auto bag = bigraph_u->adjacent(u);
+      auto it = std::find_if(bag.begin(), bag.end(), contain_lambda);
+      if(it == bag.end()) {
         U.insert(u);
       } else {
         if((*it).second >= 4.) {
@@ -204,6 +201,7 @@ class recommendation_decision_tree : public paralg {
     while(!q.empty()) {
       auto st = q.front();
       q.pop();
+      std::cout << "debug " << std::endl;
       generate_decision_tree(st);
       sync();
       if((cnt - last_cnt) == 0 || (cnt - last_cnt) == pow(3, level)) {

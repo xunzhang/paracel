@@ -42,6 +42,6 @@ int main(int argc, char *argv[])
   int alpha = pt.parse<int>("alpha");
 
   paracel::recommendation_decision_tree rdt_solver(comm, FLAGS_server_info, input1, input2, input3, output, height, depth_term, alpha_term, alpha);
-  //rdt_solver.solve();
+  rdt_solver.solve();
   return 0;
 }

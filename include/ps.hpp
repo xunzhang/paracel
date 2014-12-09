@@ -211,7 +211,6 @@ class paralg {
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
     sync();
-    while(1) {;}
     // create graph 
     ld.create_graph(lines, grp);
     set_decomp_info(pattern);

@@ -221,6 +221,7 @@ class loader {
     paracel::list_type<std::tuple<int, int, double> > stf_new;
     scheduler.index_mapping(stf, stf_new, rm, cm);
     stf.resize(0); stf.shrink_to_fit(); cheat_to_os_local();
+    m_comm.sync();
     for(auto & tpl : stf_new) {
       grp.add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl)); 
     } 

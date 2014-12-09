@@ -154,9 +154,9 @@ class recommendation_decision_tree_serial : public paralg {
     // creation of t's subtrees
     std::unordered_set<int> L, H, U;
     for(auto & u : S_t) {
-      auto it = std::find_if(bigraph_u->adjacent(u).begin(), bigraph_u->adjacent(u).end(), contain_lambda);
-      std::cout << "offset " << it - bigraph_u->adjacent(u).begin() << std::endl;
-      if(it == bigraph_u->adjacent(u).end()) {
+      auto bag = bigraph_u->adjacent(u);
+      auto it = std::find_if(bag.begin(), bag.end(), contain_lambda);
+      if(it == bag.end()) {
         U.insert(u);
       } else {
         if((*it).second >= 4.) {

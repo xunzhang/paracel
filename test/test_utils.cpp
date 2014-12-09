@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+#include <vector>
 #include "utils.hpp"
 
 int main(int agrc, char *argv[])
@@ -14,5 +16,12 @@ int main(int agrc, char *argv[])
   paracel::str_type s2 = "39352476";
   auto v = paracel::str_split(s2, '|');
   std::cout << v.size() << " | " << v[0] << std::endl;
+
+  std::string fn = "unit_test.data";
+  auto lambda = [] (std::string s) { return s + "STOP"; };
+  auto lines = paracel::tail<std::string>(fn, 3, lambda);
+  for(auto & line : lines) {
+    std::cout << line << std::endl;
+  }
   return 0;
 }
