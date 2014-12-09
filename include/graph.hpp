@@ -179,7 +179,7 @@ class undirected_graph {
   MSGPACK_DEFINE(v_sz, e_sz, adj);
 };
 
-template <class T = paracel::str_type>
+template <class T = paracel::default_id_type>
 class digraph {
 
 public:
@@ -351,7 +351,7 @@ public:
   MSGPACK_DEFINE(v_sz, e_sz, adj, reverse_adj);
 }; // class digraph
 
-template <class T = std::string>
+template <class T = paracel::default_id_type>
 class bigraph {
 
  public:
@@ -491,7 +491,7 @@ class bigraph_continuous {
  public:
   bigraph_continuous() {}
 
-  bigraph_continuous(int n) {
+  bigraph_continuous(paracel::default_id_type n) {
     v_sz = n;
     adj.resize(v_sz);
     e_sz = 0;
@@ -514,42 +514,42 @@ class bigraph_continuous {
     f.close();
   }
 
-  void add_edge(int src, int dst) {
+  void add_edge(paracel::default_id_type src, paracel::default_id_type dst) {
     add_edge(src, dst, 1.);
   }
 
-  void add_edge(int src, int dst, double rating) {
-    if(src >= (int)adj.size()) { adj.resize(src + 1); }
+  void add_edge(paracel::default_id_type src, paracel::default_id_type dst, double rating) {
+    if(src >= (paracel::default_id_type)adj.size()) { adj.resize(src + 1); }
     adj[src].put(std::make_pair(dst, rating));
     e_sz += 1;
   }
 
-  void resize(int n) {
+  void resize(paracel::default_id_type n) {
     v_sz = n;
     adj.resize(v_sz);
     e_sz = 0;
   }
 
-  int v() { 
+  paracel::default_id_type v() { 
     v_sz = adj.size();
     return v_sz; 
   }
 
-  int e() { 
+  paracel::default_id_type e() { 
     return e_sz; 
   }
 
-  paracel::bag_type<std::pair<int, double> >
-  adjacent(int v) {
+  paracel::bag_type<std::pair<paracel::default_id_type, double> >
+  adjacent(paracel::default_id_type v) {
     return adj[v];
   }
 
-  inline int outdegree(int v) {
+  inline size_t outdegree(paracel::default_id_type v) {
     return adj[v].size();
   }
 
-  inline int indegree(int v) {
-    int cnt = 0;
+  inline paracel::default_id_type indegree(paracel::default_id_type v) {
+    paracel::default_id_type cnt = 0;
     for(auto & v_bag : adj) {
       for(auto & item : v_bag) {
         if(item.first == v) {
@@ -570,16 +570,16 @@ class bigraph_continuous {
   }
 
   template <class F>
-  void traverse(int v, F & func) {
+  void traverse(paracel::default_id_type v, F & func) {
     for(auto & item : adj[v]) {
       func(v, item.first, item.second);
     }
   }
 
  private:
-  int v_sz;
-  int e_sz;
-  paracel::list_type<paracel::bag_type<std::pair<int, double> >  > adj;
+  paracel::default_id_type v_sz;
+  paracel::default_id_type e_sz;
+  paracel::list_type<paracel::bag_type<std::pair<paracel::default_id_type, double> >  > adj;
 }; // class bigraph_continuous
 
 /*

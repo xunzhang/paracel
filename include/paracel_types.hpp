@@ -43,7 +43,7 @@ const size_t split_sz = 500;
 
 const std::string seperator = "_PARACEL_";
 
-const std::string seperator_inner = "_paracel_";
+const std::string seperator_inner = "_ps_";
 
 const std::string default_so_file = "../src/default.so";
 
@@ -132,6 +132,7 @@ PARACEL_REGISTER_COMM_BUILTIN(float, MPI_FLOAT);
 PARACEL_REGISTER_COMM_BUILTIN(double, MPI_DOUBLE);
 PARACEL_REGISTER_COMM_BUILTIN(unsigned, MPI_UNSIGNED);
 PARACEL_REGISTER_COMM_BUILTIN(unsigned long, MPI_UNSIGNED_LONG);
+PARACEL_REGISTER_COMM_BUILTIN(unsigned long long, MPI_UNSIGNED_LONG_LONG);
 
 // tricky definition
 PARACEL_REGISTER_COMM_CONTAINER(std::string, MPI_CHAR);
@@ -142,6 +143,7 @@ PARACEL_REGISTER_COMM_CONTAINER(std::vector<float>, MPI_FLOAT);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<double>, MPI_DOUBLE);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<unsigned>, MPI_UNSIGNED);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<unsigned long>, MPI_UNSIGNED_LONG);
+PARACEL_REGISTER_COMM_CONTAINER(std::vector<unsigned long long>, MPI_UNSIGNED_LONG_LONG);
 
 // for alltoall usage
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<int> >, MPI_INT);
@@ -151,7 +153,9 @@ PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<float> >, MPI_FLOAT);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<double> >, MPI_DOUBLE);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<unsigned> >, MPI_UNSIGNED);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<unsigned long> >, MPI_UNSIGNED_LONG);
+PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<unsigned long long> >, MPI_UNSIGNED_LONG_LONG);
 
+//using default_id_type = unsigned long long;
 using default_id_type = uint64_t;
 
 using str_type = std::string;

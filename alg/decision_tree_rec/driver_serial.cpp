@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
   int height = pt.parse<int>("height");
   bool depth_term = pt.parse<bool>("depth_termination");
   bool alpha_term = pt.parse<bool>("alpha_termination");
-  int alpha = pt.parse<int>("alpha");
+  paracel::default_id_type alpha = pt.parse<paracel::default_id_type>("alpha");
 
   paracel::recommendation_decision_tree_serial dtr_solver(comm, FLAGS_server_info, input1, input2, output, height, depth_term, alpha_term, alpha);
   dtr_solver.solve();

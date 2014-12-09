@@ -329,6 +329,39 @@ public:
     return v_req;
   }
 
+  // impl of list of compact triple isend
+  vrequest isend(const paracel::list_type<paracel::compact_triple_type> & triple_lst, int dest, int tag) {
+    vrequest v_req;
+    int *sz = new int(triple_lst.size());
+    pt_enqueue(sz);
+    auto sz_req = isend(*sz, dest, tag);
+    v_req.append(sz_req);
+    
+    // pack list of triples
+    auto lambda_local_pack = [](const paracel::compact_triple_type & tpl) {
+      paracel::str_type r;
+      r = std::to_string(std::get<0>(tpl)) + paracel::seperator_inner + 
+          std::to_string(std::get<1>(tpl)) + paracel::seperator_inner + 
+          std::to_string(std::get<2>(tpl));
+      return r;
+    };
+    paracel::str_type *str_pt = new paracel::str_type;
+    pt_enqueue(str_pt);
+    if(triple_lst.size() != 0) {
+      if(triple_lst.size() == 1) { 
+        *str_pt += lambda_local_pack(triple_lst[0]) + paracel::seperator;
+      } else {
+        for(size_t i = 0; i < triple_lst.size() - 1; ++i) {
+          *str_pt += lambda_local_pack(triple_lst[i]) + paracel::seperator;
+        }
+        *str_pt += lambda_local_pack(triple_lst[triple_lst.size() - 1]);
+      }
+    }
+    auto vreq = isend(*str_pt, dest, tag);
+    v_req.append(vreq);
+    return v_req;
+  }
+
   // impl of list of string isend
   // TODO: abstract 
   vrequest isend(const paracel::list_type<paracel::str_type> & strlst, int dest, int tag) {
@@ -429,6 +462,23 @@ public:
       auto tpl = paracel::str_split_by_word(tpl_lst[i], paracel::seperator_inner);
       std::get<0>(triple_lst[i]) = tpl[0];
       std::get<1>(triple_lst[i]) = tpl[1];
+      std::get<2>(triple_lst[i]) = std::stod(tpl[2]);
+    }
+    return stat;
+  }
+
+  // impl of list of compact triple recv
+  MPI_Status recv(paracel::list_type<paracel::compact_triple_type> & triple_lst, int src, int tag) {
+    int sz;
+    recv(sz, src, tag);
+    if(sz) { triple_lst.resize(sz); }
+    paracel::str_type triple_lst_str;
+    MPI_Status stat = recv(triple_lst_str, src, tag);
+    auto tpl_lst = paracel::str_split_by_word(triple_lst_str, paracel::seperator);
+    for(size_t i = 0; i < tpl_lst.size(); ++i) {
+      auto tpl = paracel::str_split_by_word(tpl_lst[i], paracel::seperator_inner);
+      std::get<0>(triple_lst[i]) = std::stoull(tpl[0]);
+      std::get<1>(triple_lst[i]) = std::stoull(tpl[1]);
       std::get<2>(triple_lst[i]) = std::stod(tpl[2]);
     }
     return stat;
@@ -540,6 +590,20 @@ public:
       int f = (m_rk + i) % m_sz;
       int t = (m_rk + m_sz - i) % m_sz;
       paracel::list_type<paracel::triple_type> tmpr;
+      sendrecv(sbuf[t], tmpr, t, 2014, f, 2014);
+      rbuf[t].insert(rbuf[t].end(), tmpr.begin(), tmpr.end());
+    }
+  }
+
+  // impl of compact triple alltoall
+  void alltoall(const paracel::list_type<paracel::list_type<paracel::compact_triple_type> > & sbuf,
+                paracel::list_type<paracel::list_type<paracel::compact_triple_type> > & rbuf) {
+    if(sbuf.size()) { rbuf.resize(sbuf.size()); }
+    rbuf[m_rk] = sbuf[m_rk];
+    for(int i = 1; i < m_sz; ++i) {
+      int f = (m_rk + i) % m_sz;
+      int t = (m_rk + m_sz - i) % m_sz;
+      paracel::list_type<paracel::compact_triple_type> tmpr;
       sendrecv(sbuf[t], tmpr, t, 2014, f, 2014);
       rbuf[t].insert(rbuf[t].end(), tmpr.begin(), tmpr.end());
     }

@@ -183,6 +183,7 @@ class paralg {
     return paralg::paracel_load(fn, parser, pattern, mix_flag);	
   }
 
+  // only support paracel::digraph<paracel::default_id_type> and paracel::digraph<std::string>
   template <class T, class G>
   void paracel_load_as_graph(paracel::digraph<G> & grp,
                              const T & fn, 
@@ -200,6 +201,7 @@ class paralg {
     lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
 
+  // only support paracel::bigraph<paracel::default_id_type> and paracel::bigraph<std::string>
   template <class T, class G>
   void paracel_load_as_graph(paracel::bigraph<G> & grp,
                              const T & fn,
@@ -219,8 +221,8 @@ class paralg {
 
   template <class T>
   void paracel_load_as_graph(paracel::bigraph_continuous & grp,
-                             paracel::dict_type<int, int> & row_map,
-                             paracel::dict_type<int, int> & col_map,
+                             paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & row_map,
+                             paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & col_map,
                              const T & fn,
                              parser_type & parser,
                              const paracel::str_type & pattern = "fmap",
