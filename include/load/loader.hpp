@@ -149,6 +149,13 @@ class loader {
   }
 
   void create_graph(const paracel::list_type<paracel::str_type> & linelst,
+                    paracel::digraph<paracel::default_id_type> & grp) {
+    paracel::scheduler scheduler(m_comm, pattern, mix);
+    paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
+    scheduler.lines_organize(linelst, paraserfunc, result);
+  }
+
+  void create_graph(const paracel::list_type<paracel::str_type> & linelst,
                     paracel::digraph<paracel::str_type> & grp) {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst

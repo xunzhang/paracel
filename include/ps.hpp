@@ -183,8 +183,8 @@ class paralg {
     return paralg::paracel_load(fn, parser, pattern, mix_flag);	
   }
 
-  template <class T>
-  void paracel_load_as_graph(paracel::digraph<> & grp,
+  template <class T, class G>
+  void paracel_load_as_graph(paracel::digraph<G> & grp,
                              const T & fn, 
                              parser_type & parser,
                              const paracel::str_type & pattern = "fmap",
@@ -202,7 +202,7 @@ class paralg {
 
   template <class T, class G>
   void paracel_load_as_graph(paracel::bigraph<G> & grp,
-                             const T & fn, 
+                             const T & fn,
                              parser_type & parser,
                              const paracel::str_type & pattern = "fmap",
                              bool mix_flag = false) {
@@ -221,7 +221,7 @@ class paralg {
   void paracel_load_as_graph(paracel::bigraph_continuous & grp,
                              paracel::dict_type<int, int> & row_map,
                              paracel::dict_type<int, int> & col_map,
-                             const T & fn, 
+                             const T & fn,
                              parser_type & parser,
                              const paracel::str_type & pattern = "fmap",
                              bool mix_flag = false) {

@@ -41,12 +41,7 @@ public:
 
   scheduler(paracel::Comm comm, 
             std::string pt, 
-            bool flag) : 
-      mix(flag), 
-      pattern(pt), 
-      m_comm(comm) { 
-    dim_init(); 
-  }
+            bool flag) : mix(flag), pattern(pt), m_comm(comm) { dim_init(); }
   
   void dim_init();
    

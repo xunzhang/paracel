@@ -152,6 +152,8 @@ PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<double> >, MPI_DOUBLE);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<unsigned> >, MPI_UNSIGNED);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<unsigned long> >, MPI_UNSIGNED_LONG);
 
+using default_id_type = uint64_t;
+
 using str_type = std::string;
 
 using hash_return_type = size_t;
@@ -185,6 +187,8 @@ template <class F = std::string, class S = std::string>
 using triple_type = std::tuple<F, S, double>;
 */
 using triple_type = std::tuple<std::string, std::string, double>;
+
+using compact_triple_type = std::tuple<uint64_t, uint64_t, double>;
 
 template <class T = std::string>
 using set_type = std::set<T>;
@@ -225,6 +229,16 @@ class bag_type {
       c.push_back(cc[i]);
     }
   }
+  bag_type(const bag_type & bag) {
+    for(auto & item : bag) {
+      c.push_back(item);
+    }
+  }
+  bag_type & operator=(const bag_type & bag) {
+    for(auto & item : bag) {
+      c.push_back(item);
+    }
+  }
   typedef typename std::vector<T>::iterator iterator;
   typedef typename std::vector<T>::const_iterator const_iterator;
   iterator begin() { return c.begin(); }
@@ -239,6 +253,9 @@ class bag_type {
   bag_type get() {
     bag_type<T> bg(c);
     return bg;
+  }
+  std::vector<T> get_vec() {
+    return c;
   }
   template <class F>
   void traverse(F & func) {
