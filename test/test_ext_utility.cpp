@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
   }
   {
     std::cout << "-----------" << std::endl;
-    std::string aa = "pushPARACELkeyPARACELabcsadsABCDrv";
+    std::string aa = "pushPARACELkeyPARACELabcsadsABCDrvPARACEL";
     auto v = paracel::str_split_by_word(aa, "PARACEL");
     for(auto & val : v) std::cout << val << std::endl;
   }

@@ -30,7 +30,7 @@ extern "C" {
 }
 
 bool filter_ubias(const std::string & key) {
-  string s = "usr_bias[";
+  string s = "usr_bias_";
   if(paracel::startswith(key, s)) {
     return true;
   }
@@ -38,7 +38,7 @@ bool filter_ubias(const std::string & key) {
 }
 
 bool filter_ibias(const std::string & key) {
-  string s = "item_bias[";
+  string s = "item_bias_";
   if(paracel::startswith(key, s)) {
     return true;
   }
@@ -46,7 +46,7 @@ bool filter_ibias(const std::string & key) {
 }
 
 bool filter_W(const std::string & key) {
-  string s = "W[";
+  string s = "W_";
   if(paracel::startswith(key, s)) {
     return true;
   }
@@ -54,7 +54,7 @@ bool filter_W(const std::string & key) {
 }
 
 bool filter_H(const std::string & key) {
-  string s = "H[";
+  string s = "H_";
   if(paracel::startswith(key, s)) {
     return true;
   }

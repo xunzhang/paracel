@@ -2,17 +2,17 @@
 cmake_minimum_required(VERSION 2.8.9)
 ##############################--g++4.7-plus--###################################
 if(EXISTS "gentoo_rules.cmake")
-  find_program(CXX NAMES g++-4.8 g++-4.7.2 g++-4.7.1 g++-4.7 g++)
+  find_program(CXX NAMES g++-4.8.1 g++-4.8 g++-4.7.2 g++-4.7.1 g++-4.7 g++)
   execute_process(COMMAND sed -i 
-	"s|CMAKE_CXX_COMPILER [^ ]*|CMAKE_CXX_COMPILER ${CXX}|g" 
-	"gentoo_rules.cmake")
-  find_program(CC NAMES gcc-4.8 gcc-4.7.2 gcc-4.7.1 gcc-4.7 gcc)
+                  "s|CMAKE_CXX_COMPILER [^ ]*|CMAKE_CXX_COMPILER ${CXX}|g" 
+                  "gentoo_rules.cmake")
+  find_program(CC NAMES gcc-4.8.1 gcc-4.8 gcc-4.7.2 gcc-4.7.1 gcc-4.7 gcc)
   execute_process(COMMAND sed -i 
-	"s|CMAKE_C_COMPILER [^ ]*|CMAKE_C_COMPILER ${CC}|g"
-	"gentoo_rules.cmake")
+                  "s|CMAKE_C_COMPILER [^ ]*|CMAKE_C_COMPILER ${CC}|g"
+                  "gentoo_rules.cmake")
 else()
-  find_program(CMAKE_CXX_COMPILER NAMES g++-4.8 g++-4.7.2 g++-4.7.1 g++-4.7 g++)
-  find_program(CMAKE_C_COMPILER NAMES gcc-4.8 gcc-4.7.2 gcc-4.7.1 gcc-4.7 gcc)
+  find_program(CMAKE_CXX_COMPILER NAMES g++-4.8.1 g++-4.8 g++-4.7.2 g++-4.7.1 g++-4.7 g++)
+  find_program(CMAKE_C_COMPILER NAMES gcc-4.8.1 gcc-4.8 gcc-4.7.2 gcc-4.7.1 gcc-4.7 gcc)
 endif()
 ################################################################################
 project(paracel CXX C)
@@ -21,6 +21,8 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -O2")
   set(CMAKE_CXX_FLAGS_DEBUG "-Wall -std=c++11 -O0 -g -fno-inline")
   set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3 -march=native -ffast-math")
+#set(CMAKE_SHARED_LINKER_FLAGS "-static-libstdc++")
+#set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES RELEASE)
@@ -34,14 +36,9 @@ include_directories(${MPI_CXX_INCLUDE_PATH})
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILER_FLAGS})
 set(CMAKE_LINK_FLAGS ${CMAKE_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
-set(BOOST_ROOT "/usr")
-#set(BOOST_ROOT "/mfs/user/wuhong/.local")
-set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost 1.55.0 COMPONENTS filesystem system)
-if(Boost_FOUND)
-  include_directories(${Boost_INCLUDE_DIRS})
-endif()
+find_package(Boost 1.55.0 REQUIRED COMPONENTS coroutine regex filesystem system)
+include_directories(${Boost_INCLUDE_DIRS})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmakes")
 find_package(Eigen REQUIRED)
@@ -53,14 +50,13 @@ include_directories(${MsgpackC_INCLUDE_DIR})
 find_package(ZeroMQ REQUIRED)
 include_directories(${ZermMQ_INCLUDE_DIR})
 
-set(COROUTINE_VAR "${BOOST_ROOT}/lib/libboost_coroutine.so")
-link_libraries(${COROUTINE_VAR} ${GFlags_LIBRARIES} ${MsgpackC_LIBRARIES} ${ZeroMQ_LIBRARIES} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
+link_libraries(${Boost_LIBRARIES} ${GFlags_LIBRARIES} ${MsgpackC_LIBRARIES}
+               ${ZeroMQ_LIBRARIES} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
 ##############################--make-output--###################################
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
-set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/local")
 ############################--install-path--####################################
-install(PROGRAMS prun.py DESTINATION "${PROJECT_SOURCE_DIR}/local/bin")
+install(PROGRAMS prun.py DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
 ################################################################################
 add_subdirectory(src)
 add_subdirectory(alg/word_count)
@@ -73,4 +69,8 @@ add_subdirectory(alg/pagerank)
 add_subdirectory(alg/clustering)
 add_subdirectory(alg/hostname)
 add_subdirectory(alg/max_vertex_value)
+add_subdirectory(alg/perf_vs_mpi)
+add_subdirectory(alg/cos_sim_sparse)
+add_subdirectory(alg/decision_tree_rec)
+add_subdirectory(alg/tiny_url)
 ################################################################################

@@ -19,6 +19,8 @@
 #include <ctime>
 #include <random>
 #include <string>
+#include <queue>
+#include <fstream>
 
 #include <zmq.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -166,18 +168,20 @@ std::vector<double> evec2vec(const Eigen::VectorXd & ev) {
 }
 
 // Eigen::MatrixXd only support column-major
+// return col seq
 std::vector<double> mat2vec(const Eigen::MatrixXd & m) {
   std::vector<double> v(m.size());
   Eigen::Map<Eigen::MatrixXd>(v.data(), m.rows(), m.cols()) = m;
   return v;
 }
 
+// return row seq
 Eigen::MatrixXd vec2mat(const std::vector<double> & v,
                         size_t rows) {
   size_t cols = v.size() / rows;
-  Eigen::MatrixXd m(rows, cols);
-  m = Eigen::MatrixXd::Map(&v[0], rows, cols);
-  return m;
+  Eigen::MatrixXd m(cols, rows);
+  m = Eigen::MatrixXd::Map(&v[0], cols, rows);
+  return m.transpose();
 }
 
 template <class F>
@@ -195,6 +199,56 @@ void traverse_vector(Eigen::SparseVector<double> & v, F & func) {
   for(Eigen::SparseVector<double>::InnerIterator it(v); it; ++it) {
     func(it.index(), it.value());
   }
+}
+
+template <class K, class V>
+struct heap_node {
+  heap_node(K id, V v) {
+    val = std::pair<K, V>(id, v);
+  }
+  std::pair<K, V> val;
+};
+
+void cheat_to_os() {
+  std::vector<int> var(100000000);
+}
+
+template <class T>
+size_t ring_bsearch(std::vector<T> data, T key) {
+  if(key < data[0] || key > data[data.size()-1]) { return 0; }
+  size_t s = 0, e = data.size() - 1;
+  size_t m;
+  while(s <= e) {
+    m =  s + (e - s) / 2;
+    if(data[m] < key) {
+      s = m + 1;
+    } else if(data[m] > key) {
+      e = m - 1;
+    } else {
+      return m;
+    }
+  }
+  return data[m] < key ? m + 1 : m;
+}
+
+template <class T, class F>
+std::vector<T> tail(const std::string & filename, 
+                    int k,
+                    F & func) {
+  std::vector<T> result, buffer;
+  buffer.resize(k);
+  int cur = 0;
+  std::ifstream f(filename);
+  std::string line;
+  while(std::getline(f, line)) {
+    if(cur == k) { cur = 0; }
+    buffer[cur] = func(line);
+    cur += 1;
+  }
+  f.close();
+  for(int i = cur; i < k; ++i) { result.push_back(buffer[i]); }
+  for(int i = 0; i < cur; ++i) { result.push_back(buffer[i]); }
+  return result;
 }
 
 } // namespace paracel

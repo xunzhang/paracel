@@ -7,7 +7,6 @@ target_link_libraries(mf_filter ${CMAKE_DL_LIBS})
 install(TARGETS mf_filter LIBRARY DESTINATION lib)
 
 add_executable(mf mf_driver.cpp)
-
 target_link_libraries(mf 
   ${Boost_LIBRARIES} 
   comm scheduler)

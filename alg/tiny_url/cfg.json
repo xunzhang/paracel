@@ -1,0 +1,5 @@
+{
+  "input_original_URLs" : "/mfs/user/wuhong/paracel/data/tinyURL/original_urls",
+  "input_short_URLs" : "/mfs/user/wuhong/paracel/data/tinyURL/short_urls",
+  "output" : "/mfs/user/wuhong/paracel/data/tinyURL_result/"
+}

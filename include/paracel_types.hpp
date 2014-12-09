@@ -41,9 +41,9 @@ const int threads_num = 5;
 
 const size_t split_sz = 500;
 
-const std::string seperator = "PARACEL";
+const std::string seperator = "_PARACEL_";
 
-const std::string seperator_inner = "paracel";
+const std::string seperator_inner = "_ps_";
 
 const std::string default_so_file = "../src/default.so";
 
@@ -132,6 +132,7 @@ PARACEL_REGISTER_COMM_BUILTIN(float, MPI_FLOAT);
 PARACEL_REGISTER_COMM_BUILTIN(double, MPI_DOUBLE);
 PARACEL_REGISTER_COMM_BUILTIN(unsigned, MPI_UNSIGNED);
 PARACEL_REGISTER_COMM_BUILTIN(unsigned long, MPI_UNSIGNED_LONG);
+PARACEL_REGISTER_COMM_BUILTIN(unsigned long long, MPI_UNSIGNED_LONG_LONG);
 
 // tricky definition
 PARACEL_REGISTER_COMM_CONTAINER(std::string, MPI_CHAR);
@@ -142,6 +143,7 @@ PARACEL_REGISTER_COMM_CONTAINER(std::vector<float>, MPI_FLOAT);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<double>, MPI_DOUBLE);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<unsigned>, MPI_UNSIGNED);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector<unsigned long>, MPI_UNSIGNED_LONG);
+PARACEL_REGISTER_COMM_CONTAINER(std::vector<unsigned long long>, MPI_UNSIGNED_LONG_LONG);
 
 // for alltoall usage
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<int> >, MPI_INT);
@@ -151,6 +153,10 @@ PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<float> >, MPI_FLOAT);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<double> >, MPI_DOUBLE);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<unsigned> >, MPI_UNSIGNED);
 PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<unsigned long> >, MPI_UNSIGNED_LONG);
+PARACEL_REGISTER_COMM_CONTAINER(std::vector< std::vector<unsigned long long> >, MPI_UNSIGNED_LONG_LONG);
+
+//using default_id_type = unsigned long long;
+using default_id_type = uint64_t;
 
 using str_type = std::string;
 
@@ -168,6 +174,7 @@ using deque_type = std::deque<T>;
 template <class T>
 using hash_type = std::hash<T>;
 */
+
 template <class T>
 using hash_type = douban::hash<T>;
 
@@ -184,6 +191,8 @@ template <class F = std::string, class S = std::string>
 using triple_type = std::tuple<F, S, double>;
 */
 using triple_type = std::tuple<std::string, std::string, double>;
+
+using compact_triple_type = std::tuple<uint64_t, uint64_t, double>;
 
 template <class T = std::string>
 using set_type = std::set<T>;
@@ -213,6 +222,54 @@ template<class T>
 using kernel_type = typename std::remove_cv<
 			typename std::remove_reference<T>::type
 			>::type;
+
+template <class T>
+class bag_type {  
+ public:
+  bag_type() {}
+  bag_type(std::vector<T> cc) {
+    c.resize(0);
+    for(size_t i = 0; i < cc.size(); ++i) {
+      c.push_back(cc[i]);
+    }
+  }
+  bag_type(const bag_type & bag) {
+    for(auto & item : bag) {
+      c.push_back(item);
+    }
+  }
+  bag_type & operator=(const bag_type & bag) {
+    for(auto & item : bag) {
+      c.push_back(item);
+    }
+  }
+  typedef typename std::vector<T>::iterator iterator;
+  typedef typename std::vector<T>::const_iterator const_iterator;
+  iterator begin() { return c.begin(); }
+  const_iterator begin() const { return c.begin(); }
+  const_iterator cbegin() const { return c.cbegin(); }
+  iterator end() { return c.end(); }
+  const_iterator end() const {return c.end();}
+  const_iterator cend() const {return c.cend();}
+  void put(const T & item) { c.push_back(item); }
+  inline bool is_empty() { return c.size() == 0; }
+  inline size_t size() { return c.size(); }
+  bag_type get() {
+    bag_type<T> bg(c);
+    return bg;
+  }
+  std::vector<T> get_vec() {
+    return c;
+  }
+  template <class F>
+  void traverse(F & func) {
+    for(size_t i = 0; i < c.size(); ++i) {
+      func(c[i]);
+    }
+  }
+ private:
+  std::vector<T> c;
+}; // class bag_type
 
 } // namespace paracel
 

@@ -34,7 +34,11 @@ using parser_type = std::function<paracel::list_type<paracel::str_type>(paracel:
 using var_ret_type = boost::variant<paracel::list_type<paracel::str_type>, bool>;
 
 typedef Eigen::Triplet<double> eigen_triple;
-
+  
+void cheat_to_os_local() {
+  paracel::list_type<int> var(100000000);
+}
+  
 template <class T = paracel::str_type>
 class loader {
 
@@ -77,7 +81,7 @@ class loader {
     return linelst;
   }
 
-  // fmap case
+  // fmap case only
   void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
                      Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
                      paracel::dict_type<size_t, paracel::str_type> & rm, 
@@ -144,39 +148,110 @@ class loader {
     }
   }
 
-  // fmap case
-  void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-                    paracel::bigraph<paracel::str_type> & grp,
-                    paracel::dict_type<size_t, int> & dm,
-                    paracel::dict_type<size_t, int> & col_dm) {
+  void create_graph(paracel::list_type<paracel::str_type> & linelst,
+                    paracel::digraph<paracel::default_id_type> & grp) {
+    paracel::scheduler scheduler(m_comm, pattern, mix);
+    paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
+    scheduler.lines_organize(linelst, parserfunc, result);
+    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    paracel::list_type<paracel::compact_triple_type> stf;
+    scheduler.exchange(result, stf);
+    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    m_comm.sync();
+    for(auto & tpl : stf) {
+      grp.add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
+    }
+    stf.resize(0); stf.shrink_to_fit(); cheat_to_os_local();
+  }
+
+  void create_graph(paracel::list_type<paracel::str_type> & linelst,
+                    paracel::digraph<paracel::str_type> & grp) {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst
     auto result = scheduler.lines_organize(linelst, parserfunc);
+    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     // alltoall exchange
     auto stf = scheduler.exchange(result);
+    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
-    // mapping inds to ids, get rmap, cmap, std_new...
-    paracel::list_type<std::tuple<size_t, size_t, double> > stf_new;
-    paracel::dict_type<size_t, paracel::str_type> rm, cm;
-    scheduler.index_mapping(stf, stf_new, rm, cm, dm, col_dm);
-    std::cout << "procs " << m_comm.get_rank() << " index mapping" << std::endl;
-    paracel::dict_type<paracel::str_type, 
-        paracel::dict_type<paracel::str_type, double> > dct;
-    for(auto & tpl : stf_new) {
-      dct[rm[std::get<0>(tpl)]][cm[std::get<1>(tpl)]] = std::get<2>(tpl);  
+    paracel::dict_type<paracel::str_type, paracel::dict_type<paracel::str_type, double> > dct;
+    for(auto & tpl : stf) {
+      dct[std::get<0>(tpl)][std::get<1>(tpl)] = std::get<2>(tpl);  
+    }
+    grp.construct_from_dict(dct);
+  }
+  
+  void create_graph(paracel::list_type<paracel::str_type> & linelst,
+                    paracel::bigraph<paracel::default_id_type> & grp) {
+    paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
+    // hash lines into slotslst
+    paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
+    scheduler.lines_organize(linelst, parserfunc, result);
+    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    // alltoall exchange
+    paracel::list_type<paracel::compact_triple_type> stf;
+    scheduler.exchange(result, stf);
+    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
+    m_comm.sync();
+    for(auto & tpl : stf) {
+      grp.add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
+    }
+    stf.resize(0); stf.shrink_to_fit(); cheat_to_os_local();
+  }
+
+  void create_graph(paracel::list_type<paracel::str_type> & linelst,
+                    paracel::bigraph<paracel::str_type> & grp) {
+    paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
+    // hash lines into slotslst
+    auto result = scheduler.lines_organize(linelst, parserfunc);
+    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    // alltoall exchange
+    auto stf = scheduler.exchange(result);
+    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
+    m_comm.sync();
+    paracel::dict_type<paracel::str_type, paracel::dict_type<paracel::str_type, double> > dct;
+    for(auto & tpl : stf) { 
+      dct[std::get<0>(tpl)][std::get<1>(tpl)] = std::get<2>(tpl); 
     }
     grp.construct_from_dict(dct);
   }
 
-  // simple fmap case, fsmap case
-  void create_graph(const paracel::list_type<paracel::str_type> & linelst,
-                    paracel::bigraph<paracel::str_type> & grp) {
-    paracel::dict_type<size_t, int> dm;
-    paracel::dict_type<size_t, int> col_dm;
-    create_graph(linelst, grp, dm, col_dm);
+  void create_graph(paracel::list_type<paracel::str_type> & linelst,
+                    paracel::bigraph_continuous & grp,
+                    paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & rm,
+                    paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & cm) {
+    paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
+    // hash lines into slotslst
+    paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
+    scheduler.lines_organize(linelst, parserfunc, result);
+    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    // alltoall exchange
+    paracel::list_type<paracel::compact_triple_type> stf;
+    scheduler.exchange(result, stf);
+    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
+    m_comm.sync();
+    paracel::list_type<paracel::compact_triple_type> stf_new;
+    scheduler.index_mapping(stf, stf_new, rm, cm);
+    stf.resize(0); stf.shrink_to_fit(); cheat_to_os_local();
+    m_comm.sync();
+    for(auto & tpl : stf_new) {
+      grp.add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl)); 
+    } 
+    stf_new.resize(0); stf_new.shrink_to_fit(); cheat_to_os_local();
   }
 
  private:

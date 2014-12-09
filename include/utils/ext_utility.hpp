@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include <numeric>
+#include <boost/algorithm/string/regex.hpp>
 #include "paracel_types.hpp"
 
 namespace paracel {
@@ -81,6 +82,21 @@ slst_type str_split(paracel::str_type && str, const paracel::str_type & seps) {
 
 slst_type str_split_by_word(const paracel::str_type & str, const paracel::str_type & seps) {
   slst_type result;
+  boost::algorithm::split_regex(result, str, boost::regex(seps));
+  if(result[result.size() - 1] == "") result.pop_back();
+  return result;
+}
+
+slst_type str_split_by_word(paracel::str_type && str, const paracel::str_type & seps) {
+  slst_type result;
+  boost::algorithm::split_regex(result, std::move(str), boost::regex(seps));
+  if(result[result.size() - 1] == "") result.pop_back();
+  return result;
+}
+
+/*
+slst_type str_split_by_word(const paracel::str_type & str, const paracel::str_type & seps) {
+  slst_type result;
   auto last = str.begin();
   auto i = str.begin();
   for(; i != str.end(); ++i) {
@@ -110,6 +126,8 @@ slst_type str_split_by_word(paracel::str_type && str, const paracel::str_type & 
   }
   return result;
 }
+*/
+
 
 paracel::str_type str_join(const slst_type & strlst, const paracel::str_type & seps) {
   paracel::str_type r;

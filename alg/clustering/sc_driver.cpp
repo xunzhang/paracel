@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
   solver.solve();
   solver.dump_result();
   */
-  paracel::spectral_clustering solver(comm, FLAGS_server_info, input, output, false, rounds, 0);
-  solver.init();
+  paracel::spectral_clustering solver(comm, FLAGS_server_info, input, output, k, false, rounds, 0);
+  solver.solve();
   return 0;
 }

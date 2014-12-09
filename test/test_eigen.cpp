@@ -1,3 +1,4 @@
+#include <time.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -47,6 +48,7 @@ int main(int argc, char *argv[])
   
   std::cout << "---" << std::endl;
   
+  srand( (unsigned)time(NULL) );
   Eigen::Matrix3d mm = Eigen::Matrix3d::Random();
   std::cout << "Here is the matrix m:" << std::endl << mm << std::endl;
   std::cout << "Here is the sum of each column:" << std::endl << mm.colwise().sum() << std::endl;
@@ -92,5 +94,6 @@ int main(int argc, char *argv[])
 
   std::cout << "---" << std::endl;
   std::cout << mmat.row(1).sum() << std::endl;
+  std::cout << "---" << std::endl;
   return 0;
 }

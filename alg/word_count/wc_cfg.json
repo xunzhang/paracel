@@ -1,6 +1,5 @@
 {
-  "input" : "/mfs/user/wuhong/paracel/data/cbr_result/*",
+  "input" : "/mfs/user/wuhong/paracel/data/word_count/*.txt",
   "output" : "/mfs/user/wuhong/paracel/data/tmp4/",
-  "topk" : 20,
-  "limit_s" : 0
+  "topk" : 5
 }

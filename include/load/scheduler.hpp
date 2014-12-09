@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <mutex>
 #include <functional>
+#include <time.h>
 #include "paracel_types.hpp"
 #include "utils/comm.hpp"
 #include "utils/decomp.hpp"
@@ -40,12 +41,7 @@ public:
 
   scheduler(paracel::Comm comm, 
             std::string pt, 
-            bool flag) : 
-      mix(flag), 
-      pattern(pt), 
-      m_comm(comm) { 
-    dim_init(); 
-  }
+            bool flag) : mix(flag), pattern(pt), m_comm(comm) { dim_init(); }
   
   void dim_init();
    
@@ -72,6 +68,45 @@ public:
   inline size_t select(A & i) const {
     paracel::hash_type<A> hf;
     return hf(i) % npx;
+  }
+
+  template <class F>
+  void lines_organize(const paracel::list_type<paracel::str_type> & lines,
+                      F && parser_func,
+                      paracel::list_type<paracel::list_type<paracel::compact_triple_type> > & line_slot_lst) {
+    line_slot_lst.resize(m_comm.get_size());
+    paracel::str_type delimiter("[:| ]*");
+    for(auto & line : lines) {
+      auto stf = parser_func(line);
+      if(stf.size() == 2) {
+        auto tmp = paracel::str_split(stf[1], delimiter);
+        if(tmp.size() == 1) {
+          paracel::compact_triple_type tpl(std::stoull(stf[0]), std::stoull(stf[1]), 1.);
+          line_slot_lst[h(stf[0], stf[1], npx, npy)].push_back(tpl);
+        } else {
+          paracel::compact_triple_type tpl(std::stoull(stf[0]), std::stoull(tmp[0]), std::stod(tmp[1]));
+          line_slot_lst[h(stf[0], tmp[0], npx, npy)].push_back(tpl);
+        }
+      } else if(mix) {
+        for(size_t i = 1; i < stf.size(); ++i) {
+          auto item = stf[i];
+          auto tmp = paracel::str_split(item, delimiter);
+          if(tmp.size() == 1) {
+            paracel::compact_triple_type tpl(std::stoull(stf[0]), std::stoull(item), 1.);
+            line_slot_lst[h(stf[0], item, npx, npy)].push_back(tpl);
+          } else {
+            paracel::compact_triple_type tpl(std::stoull(stf[0]), std::stoull(tmp[0]), std::stod(tmp[1]));
+            line_slot_lst[h(stf[0], tmp[0], npx, npy)].push_back(tpl);
+          }
+        }
+      } else {
+        if(stf.size() != 3) {
+          throw std::runtime_error("Paracel error in lines_organize: fmt of input files not supported"); 
+        }
+        paracel::compact_triple_type tpl(std::stoull(stf[0]), std::stoull(stf[1]), std::stod(stf[2]));
+	      line_slot_lst[h(stf[0], stf[1], npx, npy)].push_back(tpl);
+      }
+    } // for
   }
 
   template <class F = std::function< paracel::list_type<paracel::str_type>(paracel::str_type) > >
@@ -118,6 +153,17 @@ public:
       } // end of if
     } // end of for
     return line_slot_lst;
+  }
+
+  void exchange(paracel::list_type<paracel::list_type<paracel::compact_triple_type> > & line_slot_lst,
+                paracel::list_type<paracel::compact_triple_type> & stf) {
+    paracel::list_type<paracel::list_type<paracel::compact_triple_type> > recv_lsl;
+    m_comm.alltoall(line_slot_lst, recv_lsl);
+    for(auto & lst : recv_lsl) {
+      for(auto & tpl : lst) {
+        stf.push_back(tpl);
+      }
+    }
   }
 
   lt_type exchange(llt_type & line_slot_lst) {
@@ -187,7 +233,12 @@ public:
       std::get<2>(tmp) = std::get<2>(tpl);
       stf.push_back(tmp);
     }
-
+    rev_rm.clear();
+    rev_cm.clear();
+    
+    /*
+    clock_t tt;
+    tt = clock();
     if (pattern == "fmap") {
       // cal dm
       // little tricky: default stl map sort is equal to stl set
@@ -197,7 +248,7 @@ public:
         dm[indx] = item;
         indx += 1;
       }
-    
+
       // cal col_dm
       paracel::dict_type<size_t, int> reduce_map;
       for(auto & tpl : stf) {
@@ -208,7 +259,7 @@ public:
           reduce_map[key] += 1;
         }
       }
-    
+
       auto union_func3 = [&] (paracel::dict_type<size_t, int> tmp) {
         for(auto & kv : tmp) {
           auto key = kv.first;
@@ -222,6 +273,58 @@ public:
       };
       m_comm.bcastring(reduce_map, union_func3);
     } // end of if 
+    */
+
+  } // index_mapping
+  
+  void index_mapping(const paracel::list_type<paracel::compact_triple_type> & slotslst, 
+      paracel::list_type<paracel::compact_triple_type> & stf,
+      paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & rm,
+      paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & cm) {
+    
+    int rk = m_comm.get_rank();
+    int rowcolor = rk / npy;
+    int colcolor = rk % npy;
+    auto col_comm = m_comm.split(colcolor);
+    auto row_comm = m_comm.split(rowcolor);
+    paracel::list_type<int> rows, cols;
+    for(auto & tpl : slotslst) {
+      rows.push_back(std::get<0>(tpl));
+      cols.push_back(std::get<1>(tpl));
+    }
+    paracel::set_type<int> new_rows, new_cols;
+    auto union_func1 = [&] (paracel::list_type<int> tmp) {
+      for(auto & item : tmp) { 
+        new_rows.insert(item); 
+      }
+    };
+    auto union_func2 = [&] (paracel::list_type<int> tmp) {
+      for(auto & item : tmp) { 
+        new_cols.insert(item); 
+      }
+    };
+    row_comm.bcastring(rows, union_func1);
+    col_comm.bcastring(cols, union_func2);
+    paracel::dict_type<paracel::default_id_type, paracel::default_id_type> rev_rm, rev_cm;
+    paracel::default_id_type indx = 0;
+    for(auto & item : new_rows) {
+      rm[indx] = item;
+      rev_rm[item] = indx;
+      indx += 1;
+    }
+    indx = 0;
+    for(auto & item : new_cols) {
+      cm[indx] = item;
+      rev_cm[item] = indx;
+      indx += 1;
+    }
+    for(auto & tpl : slotslst) {
+      std::tuple<paracel::default_id_type, paracel::default_id_type, double> tmp;
+      std::get<0>(tmp) = rev_rm[std::get<0>(tpl)];
+      std::get<1>(tmp) = rev_cm[std::get<1>(tpl)];
+      std::get<2>(tmp) = std::get<2>(tpl);
+      stf.push_back(tmp);
+    }
   } // index_mapping
   
 private:
@@ -239,7 +342,7 @@ private:
   paracel::Comm m_comm;
   int npx;
   int npy;
-};
+}; // class scheduler
 
 } // namespace parael
 #endif

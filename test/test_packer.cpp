@@ -41,6 +41,25 @@ int main(int argc, char *argv[])
     std::cout << r << std::endl;
   }
   {
+    std::cout << "***************************" << std::endl;
+    paracel::packer<int> obj(54);
+    std::string s;
+    obj.pack(s);
+    std::cout << s << std::endl;
+    auto r = obj.unpack(s);
+    std::cout << r << std::endl;
+    std::cout << "***************************" << std::endl;
+  }
+  {
+    std::cout << "***************************" << std::endl;
+    paracel::packer<int> obj(51);
+    msgpack::sbuffer s;
+    obj.pack(s);
+    auto r = obj.unpack(s);
+    std::cout << r << std::endl;
+    std::cout << "***************************" << std::endl;
+  }
+  {
     paracel::list_type<paracel::str_type> target = {"hello", "world"};
     paracel::packer<paracel::list_type<paracel::str_type> > obj(target);
     msgpack::sbuffer s;
@@ -228,17 +247,17 @@ int main(int argc, char *argv[])
     tpls.emplace_back(std::make_tuple(2, 3, 1.));
     tpls.emplace_back(std::make_tuple(3, 1, 3.));
     tpls.emplace_back(std::make_tuple(3, 3, 1.));
-    paracel::bigraph<size_t> bgrp(tpls);
+    paracel::digraph<size_t> bgrp(tpls);
     std::cout << bgrp.v() << std::endl;
     std::cout << bgrp.e() << std::endl;
     std::cout << bgrp.avg_degree() << std::endl;
     auto kk = bgrp.adjacent(0);
     std::cout << "cao" << kk.size() << std::endl;
 
-    paracel::packer<paracel::bigraph<size_t> > obj(bgrp);
+    paracel::packer<paracel::digraph<size_t> > obj(bgrp);
     std::string s;
     obj.pack(s);
-    paracel::bigraph<size_t> r = obj.unpack(s);
+    paracel::digraph<size_t> r = obj.unpack(s);
     std::cout << r.v() << std::endl;
     std::cout << r.e() << std::endl;
     std::cout << r.avg_degree() << std::endl;

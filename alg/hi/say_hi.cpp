@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
   paracel::hi hi_solver(comm, FLAGS_server_info, input, output, para);
   //hi_solver.solve();
   hi_solver.opt();
+  hi_solver.test();
   
   return 0;
 }

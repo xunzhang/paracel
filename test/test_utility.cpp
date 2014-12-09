@@ -11,6 +11,13 @@ int main(int agrc, char *argv[])
     std::cout << "---------------" << std::endl;
   }
   {
+    auto result = paracel::expand("/mfs/alg/tmp/jasontmp/user_music_factor_model/user_track_rating_for_training/00*");
+    for(auto & item : result) {
+      std::cout << item << std::endl;
+    }
+    std::cout << "---------------" << std::endl;
+  }
+  {
     auto result = paracel::expand("/home/xunzhang/xunzhang/Proj/paracel/test/");
     for(auto & item : result)
       std::cout << item << std::endl;
