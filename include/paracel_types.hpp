@@ -15,6 +15,7 @@
 #ifndef FILE_149f02d6_0fec_56ac_97f4_a30cea847471_HPP
 #define FILE_149f02d6_0fec_56ac_97f4_a30cea847471_HPP
 
+#include <cstdint>
 #include <vector>
 #include <map>
 #include <unordered_map>

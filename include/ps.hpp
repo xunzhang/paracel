@@ -238,12 +238,10 @@ class paralg {
     lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
 
-  template <class T>
+  template <class T, class G>
   void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
-                              paracel::dict_type<size_t, paracel::str_type> & row_map,
-                              paracel::dict_type<size_t, paracel::str_type> & col_map,
-                              paracel::dict_type<size_t, int> & degree_map,
-                              paracel::dict_type<size_t, int> & col_degree_map,
+                              paracel::dict_type<paracel::default_id_type, G> & row_map,
+                              paracel::dict_type<paracel::default_id_type, G> & col_map,
                               const T & fn, 
                               parser_type & parser,
                               const paracel::str_type & pattern = "fsmap",
@@ -251,39 +249,24 @@ class paralg {
     // TODO: check pattern
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
-    paracel::list_type<paracel::str_type> lines = ld.load();
+    paracel::list_type<paracel::str_type> lines = ld.fixload();
     sync();
     // create sparse matrix
-    ld.create_matrix(lines, blk_mtx, row_map, col_map, degree_map, col_degree_map);
+    ld.create_matrix(lines, blk_mtx, row_map, col_map);
     set_decomp_info(pattern);
     lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
   
-  template <class T>
+  template <class T, class G>
   void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
-                              paracel::dict_type<size_t, paracel::str_type> & row_map,
+                              paracel::dict_type<paracel::default_id_type, G> & row_map,
                               const T & fn, 
                               parser_type & parser,
                               const paracel::str_type & pattern = "fsmap",
                               bool mix_flag = false) {
-    paracel::dict_type<size_t, paracel::str_type> col_map;
-    paracel::dict_type<size_t, int> degree_map, col_degree_map;
+    paracel::dict_type<paracel::default_id_type, G> col_map;
     paralg::paracel_load_as_matrix(blk_mtx, 
-                                   row_map, col_map, degree_map, col_degree_map, 
-                                   fn, parser, pattern, mix_flag);
-  }
-
-  template <class T>
-  void paracel_load_as_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
-                              paracel::dict_type<size_t, paracel::str_type> & row_map,
-                              paracel::dict_type<size_t, paracel::str_type> & col_map,
-                              const T & fn, 
-                              parser_type & parser,
-                              const paracel::str_type & pattern = "fsmap",
-                              bool mix_flag = false) {
-    paracel::dict_type<size_t, int> degree_map, col_degree_map;
-    paralg::paracel_load_as_matrix(blk_mtx, 
-                                   row_map, col_map, degree_map, col_degree_map, 
+                                   row_map, col_map, 
                                    fn, parser, pattern, mix_flag);
   }
 
@@ -294,14 +277,13 @@ class paralg {
                               parser_type & parser,
                               const paracel::str_type & pattern = "fsmap",
                               bool mix_flag = false) {
-    return paralg::paracel_load_as_matrix(blk_mtx, 
-                                          rm, cm, dm, col_dm, 
+    return paralg::paracel_load_as_matrix(blk_mtx, rm, cm,
                                           fn, parser, pattern, mix_flag);
   }
 
-  template <class T>
+  template <class T, class G>
   void paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
-                              paracel::dict_type<size_t, paracel::str_type> & row_map,
+                              paracel::dict_type<paracel::default_id_type, G> & row_map,
                               const T & fn, 
                               parser_type & parser,
                               const paracel::str_type & pattern = "fsmap",
@@ -911,10 +893,10 @@ class paralg {
   int limit_s = 0;
   bool ssp_switch = false;
   parasrv *ps_obj;
-  paracel::dict_type<size_t, paracel::str_type> rm;
-  paracel::dict_type<size_t, paracel::str_type> cm;
-  paracel::dict_type<size_t, int> dm;
-  paracel::dict_type<size_t, int> col_dm;
+  paracel::dict_type<paracel::default_id_type, paracel::default_id_type> rm;
+  paracel::dict_type<paracel::default_id_type, paracel::default_id_type> cm;
+  paracel::dict_type<paracel::default_id_type, paracel::default_id_type> dm;
+  paracel::dict_type<paracel::default_id_type, paracel::default_id_type> col_dm;
   paracel::dict_type<paracel::str_type, paracel::str_type> keymap;
   paracel::dict_type<paracel::str_type, boost::any> cached_para;
   paracel::update_result update_f;

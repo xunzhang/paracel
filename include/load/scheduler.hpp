@@ -15,6 +15,7 @@
 #ifndef FILE_8199e926_217a_8205_0832_1df88970b15d_HPP
 #define FILE_8199e926_217a_8205_0832_1df88970b15d_HPP
 
+#include <cstdint>
 #include <cstdlib>
 #include <mutex>
 #include <functional>
@@ -88,7 +89,7 @@ public:
           line_slot_lst[h(stf[0], tmp[0], npx, npy)].push_back(tpl);
         }
       } else if(mix) {
-        for(size_t i = 1; i < stf.size(); ++i) {
+        for(paracel::default_id_type i = 1; i < stf.size(); ++i) {
           auto item = stf[i];
           auto tmp = paracel::str_split(item, delimiter);
           if(tmp.size() == 1) {
@@ -132,7 +133,7 @@ public:
         // fset case
 	      // ['a', 'b', 'c'] or ['a', 'b|0.2', 'c|0.4']
         // but ['a', '0.2', '0.4'] is not supported here
-        for(size_t i = 1; i < stf.size(); ++i) {
+        for(paracel::default_id_type i = 1; i < stf.size(); ++i) {
 	        auto item = stf[i];
 	        auto tmp = paracel::str_split(item, delimiter);
 	        if(tmp.size() == 1) {
@@ -180,11 +181,9 @@ public:
  
   // dm and col_dm only support fmap
   void index_mapping(const lt_type & slotslst, 
-      paracel::list_type<std::tuple<size_t, size_t, double> > & stf, 
-      paracel::dict_type<size_t, paracel::str_type> & rm,
-      paracel::dict_type<size_t, paracel::str_type> & cm,
-      paracel::dict_type<size_t, int> & dm,
-      paracel::dict_type<size_t, int> & col_dm) {
+      paracel::list_type<paracel::compact_triple_type> & stf, 
+      paracel::dict_type<paracel::default_id_type, paracel::str_type> & rm,
+      paracel::dict_type<paracel::default_id_type, paracel::str_type> & cm) {
     
     int rk = m_comm.get_rank();
     int rowcolor = rk / npy;
@@ -212,8 +211,8 @@ public:
     row_comm.bcastring(rows, union_func1);
     col_comm.bcastring(cols, union_func2);
     
-    paracel::dict_type<paracel::str_type, size_t> rev_rm, rev_cm;
-    size_t indx = 0;
+    paracel::dict_type<paracel::str_type, paracel::default_id_type> rev_rm, rev_cm;
+    paracel::default_id_type indx = 0;
     for(auto & item : new_rows) {
       rm[indx] = item;
       rev_rm[item] = indx;
@@ -227,7 +226,7 @@ public:
     }
 
     for(auto & tpl : slotslst) {
-      std::tuple<size_t, size_t, double> tmp;
+      paracel::compact_triple_type tmp;
       std::get<0>(tmp) = rev_rm[std::get<0>(tpl)];
       std::get<1>(tmp) = rev_cm[std::get<1>(tpl)];
       std::get<2>(tmp) = std::get<2>(tpl);
@@ -250,7 +249,7 @@ public:
       }
 
       // cal col_dm
-      paracel::dict_type<size_t, int> reduce_map;
+      paracel::dict_type<paracel::default_id_type, paracel::default_id_type> reduce_map;
       for(auto & tpl : stf) {
         auto key = std::get<1>(tpl);
         if(reduce_map.find(key) == reduce_map.end()) {
@@ -260,7 +259,7 @@ public:
         }
       }
 
-      auto union_func3 = [&] (paracel::dict_type<size_t, int> tmp) {
+      auto union_func3 = [&] (paracel::dict_type<paracel::default_id_type, int> tmp) {
         for(auto & kv : tmp) {
           auto key = kv.first;
 	        auto val = kv.second;
@@ -319,7 +318,7 @@ public:
       indx += 1;
     }
     for(auto & tpl : slotslst) {
-      std::tuple<paracel::default_id_type, paracel::default_id_type, double> tmp;
+      paracel::compact_triple_type tmp;
       std::get<0>(tmp) = rev_rm[std::get<0>(tpl)];
       std::get<1>(tmp) = rev_cm[std::get<1>(tpl)];
       std::get<2>(tmp) = std::get<2>(tpl);

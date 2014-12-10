@@ -82,25 +82,51 @@ class loader {
   }
 
   // fmap case only
-  void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
+  void create_matrix(paracel::list_type<paracel::str_type> & linelst,
                      Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
-                     paracel::dict_type<size_t, paracel::str_type> & rm, 
-                     paracel::dict_type<size_t, paracel::str_type> & cm,
-                     paracel::dict_type<size_t, int> & dm,
-                     paracel::dict_type<size_t, int> & col_dm) {
+                     paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & rm,
+                     paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & cm) {
+    paracel::scheduler scheduler(m_comm, pattern, mix);
+    paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
+    scheduler.lines_organize(linelst, parserfunc, result);
+    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
+    m_comm.sync();
+    paracel::list_type<paracel::compact_triple_type> stf, stf_new;
+    scheduler.exchange(result, stf);
+    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
+    m_comm.sync();
+    scheduler.index_mapping(stf, stf_new, rm, cm);
+    std::cout << "procs " << m_comm.get_rank() << " index mapping" << std::endl;
+    paracel::list_type<eigen_triple> nonzero_tpls;
+    for(auto & tpl : stf_new) {
+      nonzero_tpls.push_back(eigen_triple(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl)));
+    }
+    blk_mtx.resize(rm.size(), cm.size());
+    blk_mtx.setFromTriplets(nonzero_tpls.begin(), nonzero_tpls.end());
+  }
+
+  // simple fmap case, fsmap case
+  void create_matrix(paracel::list_type<paracel::str_type> & linelst,
+                     Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
+                     paracel::dict_type<paracel::default_id_type, paracel::str_type> & rm, 
+                     paracel::dict_type<paracel::default_id_type, paracel::str_type> & cm) {
 
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst
     auto result = scheduler.lines_organize(linelst, parserfunc);
+    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     // alltoall exchange
     auto stf = scheduler.exchange(result);
+    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
     // mapping inds to ids, get rmap, cmap, std_new...
-    paracel::list_type<std::tuple<size_t, size_t, double> > stf_new;
-    scheduler.index_mapping(stf, stf_new, rm, cm, dm, col_dm);
+    paracel::list_type<paracel::compact_triple_type> stf_new;
+    scheduler.index_mapping(stf, stf_new, rm, cm);
     std::cout << "procs " << m_comm.get_rank() << " index mapping" << std::endl;
     // create block sparse matrix
     paracel::list_type<eigen_triple> nonzero_tpls;
@@ -111,23 +137,39 @@ class loader {
     blk_mtx.setFromTriplets(nonzero_tpls.begin(), nonzero_tpls.end());
   }
 
-  // simple fmap case, fsmap case
-  void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
-                     Eigen::SparseMatrix<double, Eigen::RowMajor> & blk_mtx,
-                     paracel::dict_type<size_t, paracel::str_type> & rm,
-                     paracel::dict_type<size_t, paracel::str_type> & cm) {
-    paracel::dict_type<size_t, int> dm;
-    paracel::dict_type<size_t, int> col_dm;
-    create_matrix(linelst, blk_mtx, rm, cm, dm, col_dm);
+  // fvec case, only support row decopposition
+  void create_matrix(paracel::list_type<paracel::str_type> & linelst,
+                     Eigen::MatrixXd & blk_dense_mtx,
+                     paracel::dict_type<paracel::default_id_type, paracel::default_id_type> & rm) {
+    int csz = 0;
+    paracel::default_id_type indx = 0;
+    bool flag = true;
+    paracel::list_type<Eigen::VectorXd> mtx_llst;
+    for(auto & line : linelst) {
+      auto stf = parserfunc(line);
+      if(flag) { csz = stf.size() - 1; flag = true; }
+      rm[indx] = std::stoull(stf[0]);
+      indx += 1;
+      Eigen::VectorXd tmp(csz);
+      for(int i = 0; i < csz; ++i) {
+        tmp[i] = std::stod(stf[i + 1]);
+      }
+      mtx_llst.push_back(tmp);
+    } 
+    // create dense block matrix
+    blk_dense_mtx.resize(rm.size(), csz);
+    for(paracel::default_id_type i = 0; i < rm.size(); ++i) {
+      blk_dense_mtx.row(i) = mtx_llst[i];
+    }
   }
 
   // fvec case, only support row decomposition
-  void create_matrix(const paracel::list_type<paracel::str_type> & linelst,
+  void create_matrix(paracel::list_type<paracel::str_type> & linelst,
                      Eigen::MatrixXd & blk_dense_mtx,
-                     paracel::dict_type<size_t, paracel::str_type> & rm) {
+                     paracel::dict_type<paracel::default_id_type, paracel::str_type> & rm) {
 
     int csz = 0;
-    size_t indx = 0;
+    paracel::default_id_type indx = 0;
     bool flag = true;
     paracel::list_type<Eigen::VectorXd> mtx_llst;
     for(auto & line : linelst) {
@@ -143,7 +185,7 @@ class loader {
     } 
     // create dense block matrix
     blk_dense_mtx.resize(rm.size(), csz);
-    for(size_t i = 0; i < rm.size(); ++i) {
+    for(paracel::default_id_type i = 0; i < rm.size(); ++i) {
       blk_dense_mtx.row(i) = mtx_llst[i];
     }
   }
