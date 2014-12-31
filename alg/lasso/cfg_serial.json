@@ -1,0 +1,6 @@
+{
+  "input" : "/mfs/user/wuhong/paracel/data/regression/train_000.csv",
+  "output" : "/mfs/user/wuhong/paracel/data/lasso_result/",
+  "lambda" : 0.00001,
+  "rounds" : 3000
+}
