@@ -12,14 +12,17 @@
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_8199e926_217a_8205_0832_1df88970b15d_HPP
 #define FILE_8199e926_217a_8205_0832_1df88970b15d_HPP
+
+#include <time.h>
 
 #include <cstdint>
 #include <cstdlib>
 #include <mutex>
 #include <functional>
-#include <time.h>
+
 #include "paracel_types.hpp"
 #include "utils/comm.hpp"
 #include "utils/decomp.hpp"
@@ -343,5 +346,6 @@ private:
   int npy;
 }; // class scheduler
 
-} // namespace parael
+} // namespace paracel
+
 #endif

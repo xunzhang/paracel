@@ -21,6 +21,7 @@
 #include <string>
 #include <queue>
 #include <fstream>
+#include <stdexcept>
 
 #include <zmq.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -252,5 +253,9 @@ std::vector<T> tail(const std::string & filename,
 }
 
 } // namespace paracel
+
+#define ERROR_PRINT(ERR, INFO) {  \
+  std::cerr << __FILE__ << ":" << __LINE__ << " - " << info << ERR.what() << '\n';  \
+}  \
 
 #endif

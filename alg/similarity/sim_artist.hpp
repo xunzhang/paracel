@@ -114,7 +114,7 @@ public:
 	  local_parser(other_item_vects, linelst);
 	  local_learning(other_item_vects);
     };
-	paracel_sequential_loadall(input, handler);
+	paracel_loadall_handle(input, handler);
 	select_top();
 	std::cout << "learning done" << std::endl;
   }

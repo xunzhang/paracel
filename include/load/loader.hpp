@@ -24,6 +24,7 @@
 
 #include "paracel_types.hpp"
 #include "graph.hpp"
+#include "utils.hpp"
 #include "load/scheduler.hpp"
 #include "load/partition.hpp"
 
@@ -89,12 +90,12 @@ class loader {
     paracel::scheduler scheduler(m_comm, pattern, mix);
     paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
     scheduler.lines_organize(linelst, parserfunc, result);
-    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    linelst.resize(0); linelst.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     paracel::list_type<paracel::compact_triple_type> stf, stf_new;
     scheduler.exchange(result, stf);
-    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    result.resize(0); result.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
     scheduler.index_mapping(stf, stf_new, rm, cm);
@@ -116,12 +117,12 @@ class loader {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst
     auto result = scheduler.lines_organize(linelst, parserfunc);
-    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    linelst.resize(0); linelst.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     // alltoall exchange
     auto stf = scheduler.exchange(result);
-    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    result.resize(0); result.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
     // mapping inds to ids, get rmap, cmap, std_new...
@@ -195,17 +196,17 @@ class loader {
     paracel::scheduler scheduler(m_comm, pattern, mix);
     paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
     scheduler.lines_organize(linelst, parserfunc, result);
-    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    linelst.resize(0); linelst.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     paracel::list_type<paracel::compact_triple_type> stf;
     scheduler.exchange(result, stf);
-    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    result.resize(0); result.shrink_to_fit(); paracel::cheat_to_os();
     m_comm.sync();
     for(auto & tpl : stf) {
       grp.add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
     }
-    stf.resize(0); stf.shrink_to_fit(); cheat_to_os_local();
+    stf.resize(0); stf.shrink_to_fit(); paracel::cheat_to_os();
   }
 
   void create_graph(paracel::list_type<paracel::str_type> & linelst,
@@ -213,12 +214,12 @@ class loader {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst
     auto result = scheduler.lines_organize(linelst, parserfunc);
-    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    linelst.resize(0); linelst.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     // alltoall exchange
     auto stf = scheduler.exchange(result);
-    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    result.resize(0); result.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
     paracel::dict_type<paracel::str_type, paracel::dict_type<paracel::str_type, double> > dct;
@@ -234,19 +235,19 @@ class loader {
     // hash lines into slotslst
     paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
     scheduler.lines_organize(linelst, parserfunc, result);
-    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    linelst.resize(0); linelst.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     // alltoall exchange
     paracel::list_type<paracel::compact_triple_type> stf;
     scheduler.exchange(result, stf);
-    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    result.resize(0); result.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
     for(auto & tpl : stf) {
       grp.add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
     }
-    stf.resize(0); stf.shrink_to_fit(); cheat_to_os_local();
+    stf.resize(0); stf.shrink_to_fit(); paracel::cheat_to_os();
   }
 
   void create_graph(paracel::list_type<paracel::str_type> & linelst,
@@ -254,12 +255,12 @@ class loader {
     paracel::scheduler scheduler(m_comm, pattern, mix); // TODO
     // hash lines into slotslst
     auto result = scheduler.lines_organize(linelst, parserfunc);
-    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    linelst.resize(0); linelst.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     // alltoall exchange
     auto stf = scheduler.exchange(result);
-    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    result.resize(0); result.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
     paracel::dict_type<paracel::str_type, paracel::dict_type<paracel::str_type, double> > dct;
@@ -277,23 +278,23 @@ class loader {
     // hash lines into slotslst
     paracel::list_type<paracel::list_type<paracel::compact_triple_type> > result;
     scheduler.lines_organize(linelst, parserfunc, result);
-    linelst.resize(0); linelst.shrink_to_fit(); cheat_to_os_local();
+    linelst.resize(0); linelst.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " slotslst generated" << std::endl;
     m_comm.sync();
     // alltoall exchange
     paracel::list_type<paracel::compact_triple_type> stf;
     scheduler.exchange(result, stf);
-    result.resize(0); result.shrink_to_fit(); cheat_to_os_local();
+    result.resize(0); result.shrink_to_fit(); paracel::cheat_to_os();
     std::cout << "procs " << m_comm.get_rank() << " get desirable lines" << std::endl;
     m_comm.sync();
     paracel::list_type<paracel::compact_triple_type> stf_new;
     scheduler.index_mapping(stf, stf_new, rm, cm);
-    stf.resize(0); stf.shrink_to_fit(); cheat_to_os_local();
+    stf.resize(0); stf.shrink_to_fit(); paracel::cheat_to_os();
     m_comm.sync();
     for(auto & tpl : stf_new) {
       grp.add_edge(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl)); 
     } 
-    stf_new.resize(0); stf_new.shrink_to_fit(); cheat_to_os_local();
+    stf_new.resize(0); stf_new.shrink_to_fit(); paracel::cheat_to_os();
   }
 
  private:

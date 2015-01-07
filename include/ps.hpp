@@ -146,7 +146,7 @@ class paralg {
   }
 
   template <class T, class F>
-  void paracel_sequential_loadall(const T & fn, F & func) {
+  void paracel_loadall_handle(const T & fn, F & func) {
     auto fname_lst = paracel::expand(fn);
     auto loads = paracel::files_partition(fname_lst, get_worker_size(), "linesplit");
     // sequential_load
@@ -405,10 +405,12 @@ class paralg {
   }
 
   template<class V>
-  bool paracel_read_multi(const paracel::list_type<paracel::str_type> & keys,
-                          paracel::list_type<V> & vals) {
+  paracel::list_type<V>
+  paracel_read_multi(const paracel::list_type<paracel::str_type> & keys) {
+    paracel::list_type<V> vals;
     if(ssp_switch) {
       // TODO
+      return vals;
     }
     paracel::dict_type<paracel::str_type, size_t> indx_map;
     paracel::list_type<paracel::list_type<paracel::str_type> > lst_lst(ps_obj->srv_sz);
@@ -423,7 +425,7 @@ class paralg {
         vals[indx_map[lst_lst[k][i]]] = lst[i];
       }
     }
-    return true;
+    return vals;
   }
 
   // TODO

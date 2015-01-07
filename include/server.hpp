@@ -461,35 +461,51 @@ void init_thrds(const paracel::str_type & init_host, const paracel::str_type & i
   sock.connect(info.c_str());
 
   char hostname[1024], freeport[1024]; size_t size = sizeof(freeport);
+  
   // parameter server's hostname
   gethostname(hostname, sizeof(hostname));
   paracel::str_type ports = hostname;
   ports += ":";
+  
   // create sock in every thrd
-  zmq::socket_t sock_t0(context, ZMQ_REP);
-  sock_t0.bind("tcp://*:*");
-  sock_t0.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  ports += local_parse_port(std::move(paracel::str_type(freeport))) + ",";
+  std::vector<zmq::socket_t*> sock_pt_lst;
 
-  zmq::socket_t sock_t1(context, ZMQ_REP);
-  sock_t1.bind("tcp://*:*");
-  sock_t1.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  ports += local_parse_port(paracel::str_type(freeport)) + ",";
+  for(int i = 0; i < paracel::threads_num; ++i) {
+    zmq::socket_t *tmp = new zmq::socket_t(context, ZMQ_REP);
+    sock_pt_lst.push_back(tmp);
+    sock_pt_lst.back()->bind("tcp://*:*");
+    sock_pt_lst.back()->getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
+    if(i == paracel::threads_num - 1) {
+      ports += local_parse_port(paracel::str_type(freeport));
+    } else {
+      ports += local_parse_port(std::move(paracel::str_type(freeport))) + ",";
+    }
+  }
+  
+  //zmq::socket_t sock_t0(context, ZMQ_REP);
+  //sock_t0.bind("tcp://*:*");
+  //sock_t0.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
+  //ports += local_parse_port(std::move(paracel::str_type(freeport))) + ",";
 
-  zmq::socket_t sock_t2(context, ZMQ_PULL);
-  sock_t2.bind("tcp://*:*");
-  sock_t2.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  ports += local_parse_port(paracel::str_type(freeport)) + ",";
+  //zmq::socket_t sock_t1(context, ZMQ_REP);
+  //sock_t1.bind("tcp://*:*");
+  //sock_t1.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
+  //ports += local_parse_port(paracel::str_type(freeport)) + ",";
 
-  zmq::socket_t sock_t3(context, ZMQ_REP);
-  sock_t3.bind("tcp://*:*");
-  sock_t3.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  ports += local_parse_port(paracel::str_type(freeport)) + ",";
+  //zmq::socket_t sock_t2(context, ZMQ_PULL);
+  //sock_t2.bind("tcp://*:*");
+  //sock_t2.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
+  //ports += local_parse_port(paracel::str_type(freeport)) + ",";
 
-  zmq::socket_t sock_t4(context, ZMQ_REP);
-  sock_t4.bind("tcp://*:*");
-  sock_t4.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  ports += local_parse_port(paracel::str_type(freeport));
+  //zmq::socket_t sock_t3(context, ZMQ_REP);
+  //sock_t3.bind("tcp://*:*");
+  //sock_t3.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
+  //ports += local_parse_port(paracel::str_type(freeport)) + ",";
+
+  //zmq::socket_t sock_t4(context, ZMQ_REP);
+  //sock_t4.bind("tcp://*:*");
+  //sock_t4.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
+  //ports += local_parse_port(paracel::str_type(freeport));
 
   zmq::message_t request(ports.size()); 
   std::memcpy((void *)request.data(), &ports[0], ports.size());
@@ -499,21 +515,25 @@ void init_thrds(const paracel::str_type & init_host, const paracel::str_type & i
   sock.recv(&reply);
 
   paracel::list_type<std::thread> threads;
-  threads.push_back(std::thread(thrd_exec, std::ref(sock_t0)));
-  threads.push_back(std::thread(thrd_exec, std::ref(sock_t1)));
-  threads.push_back(std::thread(thrd_exec, std::ref(sock_t2)));
-  threads.push_back(std::thread(thrd_exec, std::ref(sock_t3)));
-  threads.push_back(std::thread(thrd_exec_ssp, std::ref(sock_t4)));
-  /*
-     threads.push_back(std::thread(thrd_exec, std::move(sock_t0)));
-     threads.push_back(std::thread(thrd_exec, std::move(sock_t1)));
-     threads.push_back(std::thread(thrd_exec, std::move(sock_t2)));
-     threads.push_back(std::thread(thrd_exec, std::move(sock_t3)));
-     */
+  for(int i = 0; i < paracel::threads_num - 1; ++i) {
+    threads.push_back(std::thread(thrd_exec, std::ref(*sock_pt_lst[i])));
+  }
+  threads.push_back(std::thread(thrd_exec_ssp, std::ref(*sock_pt_lst.back())));
+  
+  //threads.push_back(std::thread(thrd_exec, std::ref(sock_t0)));
+  //threads.push_back(std::thread(thrd_exec, std::ref(sock_t1)));
+  //threads.push_back(std::thread(thrd_exec, std::ref(sock_t2)));
+  //threads.push_back(std::thread(thrd_exec, std::ref(sock_t3)));
+  //threads.push_back(std::thread(thrd_exec_ssp, std::ref(sock_t4)));
+  
   for(auto & thrd : threads) {
     thrd.join();
   }
+  for(int i = 0; i < paracel::threads_num; ++i) {
+    delete sock_pt_lst[i];
+  }
   zmq_ctx_destroy(context);
+  //delete
 }
 
 } // namespace paracel
