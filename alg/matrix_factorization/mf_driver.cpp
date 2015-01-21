@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
   int rounds = pt.parse<int>("rounds");
   int limit_s = pt.parse<int>("limit_s");
   
-  paracel::matrix_factorization mf_solver(comm, FLAGS_server_info, input, output, "ipm", k, rounds, alpha, beta, false, limit_s, true);
+  paracel::matrix_factorization mf_solver(comm, FLAGS_server_info, input, output, "ipm", k, rounds, alpha, beta, false, limit_s, false);
   mf_solver.solve();
   std::cout << mf_solver.cal_rmse() << std::endl;
   mf_solver.dump_result();

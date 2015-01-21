@@ -5,7 +5,7 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: 
  *   Hong Wu <xunzhangthu@gmail.com>
@@ -13,11 +13,6 @@
  *
  */
 
-/**
- * a simple version, just for paracel usage
- * full version is implemented at Douban by Changsheng Jiang
- *
- */
 #include "utils/comm.hpp"
 
 namespace paracel {

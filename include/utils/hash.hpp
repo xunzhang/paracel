@@ -7,30 +7,29 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors
  *   Changsheng Jiang <jiangzuoyan@gmail.com>
  *   Hong Wu <xunzhangthu@gmail.com>
  *
  */
-#ifndef FILE_45bb1820_07f5_4c07_8163_35d6870a4475_H
-#define FILE_45bb1820_07f5_4c07_8163_35d6870a4475_H
-#include <utility>
-#include <functional>
-#include <sys/types.h>
 
-#include <cstdint>
+#ifndef FILE_45bb1820_07f5_4c07_8163_35d6870a4475_HPP
+#define FILE_45bb1820_07f5_4c07_8163_35d6870a4475_HPP
+
+#include <sys/types.h>
 #include <endian.h>
 
+#include <cstdint>
+#include <utility>
+#include <functional>
 #include <vector>
 #include <string>
 #include <sstream>
-namespace douban {
-/**
- * @addtogroup utility
- * @{
- */
+
+namespace paracel {
+namespace utils {
 
 template <class T>
 struct hash {
@@ -42,7 +41,7 @@ struct hash {
 struct meta_hash {
   template <class T>
   size_t operator()(const T &t) const {
-    return douban::hash<T>()(t);
+    return utils::hash<T>()(t);
   }
 };
 
@@ -57,9 +56,8 @@ inline uint64_t hash_value_combine(const uint64_t x, const uint64_t y) {
 }
 
 /**
- * Compute hash of @p v with seed @p seed.
+ * Compute hash of v with seed.
  *
- * @return computed hash value
  */
 template <class T>
 inline size_t hash_combine(size_t seed, const T& v) {
@@ -90,43 +88,7 @@ struct hash< std::pair<L, R> > {
   }
 };
 
-size_t hash_bytes(const void * ptr, size_t len, size_t seed);
+} // namespace utils
+} // namespace paracel 
 
-#if __WORDSIZE == 64
-#define FNV1_INIT ((uint64_t)0xcbf29ce484222325ULL)
-#define FNV1A_INIT ((uint64_t)0xcbf29ce484222325ULL)
-#else
-#define FNV1_INIT ((uint32_t)0x811c9dc5)
-#define FNV1A_INIT ((uint32_t)0x811c9dc5)
-#endif
-
-size_t fnv_hash_bytes(const void * ptr, size_t len, size_t seed);
-uint32_t fnv_hash_bytes_32(const void * ptr, size_t len, uint32_t seed);
-uint64_t fnv_hash_bytes_64(const void * ptr, size_t len, uint64_t seed);
-
-size_t spooky_hash_bytes(const void * ptr, size_t len, size_t seed);
-uint32_t spooky_hash_bytes_32(const void *ptr, size_t len, uint32_t seed);
-uint64_t spooky_hash_bytes_64(const void *ptr, size_t len, uint64_t seed);
-void spooky_hash_bytes_128(const void *ptr, size_t len,
-                           uint64_t *in_seed_out_hash0,
-                           uint64_t *in_seed_out_hash1);
-
-uint64_t city_hash_bytes_64(const void * ptr, size_t len);
-uint64_t city_hash_bytes_64(const void * ptr, size_t len, uint64_t seed);
-uint64_t city_hash_bytes_64(const void *ptr, size_t len, uint64_t seed0, uint64_t seed1);
-void city_hash_bytes_128_noseed(const void *ptr, size_t len, uint64_t *h0, uint64_t *h1);
-void city_hash_bytes_128(const void *ptr, size_t len,
-                         uint64_t *in_seed_out_hash0,
-                         uint64_t *in_seed_out_hash1);
-
-inline size_t city_hash_bytes(const void * ptr, size_t len, size_t seed) {
-  return city_hash_bytes_64(ptr, len, seed);
-}
-
-inline size_t city_hash_bytes(const void * ptr, size_t len) {
-  return city_hash_bytes_64(ptr, len);
-}
-
-/** @} */
-} // namespace douban
 #endif

@@ -7,34 +7,37 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_3abacbd9_27ff_b19b_e2a0_88e092dbc44b_HPP 
 #define FILE_3abacbd9_27ff_b19b_e2a0_88e092dbc44b_HPP
 
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <thread>
 #include <mutex>
 #include <functional>
 
 #include <zmq.hpp>
 
-#include "paracel_types.hpp"
 #include "utils.hpp"
 #include "packer.hpp"
 #include "kv_def.hpp"
 #include "proxy.hpp"
+#include "paracel_types.hpp"
 
 namespace paracel {
 
 std::mutex mutex;
 
 using update_result = paracel::update_result;
+
 using filter_result = paracel::filter_result;
 
 static paracel::str_type local_parse_port(paracel::str_type && s) {
@@ -75,8 +78,7 @@ void kv_filter4remove(const paracel::dict_type<paracel::str_type, paracel::str_t
     auto key = kv.first;
     auto exist = paracel::tbl_store.get(key, v);
     if(!exist) {
-      std::cerr << "kv_filter4remove: " << key << " is not exist." << '\n';
-      abort();
+      ERROR_ABORT("key does not exist");
     }
     if(filter_func(key, v)) {
       paracel::tbl_store.del(key);
@@ -90,8 +92,6 @@ void kv_update(const paracel::str_type & key,
   paracel::str_type val;
   auto exist = paracel::tbl_store.get(key, val);
   if(!exist) {
-    //std::cerr << "kv_update: " << key << " is not exist." << '\n';
-    //abort();
     paracel::tbl_store.set(key, v_or_delta);
     return;
   }
@@ -101,21 +101,26 @@ void kv_update(const paracel::str_type & key,
 
 // thread entry for ssp 
 void thrd_exec_ssp(zmq::socket_t & sock) {
+  
   paracel::packer<> pk;
   paracel::ssp_tbl.set("server_clock", 0);
+  
   while(1) {
+    
     zmq::message_t s;
     sock.recv(&s);
     auto scrip = paracel::str_type(static_cast<const char *>(s.data()), s.size());
     auto msg = paracel::str_split_by_word(scrip, paracel::seperator);
     auto indicator = pk.unpack(msg[0]);
     //std::cout << indicator << std::endl;
+    
     if(indicator == "push_int") {
       auto key = pk.unpack(msg[1]);
       paracel::packer<int> pk_i;
       auto val = pk_i.unpack(msg[2]);
       paracel::ssp_tbl.set(key, val);
-      bool result = true; rep_pack_send(sock, result);
+      bool result = true;
+      rep_pack_send(sock, result);
     }
     if(indicator == "incr_int") {
       auto key = pk.unpack(msg[1]);
@@ -133,24 +138,27 @@ void thrd_exec_ssp(zmq::socket_t & sock) {
       paracel::packer<int> pk_i;
       int delta = pk_i.unpack(msg[2]);
       paracel::ssp_tbl.incr(key, delta);
-      bool result = true; rep_pack_send(sock, result);
+      bool result = true;
+      rep_pack_send(sock, result);
     }
     if(indicator == "pull_int") {
       auto key = pk.unpack(msg[1]);
       int result = 0;
-      paracel::ssp_tbl.get(key, result);
+      auto exist = paracel::ssp_tbl.get(key, result);
+      if(!exist) {
+        paracel::str_type tmp = "nokey";
+        rep_send(sock, tmp);
+      }
       rep_pack_send(sock, result);
     }
-  }
+  
+  } // while
 }
 
 // thread entry
 void thrd_exec(zmq::socket_t & sock) {
 
   paracel::packer<> pk;
-  //void *update_handler; 
-  //void *pullall_special_handler;
-  //void *remove_special_handler;
   update_result update_f;
   filter_result pullall_special_f;
   filter_result remove_special_f;
@@ -210,6 +218,7 @@ void thrd_exec(zmq::socket_t & sock) {
     auto msg = paracel::str_split_by_word(scrip, paracel::seperator);
     auto indicator = pk.unpack(msg[0]);
     //std::cout << indicator << std::endl;
+    
     mutex.lock();
     if(indicator == "contains") {
       auto key = pk.unpack(msg[1]);
@@ -221,12 +230,11 @@ void thrd_exec(zmq::socket_t & sock) {
       paracel::str_type result;
       auto exist = paracel::tbl_store.get(key, result);
       if(!exist) {
-        std::cerr << "while: " << key << " is not exist." << '\n';
-        abort();
+        paracel::str_type tmp = "nokey";
+        rep_send(sock, tmp); 
+      } else {
+        rep_send(sock, result);
       }
-      rep_send(sock, result);
-      //auto result = paracel::tbl_store.get(key);
-      //rep_send(sock, *result);
     }
     if(indicator == "pull_multi") {
       paracel::packer<paracel::list_type<paracel::str_type> > pk_l; 
@@ -244,103 +252,51 @@ void thrd_exec(zmq::socket_t & sock) {
         auto file_name = pk.unpack(msg[1]);
         auto func_name = pk.unpack(msg[2]);
         dlopen_pullall_lambda(file_name, func_name);
-        /*
-           pullall_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
-           if(!pullall_special_handler) {
-           std::cerr << "Cannot open library: " << dlerror() << '\n';
-           return;
-           }
-           auto pullall_special_local = dlsym(pullall_special_handler, func_name.c_str());
-           if(!pullall_special_local) {
-           std::cerr << "Cannot load symbol: " << dlerror() << '\n';
-           dlclose(pullall_special_handler);
-           return;
-           }
-           pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) pullall_special_local;
-           dlclose(pullall_special_handler);
-           */
       } else {
         // work with registered mode
         if(!pullall_special_f) {
-          std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
-          abort();
+          ERROR_ABORT("you must specify a filter for pullall, otherwise you can just use pullall instead");
         }
-        //TODO
+        // TODO
       }
       auto dct = paracel::tbl_store.getall();
       paracel::dict_type<paracel::str_type, paracel::str_type> new_dct;
-      kv_filter4pullall(dct, new_dct, pullall_special_f);
+      kv_filter4pullall(dct, 
+                        new_dct, 
+                        pullall_special_f);
       rep_pack_send(sock, new_dct);
     }
     if(indicator == "register_pullall_special") {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
       dlopen_pullall_lambda(file_name, func_name);
-      /*
-         pullall_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
-         if(!pullall_special_handler) {
-         std::cerr << "Cannot open library: " << dlerror() << '\n';
-         return;
-         }
-         auto pullall_special_local = dlsym(pullall_special_handler, func_name.c_str());
-         if(!pullall_special_local) {
-         std::cerr << "Cannot load symbol: " << dlerror() << '\n';
-         dlclose(pullall_special_handler);
-         return;
-         }
-         pullall_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) pullall_special_local;
-         dlclose(pullall_special_handler);
-         */
-      bool result = true; rep_pack_send(sock, result);
+      bool result = true; 
+      rep_pack_send(sock, result);
     }
     if(indicator == "register_remove_special") {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
       dlopen_remove_lambda(file_name, func_name);
-      /*
-         remove_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
-         if(!remove_special_handler) {
-         std::cerr << "Cannot open library: " << dlerror() << '\n';
-         return;
-         }
-         auto remove_special_local = dlsym(remove_special_handler, func_name.c_str());
-         if(!remove_special_local) {
-         std::cerr << "Cannot load symbol: " << dlerror() << '\n';
-         dlclose(remove_special_handler);
-         return;
-         }
-         remove_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) remove_special_local;
-         dlclose(remove_special_handler);
-         */
-      bool result = true; rep_pack_send(sock, result);
+      bool result = true; 
+      rep_pack_send(sock, result);
     }
-    if(indicator == "register_update" || indicator == "register_bupdate") {
+    if(indicator == "register_update") {
       auto file_name = pk.unpack(msg[1]);
       auto func_name = pk.unpack(msg[2]);
       dlopen_update_lambda(file_name, func_name);
-      /*
-         update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
-         if(!update_handler) {
-         std::cerr << "Cannot open library: " << dlerror() << '\n';
-         return;
-         }
-         auto update_local = dlsym(update_handler, func_name.c_str());
-         if(!update_local) {
-         std::cerr << "Cannot load symbol: " << dlerror() << '\n';
-         dlclose(update_handler);
-         return;
-         }
-         update_f = *(std::function<paracel::str_type(paracel::str_type, paracel::str_type)>*) update_local;
-         dlclose(update_handler);
-         */
-      if(indicator == "register_bupdate") {
-        bool result = true; rep_pack_send(sock, result);
-      }
+    }
+    if(indicator == "register_bupdate") {
+      auto file_name = pk.unpack(msg[1]);
+      auto func_name = pk.unpack(msg[2]);
+      dlopen_update_lambda(file_name, func_name);
+      bool result = true; 
+      rep_pack_send(sock, result);
     }
     if(indicator == "push") {
       auto key = pk.unpack(msg[1]);
       paracel::tbl_store.set(key, msg[2]);
-      bool result = true; rep_pack_send(sock, result);
+      bool result = true;
+      rep_pack_send(sock, result);
     }
     if(indicator == "push_multi") {
       paracel::packer<paracel::list_type<paracel::str_type> > pk_l;
@@ -352,51 +308,22 @@ void thrd_exec(zmq::socket_t & sock) {
         kv_pairs[key_lst[i]] = val_lst[i];
       }
       paracel::tbl_store.set_multi(kv_pairs);
-      bool result = true; rep_pack_send(sock, result);
+      bool result = true;
+      rep_pack_send(sock, result);
     }
     if(indicator == "update" || indicator == "bupdate") {
       if(msg.size() > 3) {
         if(msg.size() != 5) {
-          std::cerr << "Invalid invoke!!" << dlerror() << '\n';
-          abort();
+          ERROR_ABORT("invalid invoke in server end");
         }
         // open request func
         auto file_name = pk.unpack(msg[3]);
         auto func_name = pk.unpack(msg[4]);
         dlopen_update_lambda(file_name, func_name);
-        /*
-           update_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
-           if(!update_handler) {
-           std::cerr << "Cannot open library: " << dlerror() << '\n';
-           return;
-           }
-           auto update_local = dlsym(update_handler, func_name.c_str());
-           if(!update_local) {
-           std::cerr << "Cannot load symbol: " << dlerror() << '\n';
-           dlclose(update_handler);
-           return;
-           }
-           update_f = *(std::function<std::string(paracel::str_type, paracel::str_type)>*) update_local;
-           dlclose(update_handler); // RTLD_NODELETE
-           */
       } else {
         if(!update_f) {
-          dlopen_update_lambda("/mfs/user/wuhong/paracel/lib/default.so", "default_incr_d");
-          /*
-             update_handler = dlopen("/mfs/user/wuhong/paracel/lib/default.so", RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE); 
-             if(!update_handler) {
-             std::cerr << "Cannot open library: " << dlerror() << '\n';
-             return;
-             }
-             auto update_local = dlsym(update_handler, "default_incr_d");
-             if(!update_local) {
-             std::cerr << "Cannot load symbol: " << dlerror() << '\n';
-             dlclose(update_handler);
-             return;
-             }
-             update_f = *(std::function<std::string(paracel::str_type, paracel::str_type)>*) update_local;
-             dlclose(update_handler); // RTLD_NODELETE
-             */
+          dlopen_update_lambda("../local/build/lib/default.so",
+                               "default_incr_i");
         }
       }
       auto key = pk.unpack(msg[1]);
@@ -417,30 +344,15 @@ void thrd_exec(zmq::socket_t & sock) {
         auto file_name = pk.unpack(msg[1]);
         auto func_name = pk.unpack(msg[2]);
         dlopen_remove_lambda(file_name, func_name);
-        /*
-           remove_special_handler = dlopen(file_name.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
-           if(!remove_special_handler) {
-           std::cerr << "Cannot open library: " << dlerror() << '\n';
-           return;
-           }
-           auto remove_special_local = dlsym(remove_special_handler, func_name.c_str());
-           if(!remove_special_local) {
-           std::cerr << "Cannot load symbol: " << dlerror() << '\n';
-           dlclose(remove_special_handler);
-           return;
-           }
-           remove_special_f = *(std::function<bool(paracel::str_type, paracel::str_type)>*) remove_special_local;
-           dlclose(remove_special_handler);
-           */
       } else {
         if(!remove_special_f) {
-          std::cerr << "You must define filter in using this interface" << dlerror() << '\n';
-          abort();
+          ERROR_ABORT("you must define a filter to use remove_special, otherwise you can use remove instead");
         }
       }
       auto dct = paracel::tbl_store.getall();
       kv_filter4remove(dct, remove_special_f);
-      bool result = true; rep_pack_send(sock, result);
+      bool result = true;
+      rep_pack_send(sock, result);
     }
     if(indicator == "clear") { 
       paracel::tbl_store.clean();
@@ -448,30 +360,38 @@ void thrd_exec(zmq::socket_t & sock) {
       rep_pack_send(sock, result);
     }
     mutex.unlock();
-  }
-}
+
+  } // while
+
+} // thrd_exec
 
 // init_host is the hostname of starter
-void init_thrds(const paracel::str_type & init_host, const paracel::str_type & init_port) {
+void init_thrds(const paracel::str_type & init_host, 
+                const paracel::str_type & init_port) {
 
   zmq::context_t context(2);
   zmq::socket_t sock(context, ZMQ_REQ);
-  //paracel::str_type info = "tcp://" + init_host + ":" + paracel::default_port;
+  
   paracel::str_type info = "tcp://" + init_host + ":" + init_port;
   sock.connect(info.c_str());
 
-  char hostname[1024], freeport[1024]; size_t size = sizeof(freeport);
+  char hostname[1024], freeport[1024];
+  size_t size = sizeof(freeport);
   
-  // parameter server's hostname
+  // hostname of servers
   gethostname(hostname, sizeof(hostname));
   paracel::str_type ports = hostname;
   ports += ":";
-  
-  // create sock in every thrd
-  std::vector<zmq::socket_t*> sock_pt_lst;
 
+  // create sock in every thrd
+  std::vector<zmq::socket_t *> sock_pt_lst;
   for(int i = 0; i < paracel::threads_num; ++i) {
-    zmq::socket_t *tmp = new zmq::socket_t(context, ZMQ_REP);
+    zmq::socket_t *tmp;
+    if(i == 2) {
+      tmp = new zmq::socket_t(context, ZMQ_PULL);
+    } else {
+      tmp = new zmq::socket_t(context, ZMQ_REP);
+    }
     sock_pt_lst.push_back(tmp);
     sock_pt_lst.back()->bind("tcp://*:*");
     sock_pt_lst.back()->getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
@@ -481,31 +401,6 @@ void init_thrds(const paracel::str_type & init_host, const paracel::str_type & i
       ports += local_parse_port(std::move(paracel::str_type(freeport))) + ",";
     }
   }
-  
-  //zmq::socket_t sock_t0(context, ZMQ_REP);
-  //sock_t0.bind("tcp://*:*");
-  //sock_t0.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  //ports += local_parse_port(std::move(paracel::str_type(freeport))) + ",";
-
-  //zmq::socket_t sock_t1(context, ZMQ_REP);
-  //sock_t1.bind("tcp://*:*");
-  //sock_t1.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  //ports += local_parse_port(paracel::str_type(freeport)) + ",";
-
-  //zmq::socket_t sock_t2(context, ZMQ_PULL);
-  //sock_t2.bind("tcp://*:*");
-  //sock_t2.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  //ports += local_parse_port(paracel::str_type(freeport)) + ",";
-
-  //zmq::socket_t sock_t3(context, ZMQ_REP);
-  //sock_t3.bind("tcp://*:*");
-  //sock_t3.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  //ports += local_parse_port(paracel::str_type(freeport)) + ",";
-
-  //zmq::socket_t sock_t4(context, ZMQ_REP);
-  //sock_t4.bind("tcp://*:*");
-  //sock_t4.getsockopt(ZMQ_LAST_ENDPOINT, &freeport, &size);
-  //ports += local_parse_port(paracel::str_type(freeport));
 
   zmq::message_t request(ports.size()); 
   std::memcpy((void *)request.data(), &ports[0], ports.size());
@@ -519,22 +414,17 @@ void init_thrds(const paracel::str_type & init_host, const paracel::str_type & i
     threads.push_back(std::thread(thrd_exec, std::ref(*sock_pt_lst[i])));
   }
   threads.push_back(std::thread(thrd_exec_ssp, std::ref(*sock_pt_lst.back())));
-  
-  //threads.push_back(std::thread(thrd_exec, std::ref(sock_t0)));
-  //threads.push_back(std::thread(thrd_exec, std::ref(sock_t1)));
-  //threads.push_back(std::thread(thrd_exec, std::ref(sock_t2)));
-  //threads.push_back(std::thread(thrd_exec, std::ref(sock_t3)));
-  //threads.push_back(std::thread(thrd_exec_ssp, std::ref(sock_t4)));
-  
+
   for(auto & thrd : threads) {
     thrd.join();
   }
+
   for(int i = 0; i < paracel::threads_num; ++i) {
     delete sock_pt_lst[i];
   }
+
   zmq_ctx_destroy(context);
-  //delete
-}
+} // init_thrds
 
 } // namespace paracel
 

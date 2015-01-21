@@ -1,6 +1,6 @@
 #! /usr/bin/env python
-f = file('/mfs/user/wuhong/paracel/data/dtr/netflix_train_compact')
-f_o = file('/mfs/user/wuhong/paracel/data/dtr/netflix_train_compact2', 'w')
+f = file('/mfs/user/wuhong/paracel/data/dtr/fm_train.data_compact')
+f_o = file('/mfs/user/wuhong/paracel/data/dtr/fm_train.data_compact2', 'w')
 cnt = 0
 for line in f:
     cnt += 1

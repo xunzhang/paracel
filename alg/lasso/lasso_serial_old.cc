@@ -43,23 +43,18 @@ class lasso {
   void learning() {
     for(int rd = 0; rd < rounds; ++rd) {
       int j = random_select();
-      int jj = j;
-      bool flag = false;
-      if(j >= kdim) { flag = true; jj -= kdim; }
       double delta = lambda;
       for(int i = 0; i < nsamples; ++i) {
-        if(X[i][jj] != 0) {
-	        double tmp = flag ? -X[i][jj] : X[i][jj];
-          delta += (Z[i] - Y[i]) * tmp;
+        if(X[i][j] != 0) {
+          delta += (Z[i] - Y[i]) * X[i][j];
         }
       }
       delta *= 1. / nsamples;
       double ita = std::max(-W[j], -delta);
       W[j] += ita;
       for(int i = 0; i < nsamples; ++i) {
-        if(X[i][jj] != 0) {
-	        double tmp = flag ? -X[i][jj] : X[i][jj];
-          Z[i] += ita * tmp;
+        if(X[i][j] != 0) {
+          Z[i] += ita * X[i][j];
         }
       }
     } // round loop
@@ -74,17 +69,15 @@ class lasso {
 
   void dump_result() {
     pt->paracel_dump_vector(rW, "lasso_weight_", "|");
-    //pt->paracel_dump_vector(W, "lasso_weight_W_", "|");
   }
 
   void check() {
     double err = 0.;
-    for(int i = 0; i < kdim; ++i) {  
-      std::cout  << W[i] << "|" << W[i+kdim] << std::endl;
-    }
     for(int i = 0; i < nsamples; ++i) {
-      double a = paracel::dot_product(X[i], rW);
-      //std::cout << "predict: " << a << "|" << Y[i] << std::endl;
+      std::vector<double> tmp(X[i].begin(), X[i].begin() + kdim);
+      double a = paracel::dot_product(tmp, rW);
+      //double a = paracel::dot_product(X[i], W);
+      std::cout << "predict: " << a << "|" << Y[i] << std::endl;
       err += (a - Y[i]) * (a - Y[i]);
     }
     std::cout << "total error: " << err << std::endl;
@@ -111,14 +104,16 @@ class lasso {
     }
     kdim = X[0].size();
     nsamples = X.size();
+    for(int i = 0; i < nsamples; ++i) {
+      for(int j = 0; j < kdim; ++j) {
+        X[i].push_back(-X[i][j]);
+      }
+    }
     for(int i = 0; i < 2 * kdim; ++i) {
       W.push_back(0.);
     }
     for(int i = 0; i < nsamples; ++i) {
       Z.push_back(0.);
-    }
-    for(int i = 0; i < kdim; ++i) {
-      rW.push_back(0.);
     }
   }
 
@@ -132,7 +127,8 @@ class lasso {
   int rounds;
   paralg *pt;
   std::vector<std::vector<double> > X;
-  std::vector<double> rW, W, Z, Y;
+  std::vector<double> W, Z, Y;
+  std::vector<double> rW;
   int kdim;
   int nsamples;
 }; // class lasso
@@ -158,5 +154,6 @@ int main(int argc, char *argv[])
   solver.solve();
   solver.dump_result();
   solver.check();
+  
   return 0;
 }

@@ -7,14 +7,17 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #include <string>
 #include <iostream>
+
 #include <google/gflags.h>
+
 #include "utils.hpp"
 
 DEFINE_string(init_port, "7773", "init port");

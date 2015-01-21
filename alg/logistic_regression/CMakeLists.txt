@@ -14,5 +14,8 @@ add_executable(lg lg_driver.cpp)
 target_link_libraries(lg
   ${Boost_LIBRARIES} 
   comm scheduler lg_ssp_method)
-
 install(TARGETS lg RUNTIME DESTINATION bin)
+
+add_executable(lr_l1_serial lr_l1_serial.cpp)
+target_link_libraries(lr_l1_serial ${Boost_LIBRARIES} comm scheduler)
+install(TARGETS lr_l1_serial RUNTIME DESTINATION bin)

@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 udct = {}
 idct = {}
-f = file('/mfs/user/wuhong/paracel/data/netflix/train/train_sorted_fmt')
-f_o = file('/mfs/user/wuhong/paracel/data/dtr/netflix_train_compact', 'w')
+f = file('/mfs/user/wuhong/paracel/data/dtr/fm_train.data')
+f_o = file('/mfs/user/wuhong/paracel/data/dtr/fm_train.data_compact', 'w')
 for line in f:
     uid, iid, rating = line.strip().split(',')
     if uid not in udct:
@@ -13,8 +13,8 @@ for line in f:
 f.close()
 f_o.close()
 
-f_o_ud = file('/mfs/user/wuhong/paracel/data/dtr/netflix_train_compact_udct', 'w')
-f_o_id = file('/mfs/user/wuhong/paracel/data/dtr/netflix_train_compact_idct', 'w')
+f_o_ud = file('/mfs/user/wuhong/paracel/data/dtr/fm_train.data_compact_udct', 'w')
+f_o_id = file('/mfs/user/wuhong/paracel/data/dtr/fm_train.data_compact_idct', 'w')
 for k, v in udct.items():
     f_o_ud.write('%s\t%s\n' % (k, v))
 for k, v in idct.items():

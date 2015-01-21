@@ -7,11 +7,12 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_e91abf0f_fadd_f098_91ba_d9ed64bbee7f_HPP
 #define FILE_e91abf0f_fadd_f098_91ba_d9ed64bbee7f_HPP
 
@@ -23,10 +24,10 @@
 #include <fstream>
 #include <stdexcept>
 
-#include <zmq.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+#include <zmq.hpp>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 
@@ -38,16 +39,23 @@
 
 #include "paracel_types.hpp"
 
+#define ERROR_PRINT(ERR, INFO) {  \
+  std::cerr << __FILE__ << ":" << __LINE__ << " - " << INFO << ERR.what() << '\n';  \
+}  \
+
+#define ERROR_ABORT(INFO) {  \
+  std::cerr << __FILE__ << ":" << __LINE__ << " - " << INFO << '\n';  \
+}  \
+
 namespace paracel {
 
 typedef paracel::dict_type<paracel::str_type, paracel::str_type> local_dict_type;
 
-// talk with init machine, get parameter servers' info
+// talk to initialized machine, get servers' info
 paracel::str_type get_hostnames_string(int srv_num, const paracel::str_type & init_port) {
   paracel::str_type s;
   zmq::context_t context(2);
   zmq::socket_t sock(context, ZMQ_REP);
-  //paracel::str_type info = "tcp://*:" + paracel::default_port;
   paracel::str_type info  = "tcp://*:" + init_port;
   sock.bind(info.c_str());
   for(int i = 0; i < srv_num; ++i) {
@@ -58,7 +66,6 @@ paracel::str_type get_hostnames_string(int srv_num, const paracel::str_type & in
     if(i != srv_num - 1) { 
       s += paracel::seperator; 
     }
-    //std::cout << "client: " << s << std::endl;
     zmq::message_t reply(4);
     std::memcpy((void *)reply.data(), "done", 4);
     sock.send(reply);
@@ -66,7 +73,7 @@ paracel::str_type get_hostnames_string(int srv_num, const paracel::str_type & in
   return s;
 }
 
-// take output from get_hostnames_string as input
+// take output(returned by get_hostnames_string) as input
 paracel::list_type<local_dict_type> 
 get_hostnames_dict(const paracel::str_type & names) {
   paracel::list_type<local_dict_type> dl;
@@ -81,20 +88,16 @@ get_hostnames_dict(const paracel::str_type & names) {
   return dl;
 }
 
-static inline size_t random_size_t(size_t s, size_t e) {
-  std::srand(std::time(0));
-  return s + std::rand() % (e - s + 1);
-}
-
-static bool is_idle_port(size_t port) {
-  return true;
-}
-
 static size_t gen_port() {
+  auto random_size_t = [] (size_t s, size_t e) {
+    std::srand(std::time(0));
+    return s + std::rand() % (e - s + 1);
+  };
+  auto is_idle_port = [] (size_t port) {
+    return true;
+  };
   size_t port = random_size_t(2014, 65535);
-  while(!is_idle_port(port)) {
-    port = random_size_t(2014, 65535);
-  }
+  while(!is_idle_port(port)) port = random_size_t(2014, 65535);
   return port;
 }
 
@@ -106,21 +109,17 @@ paracel::list_type<size_t> get_ports() {
   return ports_lst;
 }
 
-std::string gen_init_port() {
-  size_t p = random_size_t(10000, 30000);
-  return std::to_string(p);
-}
-
 // return a uniform random double value in range(0, 1.)
 inline double random_double() {
-  auto v = random() / (double)RAND_MAX;
+  auto v = random() / static_cast<double>(RAND_MAX);
   while(v == 0 || v == 1.) {
-    v = random() / (double)RAND_MAX;
+    v = random() / static_cast<double>(RAND_MAX);
   }
   return v;
 }
 
-paracel::list_type<double> random_double_list(size_t len, double range = 1.) {
+paracel::list_type<double> 
+random_double_list(size_t len, double range = 1.) {
   paracel::list_type<double> r;
   for(size_t i = 0; i < len; ++i) {
     r.push_back(range * random_double());
@@ -128,7 +127,7 @@ paracel::list_type<double> random_double_list(size_t len, double range = 1.) {
   return r;
 }
 
-struct json_parser{
+struct json_parser {
 private:
   boost::property_tree::ptree *pt;
 public:
@@ -162,14 +161,14 @@ Eigen::VectorXd vec2evec(const std::vector<double> & v) {
   return ev;
 }
 
+// Eigen::VectorXd to std::vector
 std::vector<double> evec2vec(const Eigen::VectorXd & ev) {
   std::vector<double> v(ev.size());
   Eigen::Map<Eigen::VectorXd>(v.data(), ev.size()) = ev;
   return v;
 }
 
-// Eigen::MatrixXd only support column-major
-// return col seq
+// Eigen::MatrixXd only support column-major and return col seq
 std::vector<double> mat2vec(const Eigen::MatrixXd & m) {
   std::vector<double> v(m.size());
   Eigen::Map<Eigen::MatrixXd>(v.data(), m.rows(), m.cols()) = m;
@@ -186,7 +185,8 @@ Eigen::MatrixXd vec2mat(const std::vector<double> & v,
 }
 
 template <class F>
-void traverse_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & m, F & func) {
+void traverse_matrix(Eigen::SparseMatrix<double, Eigen::RowMajor> & m, 
+                     F & func) {
   for(int k = 0; k < m.outerSize(); ++k) {
     for(Eigen::SparseMatrix<double, Eigen::RowMajor>::InnerIterator it(m, k); it; ++it) {
       //func(it.row(), it.col(), it.value());
@@ -216,7 +216,7 @@ void cheat_to_os() {
 
 template <class T>
 size_t ring_bsearch(std::vector<T> data, T key) {
-  if(key < data[0] || key > data[data.size()-1]) { return 0; }
+  if(key < data[0] || key > data[data.size()-1]) return 0;
   size_t s = 0, e = data.size() - 1;
   size_t m;
   while(s <= e) {
@@ -234,28 +234,23 @@ size_t ring_bsearch(std::vector<T> data, T key) {
 
 template <class T, class F>
 std::vector<T> tail(const std::string & filename, 
-                    int k,
-                    F & func) {
+                    int k, F & func) {
   std::vector<T> result, buffer;
   buffer.resize(k);
   int cur = 0;
   std::ifstream f(filename);
   std::string line;
   while(std::getline(f, line)) {
-    if(cur == k) { cur = 0; }
+    if(cur == k) cur = 0;
     buffer[cur] = func(line);
     cur += 1;
   }
   f.close();
-  for(int i = cur; i < k; ++i) { result.push_back(buffer[i]); }
-  for(int i = 0; i < cur; ++i) { result.push_back(buffer[i]); }
+  for(int i = cur; i < k; ++i) result.push_back(buffer[i]);
+  for(int i = 0; i < cur; ++i) result.push_back(buffer[i]);
   return result;
 }
 
 } // namespace paracel
-
-#define ERROR_PRINT(ERR, INFO) {  \
-  std::cerr << __FILE__ << ":" << __LINE__ << " - " << info << ERR.what() << '\n';  \
-}  \
 
 #endif

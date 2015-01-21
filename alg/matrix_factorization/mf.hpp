@@ -152,15 +152,15 @@ class matrix_factorization: public paracel::paralg {
     std::cout << "init push done" << std::endl;
     sync();
     paracel::list_type<paracel::str_type> tmp_wgtx_lst, tmp_wgty_lst;
-    paracel::list_type<double> tmp_x_cnt, tmp_y_cnt;
+    paracel::list_type<int> tmp_x_cnt, tmp_y_cnt;
     for(auto & kv : usr_bag) {
       tmp_wgtx_lst.push_back(kv.first + "_u_cnt");
     }
     for(auto & kv : item_bag) {
       tmp_wgty_lst.push_back(kv.first + "_i_cnt");
     }
-    tmp_x_cnt = paracel_read_multi<double>(tmp_wgtx_lst);
-    tmp_y_cnt = paracel_read_multi<double>(tmp_wgty_lst);
+    tmp_x_cnt = paracel_read_multi<int>(tmp_wgtx_lst);
+    tmp_y_cnt = paracel_read_multi<int>(tmp_wgty_lst);
     size_t indx_cnt = 0;
     for(auto & kv : usr_bag) {
       wgtx_map[kv.first] = 1. / static_cast<double>(tmp_x_cnt[indx_cnt]);

@@ -7,11 +7,12 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_0f372fdb_d853_338a_95b6_a3c1f4b9fc30_HPP
 #define FILE_0f372fdb_d853_338a_95b6_a3c1f4b9fc30_HPP
 
@@ -19,8 +20,8 @@
 #include <type_traits>
 
 #include "paracel_types.hpp"
-#include "utils/func_utility.hpp"
 #include "packer.hpp"
+#include "utils/func_utility.hpp"
 
 namespace paracel {
 
@@ -53,7 +54,7 @@ filter_with_key_result filter_with_key_proxy(F && func) {
 }
 
 template <class F>
-update_result update_proxy(F && func) { // '&' is important
+update_result update_proxy(F && func) {
   
   typedef paracel::f_traits<decltype(func)> traits;
 

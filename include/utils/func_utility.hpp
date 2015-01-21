@@ -7,11 +7,12 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_5301a774_a9c4_df8d_d8e4_62d952066bb5_HPP
 #define FILE_5301a774_a9c4_df8d_d8e4_62d952066bb5_HPP
 
@@ -22,7 +23,6 @@ namespace paracel {
 // lambda & functor
 template <class F>
 struct f_traits {
-
 public:
 
   using call_type = f_traits<decltype(&F::operator())>;
@@ -53,7 +53,6 @@ template <class R, class ...Args>
 struct f_traits< R(Args...) > {
 
 public:
-
   using result_type = R;  
   
   static constexpr std::size_t arity = sizeof...(Args);

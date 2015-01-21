@@ -37,7 +37,7 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILER_FLAGS})
 set(CMAKE_LINK_FLAGS ${CMAKE_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost 1.55.0 REQUIRED COMPONENTS coroutine regex filesystem system)
+find_package(Boost 1.55.0 REQUIRED COMPONENTS regex filesystem system)
 include_directories(${Boost_INCLUDE_DIRS})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmakes")

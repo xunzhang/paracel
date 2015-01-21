@@ -7,15 +7,16 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #include <functional>
 #include <vector>
-#include "paracel_types.hpp"
 
+#include "paracel_types.hpp"
 #include "proxy.hpp"
 
 using update_result = std::function<paracel::str_type(paracel::str_type, paracel::str_type)>;
@@ -33,9 +34,7 @@ int paracel_incr_i(int a, int b) { return a + b; }
 
 float paracel_incr_f(float a, float b) { return a + b; }
 
-double paracel_incr_d(double a, double b) { 
-  return a + b; 
-}
+double paracel_incr_d(double a, double b) { return a + b; }
 
 paracel::list_type<int> 
 paracel_incr_li(paracel::list_type<int> a, 
@@ -49,9 +48,9 @@ paracel_incr_li(paracel::list_type<int> a,
 
 paracel::list_type<float> 
 paracel_incr_lf(paracel::list_type<float> a, 
-		paracel::list_type<float> b) {
+                paracel::list_type<float> b) {
   paracel::list_type<float> r;
-  for(int i = 0; i < (int)a.size(); ++i) {
+  for(size_t i = 0; i < a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
   return r;
@@ -59,9 +58,9 @@ paracel_incr_lf(paracel::list_type<float> a,
 
 paracel::list_type<double> 
 paracel_incr_ld(paracel::list_type<double> a, 
-		paracel::list_type<double> b) {
+                paracel::list_type<double> b) {
   paracel::list_type<double> r;
-  for(int i = 0; i < (int)a.size(); ++i) {
+  for(size_t i = 0; i < a.size(); ++i) {
     r.push_back(a[i] + b[i]);
   }
   return r;

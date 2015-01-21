@@ -46,19 +46,8 @@ class pagerank : public paracel::paralg {
       return paracel::str_split(line, ',');
     };
     auto f_parser = paracel::gen_parser(local_parser);
+    if(get_worker_id() == 0) std::cout << "bug0" << std::endl;
     paracel_load_as_graph(local_graph, input, f_parser, "fmap");
-
-    /*
-    // debug print
-    auto debug_lambda = [&] (const std::string & a,
-                             const std::string & b,
-                             double c) {
-      std::cout << a << "-" << b << "-" << c << std::endl;
-    };
-    if(get_worker_id() == 0) {
-      local_graph.traverse(debug_lambda);
-    }
-    */
 
     auto cnt_lambda = [&] (const std::string & a,
                            const std::string & b,
@@ -70,6 +59,7 @@ class pagerank : public paracel::paralg {
       }
     };
     local_graph.traverse(cnt_lambda);
+    if(get_worker_id() == 0) std::cout << "bug1" << std::endl;
     
     // make sure input data is clean which means there are no same pieces
     // generate kv + local combine
@@ -79,9 +69,10 @@ class pagerank : public paracel::paralg {
       klstmap[b].push_back(std::make_pair(a, kvmap[a]));
     };
     local_graph.traverse(kvinit_lambda);
+    if(get_worker_id() == 0) std::cout << "bug2" << std::endl;
 
     // init push to construct global connect info
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libpr_update.so",
+    paracel_register_bupdate("/mfs/user/wuhong/paracel/build/lib/libpr_update.so",
                              "init_updater");
     for(auto & kv : klstmap) {
       paracel_bupdate(kv.first + "_links", kv.second);
@@ -121,6 +112,7 @@ class pagerank : public paracel::paralg {
     }
 
     for(int rd = 0; rd < rounds; ++rd) {
+      if(get_worker_id() == 0) std::cout << rd << std::endl;
       // pull
       for(auto & kv : kvmap_stale) {
         kvmap_stale[kv.first] = paracel_read<double>(kv.first + "_pr");
@@ -144,7 +136,7 @@ class pagerank : public paracel::paralg {
     }
     // last pull all
     auto kvmap_tmp = paracel_read_special<double>(
-        "/mfs/user/wuhong/paracel/local/lib/libpr_update.so",
+        "/mfs/user/wuhong/paracel/build/lib/libpr_update.so",
         "pr_filter");
     auto tear_lambda = [] (const std::string & str) {
       auto pos = str.find('_');

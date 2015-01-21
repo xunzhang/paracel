@@ -7,11 +7,12 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_b92511cb_f391_2888_596e_99a4a6b74ee7_HPP
 #define FILE_b92511cb_f391_2888_596e_99a4a6b74ee7_HPP
 
@@ -20,6 +21,7 @@
 #include <queue>
 #include <algorithm>
 #include <fstream>
+
 #include "paracel_types.hpp"
 #include "utils.hpp"
 
@@ -347,6 +349,7 @@ public:
   size_t e_sz = 0;
   paracel::dict_type<T, paracel::dict_type<T, double> > adj;
   paracel::dict_type<T, paracel::dict_type<T, double> > reverse_adj;
+ 
  public:
   MSGPACK_DEFINE(v_sz, e_sz, adj, reverse_adj);
 }; // class digraph
@@ -481,6 +484,7 @@ class bigraph {
   size_t v_sz = 0; 
   size_t e_sz = 0;
   paracel::dict_type<T, paracel::dict_type<T, double> > adj;
+ 
  public:
   MSGPACK_DEFINE(v_sz, e_sz, adj);
 }; // class bigraph
@@ -580,6 +584,9 @@ class bigraph_continuous {
   paracel::default_id_type v_sz;
   paracel::default_id_type e_sz;
   paracel::list_type<paracel::bag_type<std::pair<paracel::default_id_type, double> >  > adj;
+ 
+ public:
+  MSGPACK_DEFINE(v_sz, e_sz, adj);
 }; // class bigraph_continuous
 
 /*

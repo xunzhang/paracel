@@ -3,6 +3,7 @@
 # Logistic regression
 #
 
+import math
 from math import e
 from array import array
 import numpy as np
@@ -20,12 +21,12 @@ def log_reg_regularized_sgd(x, y, alpha, beta = 0.1, max_iter = 100, debug = Fal
     z = np.arange(m)
     for t in xrange(max_iter):
         z = np.random.permutation(z)
-	opt = 2. * alpha * beta
+        opt = 2. * alpha * beta
         for i in z:
-	    theta = theta + alpha * (y[i] - h(x[i], theta)) * x[i] - opt * theta
-	    #theta = theta + alpha * (y[i] - h(x[i], theta)) * x[i] - beta * 2. * alpha * theta
-            if debug: 
-	    	err.append(sum([(y[i] - h(x[i], theta)) ** 2 for i in range(m)]))
+	          theta = theta + alpha * (y[i] - h(x[i], theta)) * x[i] - opt * theta
+        if debug: 
+            err.append(cal_loss(theta, x, y))
+	    	    #err.append(sum([(y[i] - h(x[i], theta)) ** 2 for i in range(m)]))
     if debug:
         return theta,err
     return theta
@@ -38,13 +39,12 @@ def log_reg_regularized_bgd(x, y, alpha, beta = 0.1, max_iter = 100, debug = Fal
     z = np.arange(m)
     for t in xrange(max_iter):
         z = np.random.permutation(z)
-	opt = 2. * alpha * beta
-	delta = [0 for i in xrange(n)]
+        opt = 2. * alpha * beta
+        delta = [0 for i in xrange(n)]
         for i in z:
-	    delta += alpha * (y[i] - h(x[i], theta)) * x[i] - opt * theta
-	    #theta = theta + alpha * (y[i] - h(x[i], theta)) * x[i] - beta * 2. * alpha * theta
-            if debug: 
-	    	err.append(sum([(y[i] - h(x[i], theta)) ** 2 for i in range(m)]))
+            delta += alpha * (y[i] - h(x[i], theta)) * x[i] - opt * theta
+        if debug: 
+            err.append(cal_loss(theta, x, y))
         theta += delta
     if debug:
         return theta,err
@@ -55,8 +55,8 @@ def load(f):
     y = []
     for line in f:
         arr = [float(i) for i in line.strip('\n').split(',')]
-	x.append(arr[0:-1])
-	y.append(arr[-1])
+        x.append(arr[0:-1])
+        y.append(arr[-1])
     x = np.array(x)
     x = np.hstack( (np.ones( (x.shape[0], 1.) ), x) )
     y = np.array(y)
@@ -65,20 +65,20 @@ def load(f):
 def cal_loss(theta, x, y):
     loss = 0.
     for i in xrange(len(y)):
-        loss += (h(x[i], theta) - y[i]) ** 2
+        hv = h(x[i], theta)
+        print y[i], '|', hv
+        if y[i] == 1:
+            loss += -math.log(hv)
+        else:
+            loss += -math.log(1-hv)
     return loss / len(y)
 
 if __name__ == '__main__':
     f = file('/mfs/user/wuhong/paracel/data/classification/train_000.csv')
     x, y = load(f)
     f.close()
-
-    theta = log_reg_regularized_sgd(x, y, 0.001, 0.01, max_iter = 100, debug = False)
+    theta = log_reg_regularized_sgd(x, y, 0.01, 0.01, max_iter = 100, debug = False)
     print theta
-
-    #theta, err = log_reg_regularized_sgd(x, y, 0.001, 0.1, max_iter = 1, debug = True)
-    #print err
-
     f2 = file('/mfs/user/wuhong/paracel/data/classification/test_000.csv')
     x_t, y_t = load(f2)
     f.close()

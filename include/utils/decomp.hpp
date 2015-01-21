@@ -7,11 +7,12 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_a0d2b4a9_6b3d_70e6_20a8_640ae47d8d42_HPP
 #define FILE_a0d2b4a9_6b3d_70e6_20a8_640ae47d8d42_HPP
 
@@ -29,19 +30,18 @@ void npfacty(const int np, int & nx, int & ny) {
   ny = np;
 }
 
-void npfact2d(const int np, int & nx, int & ny, 
-	bool row_master = true) {
+void npfact2d(const int np, int & nx, int & ny, bool row_master = true) {
   int upbnd = (int)sqrt(np);
   while(upbnd - 1) {
     if((np % upbnd) == 0) {
       if(row_master) {
         nx = upbnd;
-	ny = np / upbnd;
-	return;
+        ny = np / upbnd;
+        return;
       } else {
         nx = np / upbnd;
-	ny = upbnd;
-	return;
+        ny = upbnd;
+        return;
       }
     } else {
       upbnd -= 1;

@@ -7,20 +7,22 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_ec8e1787_f407_c643_5d12_b8c93bdb52bb_HPP 
 #define FILE_ec8e1787_f407_c643_5d12_b8c93bdb52bb_HPP 
 
 #include <sstream>
 #include <algorithm> // std::sort, std::find
 #include <functional>
+
 #include "paracel_types.hpp"
-#include "utils/hash.hpp"
 #include "utils.hpp"
+#include "utils/hash.hpp"
 
 namespace paracel {
 
@@ -87,13 +89,6 @@ public:
     auto key = hfunc(skey);
     auto server = srv_hashring[paracel::ring_bsearch(srv_hashring, key)];
     return srv_hashring_dct[server];
-    /*
-    for(size_t i = 0; i < srv_hashring.size(); ++i) {
-      auto server = srv_hashring[i];
-      if(key <= server) { return srv_hashring_dct[server]; }
-    }
-    return srv_hashring_dct[srv_hashring[0]];
-    */
   }
 
 private:

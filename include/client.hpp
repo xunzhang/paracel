@@ -7,16 +7,16 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
 #ifndef FILE_a68107bb_430d_eb9e_9cce_184c46bad4cd_HPP 
 #define FILE_a68107bb_430d_eb9e_9cce_184c46bad4cd_HPP
 
 #include <dlfcn.h>
-
 #include <assert.h>
 
 #include <cstring> // std::memcpy
@@ -25,18 +25,17 @@
 
 #include <zmq.hpp>
 
+#include "packer.hpp"
 #include "paracel_types.hpp"
 #include "utils/ext_utility.hpp"
-#include "packer.hpp"
 
 namespace paracel {
 
 struct kvclt {
-public:
 
+public:
   kvclt(paracel::str_type hostname, 
-  	paracel::str_type ports) 
-	  : host(hostname), context(1) {
+        paracel::str_type ports) : host(hostname), context(1) {
     ports_lst = paracel::str_split(ports, ',');
     conn_prefix = "tcp://" + host + ":";
   }
@@ -47,8 +46,9 @@ public:
       p_contains_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("contains"), key);
-    bool val = false;;
-    req_send_recv(*p_contains_sock, scrip, val);
+    bool val = false;
+    bool r = req_send_recv(*p_contains_sock, scrip, val);
+    assert(r);
     return val;
   }
  
@@ -61,11 +61,10 @@ public:
     V val;
     bool r = req_send_recv(*p_pull_sock, scrip, val);
     assert(r);
-    /*
-    while(!r) {
-      r = req_send_recv(*p_pull_sock, scrip, val);
+    if(!r) {
+      ERROR_ABORT("key does not exist");
     }
-    */
+    //while(!r) r = req_send_recv(*p_pull_sock, scrip, val);
     return val;
   }
   
@@ -75,12 +74,7 @@ public:
       p_pull_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pull"), key); // paracel::str_type
-    bool r = req_send_recv(*p_pull_sock, scrip, val);
-    if(!r) {
-      return false;
-    } else {
-      return true;
-    }
+    return req_send_recv(*p_pull_sock, scrip, val);
   }
 
   template <class V, class K>
@@ -93,7 +87,7 @@ public:
     req_send_recv_lst(*p_pull_multi_sock, scrip, val);
     return val;
   }
-   
+
   // pull all V-type-vals
   template <class V>
   paracel::dict_type<paracel::str_type, V> pullall() {
@@ -106,36 +100,24 @@ public:
     return val;
   }
   
-  // pull all types, to be unpacked
-  template <class V>
-  bool pullall(V & val) {
+  // pull all types, to be unpacked by upper layer themselves
+  void pullall(paracel::str_type & val) {
     if(p_pullall_sock == nullptr) {
       p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
     auto scrip = paste(paracel::str_type("pullall"));
-    auto r = req_send_recv(*p_pullall_sock, scrip, val);
-    return r;
+    zmq::message_t req_msg(scrip.size());
+    std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
+    (*p_pullall_sock).send(req_msg);
+    zmq::message_t rep_msg;
+    (*p_pullall_sock).recv(&rep_msg);
+    if(!rep_msg.size()) {
+      ERROR_ABORT("paracel internal error!");
+    } 
+    val = paracel::str_type(
+                          static_cast<char *>(rep_msg.data()),
+                          rep_msg.size());
   }
-/*
-  // TODO: default fn * fcn
-  template <class V>
-  void pullall_1by1(const paracel::str_type & so_filename,
-  		const paracel::str_type & func_name,
-		paracel::dict_type<paracel::str_type, V> & d) {
-    d.clear();
-    if(pullall_sock == nullptr) {
-      p_pullall_sock.reset(create_req_sock(ports_lst[0]));
-    }
-    auto scrip = paste(paracel::str_type("pullall_1by1"));
-
-    // load func
-    void *handler = dlopen(so_filaname.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE);
-    auto local = dlsym(handler, func_name.c_str());
-    paracel::filter_result filter = *(std::function<bool(paracel::str_type, paracel::str_type)>*) local;
-    dlclose(handler);
-    req_send_recv_dct_1by1(*p_pullall_sock, scrip, d, filter);
-  }
-*/
 
   template <class V>
   paracel::dict_type<paracel::str_type, V> pullall_special() {
@@ -151,54 +133,64 @@ public:
   template <class V>
   paracel::dict_type<paracel::str_type, V> 
   pullall_special(const paracel::str_type & so_filename,
-  		const paracel::str_type & func_name) {
+                  const paracel::str_type & func_name) {
     if(p_pullall_sock == nullptr) {
       p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
-    auto scrip = paste(paracel::str_type("pullall_special"), so_filename, func_name);
+    auto scrip = paste(paracel::str_type("pullall_special"),
+                       so_filename, 
+                       func_name);
     paracel::dict_type<paracel::str_type, V> val;
     req_send_recv_dct(*p_pullall_sock, scrip, val);
     return val;
   }
   
   bool register_pullall_special(const paracel::str_type & file_name, 
-  		const paracel::str_type & func_name) {
+                                const paracel::str_type & func_name) {
     if(p_pullall_sock == nullptr) {
       p_pullall_sock.reset(create_req_sock(ports_lst[0]));
     }
-    auto scrip = paste(paracel::str_type("register_pullall_special"), file_name, func_name); 
+    auto scrip = paste(paracel::str_type("register_pullall_special"), 
+                       file_name, 
+                       func_name); 
     bool stat;
     auto r = req_send_recv(*p_pullall_sock, scrip, stat);
     return r && stat;
   }
   
-  bool register_remove_special(const paracel::str_type & file_name, 
-  		const paracel::str_type & func_name) {
+  bool register_remove_special(const paracel::str_type & file_name,
+                               const paracel::str_type & func_name) {
     if(p_remove_sock == nullptr) {
       p_remove_sock.reset(create_req_sock(ports_lst[0]));
     }
-    auto scrip = paste(paracel::str_type("register_remove_special"), file_name, func_name); 
+    auto scrip = paste(paracel::str_type("register_remove_special"), 
+                       file_name, 
+                       func_name); 
     bool stat;
     auto r = req_send_recv(*p_remove_sock, scrip, stat);
     return r && stat;
   }
 
-  bool register_update(const paracel::str_type & file_name, 
-  		const paracel::str_type & func_name) {
+  bool register_update(const paracel::str_type & file_name,
+                       const paracel::str_type & func_name) {
     if(p_update_sock == nullptr) {
       p_update_sock.reset(create_push_sock(ports_lst[2]));
     }
-    auto scrip = paste(paracel::str_type("register_update"), file_name, func_name); 
+    auto scrip = paste(paracel::str_type("register_update"), 
+                       file_name, 
+                       func_name); 
     push_send(*p_update_sock, scrip);
     return true;
   }
   
-  bool register_bupdate(const paracel::str_type & file_name, 
-  		const paracel::str_type & func_name) {
+  bool register_bupdate(const paracel::str_type & file_name,
+                        const paracel::str_type & func_name) {
     if(p_bupdate_sock == nullptr) {
       p_bupdate_sock.reset(create_req_sock(ports_lst[3]));
     }
-    auto scrip = paste(paracel::str_type("register_bupdate"), file_name, func_name); 
+    auto scrip = paste(paracel::str_type("register_bupdate"), 
+                       file_name, 
+                       func_name); 
     bool stat;
     auto r = req_send_recv(*p_bupdate_sock, scrip, stat);
     return r && stat;
@@ -211,12 +203,13 @@ public:
     }
     auto scrip = paste(paracel::str_type("push"), key, val); 
     bool stat;
-    auto result = req_send_recv(*p_push_sock, scrip, stat);
-    return result && stat;
+    auto r = req_send_recv(*p_push_sock, scrip, stat);
+    return r && stat;
   }
   
   template <class K, class V>
-  bool push_multi(const paracel::list_type<K> & key_lst, const paracel::list_type<V> & val_lst) {
+  bool push_multi(const paracel::list_type<K> & key_lst, 
+                  const paracel::list_type<V> & val_lst) {
     if(p_push_multi_sock == nullptr) {
       p_push_multi_sock.reset(create_req_sock(ports_lst[1]));
     }
@@ -227,10 +220,12 @@ public:
       pk.pack(s);
       pack_val_lst.push_back(s);
     }
-    auto scrip = paste(paracel::str_type("push_multi"), key_lst, pack_val_lst);
+    auto scrip = paste(paracel::str_type("push_multi"), 
+                       key_lst, 
+                       pack_val_lst);
     bool stat;
-    auto result = req_send_recv(*p_push_multi_sock, scrip, stat);
-    return result && stat;
+    auto r = req_send_recv(*p_push_multi_sock, scrip, stat);
+    return r && stat;
   }
   
   template <class K, class V>
@@ -248,7 +243,8 @@ public:
   }
    
   template <class K, class V>
-  void update(const K & key, const V & delta) {
+  void update(const K & key, 
+              const V & delta) {
     if(p_update_sock == nullptr) {
       p_update_sock.reset(create_push_sock(ports_lst[2]));
     }
@@ -257,38 +253,49 @@ public:
   }
 
   template <class K, class V>
-  void update(const K & key, const V & delta,
-  	const paracel::str_type & file_name, 
-	const paracel::str_type & func_name) {
+  void update(const K & key, 
+              const V & delta,
+              const paracel::str_type & file_name, 
+              const paracel::str_type & func_name) {
     if(p_update_sock == nullptr) {
       p_update_sock.reset(create_push_sock(ports_lst[2]));
     }
-    auto scrip = paste(paracel::str_type("update"), key, delta, file_name, func_name);
+    auto scrip = paste(paracel::str_type("update"), 
+                       key,
+                       delta,
+                       file_name,
+                       func_name);
     push_send(*p_update_sock, scrip);
   }
   
   template <class K, class V>
-  bool bupdate(const K & key, const V & delta) {
+  bool bupdate(const K & key,
+               const V & delta) {
     if(p_bupdate_sock == nullptr) {
       p_bupdate_sock.reset(create_req_sock(ports_lst[3]));
     }
     auto scrip = paste(paracel::str_type("bupdate"), key, delta);
     bool val;
-    req_send_recv(*p_bupdate_sock, scrip, val);
-    return val;
+    auto r = req_send_recv(*p_bupdate_sock, scrip, val);
+    return r && val;
   }
 
   template <class K, class V>
-  bool bupdate(const K & key, const V & delta,
-  	const paracel::str_type & file_name, 
-	const paracel::str_type & func_name) {
+  bool bupdate(const K & key,
+               const V & delta,
+               const paracel::str_type & file_name, 
+               const paracel::str_type & func_name) {
     if(p_bupdate_sock == nullptr) {
       p_bupdate_sock.reset(create_req_sock(ports_lst[3]));
     }
-    auto scrip = paste(paracel::str_type("bupdate"), key, delta, file_name, func_name);
+    auto scrip = paste(paracel::str_type("bupdate"),
+                       key,
+                       delta,
+                       file_name,
+                       func_name);
     bool val;
-    req_send_recv(*p_bupdate_sock, scrip, val);
-    return val;
+    auto r = req_send_recv(*p_bupdate_sock, scrip, val);
+    return r && val;
   }
 
   template <class K>
@@ -298,8 +305,8 @@ public:
     }
     auto scrip = paste(paracel::str_type("remove"), key);
     bool val;
-    req_send_recv(*p_remove_sock, scrip, val);
-    return val;
+    auto r = req_send_recv(*p_remove_sock, scrip, val);
+    return r && val;
   }
 
   bool remove_special() {
@@ -308,19 +315,21 @@ public:
     }
     auto scrip = paste(paracel::str_type("remove_special"));
     bool val;
-    req_send_recv(*p_remove_sock, scrip, val);
-    return val;
+    auto r = req_send_recv(*p_remove_sock, scrip, val);
+    return r && val;
   }
 
   bool remove_special(const paracel::str_type & file_name,
-  		const paracel::str_type & func_name) {
+                      const paracel::str_type & func_name) {
     if(p_remove_sock == nullptr) {
       p_remove_sock.reset(create_req_sock(ports_lst[0]));
     }
-    auto scrip = paste(paracel::str_type("remove_special"), file_name, func_name);
+    auto scrip = paste(paracel::str_type("remove_special"),
+                       file_name,
+                       func_name);
     bool val;
-    req_send_recv(*p_remove_sock, scrip, val);
-    return val;
+    auto r = req_send_recv(*p_remove_sock, scrip, val);
+    return r && val;
   }
 
   bool clear() {
@@ -329,29 +338,35 @@ public:
     }
     auto scrip = paste(paracel::str_type("clear"));
     bool val;
-    req_send_recv(*p_clear_sock, scrip, val);
-    return val;
+    auto r = req_send_recv(*p_clear_sock, scrip, val);
+    return r && val;
   }
   
-  // built-in sock ops for ssp usage
-  bool push_int(const paracel::str_type & key, int val) {
+  // ports_lst[4]: built-in sock ops for ssp(ps layer) usage
+  bool push_int(const paracel::str_type & key,
+                int val) {
     if(p_ssp_sock == nullptr) {
       p_ssp_sock.reset(create_req_sock(ports_lst[4]));
     }
-    auto scrip = paste(paracel::str_type("push_int"), key, val); 
+    auto scrip = paste(paracel::str_type("push_int"),
+                       key,
+                       val); 
     bool stat;
-    auto result = req_send_recv(*p_ssp_sock, scrip, stat);
-    return result && stat;
+    auto r = req_send_recv(*p_ssp_sock, scrip, stat);
+    return r && stat;
   }
   
-  bool incr_int(const paracel::str_type & key, int delta) {
+  bool incr_int(const paracel::str_type & key,
+                int delta) {
     if(p_ssp_sock == nullptr) {
       p_ssp_sock.reset(create_req_sock(ports_lst[4]));
     }
-    auto scrip = paste(paracel::str_type("incr_int"), key, delta);
+    auto scrip = paste(paracel::str_type("incr_int"),
+                       key,
+                       delta);
     bool stat;
-    auto result = req_send_recv(*p_ssp_sock, scrip, stat);
-    return result && stat;
+    auto r = req_send_recv(*p_ssp_sock, scrip, stat);
+    return r && stat;
   }
   
   int pull_int(const paracel::str_type & key) {
@@ -359,10 +374,20 @@ public:
       p_ssp_sock.reset(create_req_sock(ports_lst[4]));
     }
     auto scrip = paste(paracel::str_type("pull_int"), key);
-    int val;
+    int val = -1;
     bool r = req_send_recv(*p_ssp_sock, scrip, val);
+    assert(val != -1);
     assert(r);
+    if(!r) ERROR_ABORT("key: pull_int does not exist");
     return val;
+  }
+
+  bool pull_int(const paracel::str_type & key, int & val) {
+    if(p_ssp_sock == nullptr) {
+      p_ssp_sock.reset(create_req_sock(ports_lst[4]));
+    }
+    auto scrip = paste(paracel::str_type("pull_int"), key);
+    return req_send_recv(*p_ssp_sock, scrip, val);
   }
   
 private:
@@ -394,7 +419,8 @@ private:
 
   // use template T to do recursive variadic template(T must be paracel::str_type)
   template<class T, class ...Args>
-  paracel::str_type paste(const T & op_str, const Args & ...args) { 
+  paracel::str_type paste(const T & op_str,
+                          const Args & ...args) { 
     paracel::packer<T> pk(op_str);
     paracel::str_type scrip;
     pk.pack(scrip); // pack to scrip
@@ -402,7 +428,9 @@ private:
   }
   
   template <class V>
-  bool req_send_recv(zmq::socket_t & sock, const paracel::str_type & scrip, V & val) {
+  bool req_send_recv(zmq::socket_t & sock, 
+                     const paracel::str_type & scrip, 
+                     V & val) {
     zmq::message_t req_msg(scrip.size());
     std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
     sock.send(req_msg);
@@ -410,16 +438,20 @@ private:
     sock.recv(&rep_msg);
     paracel::packer<V> pk;
     if(!rep_msg.size()) {
-      return false;
+      ERROR_ABORT("paracel internal error!");
     } else {
-      val = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
-      return true;
+      std::string data = paracel::str_type(
+          static_cast<char*>(rep_msg.data()),
+          rep_msg.size());
+      if(data == "nokey") return false;
+      val = pk.unpack(data);
     }
+    return true;
   }
   
   template <class V>
-  bool req_send_recv_dct(zmq::socket_t & sock, 
-  			const paracel::str_type & scrip, 
+  void req_send_recv_dct(zmq::socket_t & sock, 
+                         const paracel::str_type & scrip, 
 			paracel::dict_type<paracel::str_type, V> & val) {
     zmq::message_t req_msg(scrip.size());
     std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
@@ -429,51 +461,22 @@ private:
     paracel::packer<paracel::dict_type<paracel::str_type, paracel::str_type> > pk;
     paracel::packer<V> pk2;
     if(!rep_msg.size()) {
-      return false;
+      ERROR_ABORT("paracel internal error!");
     } else {
-      auto tmp = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+      auto tmp = pk.unpack(paracel::str_type(
+                          static_cast<char *>(rep_msg.data()), 
+                          rep_msg.size()
+                          ));
       for(auto & kv : tmp) {
         val[kv.first] = pk2.unpack(kv.second);
       }
-      return true;
     }
   }
 
-/*
   template <class V>
-  void req_send_recv_dct_1by1(zmq::socket_t & sock,
-  			const paracel::str_type & scrip,
-			paracel::filter_result & filter,
-			paracel::dict_type<paracel::str_type, V> & val) {
-			
-    zmq::message_t req_msg(scrip.size());
-    std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
-    sock.send(req_msg);
-    zmq::message_t rep_msg;
-    
-    paracel::packer<paracel::size_t> pk1;
-    paracel::packer<paracel::dict_type<paracel::str_type, paracel::str_type> > pk2;
-    paracel::packer<V> pk3;
-    
-    sock.recv(&rep_msg);
-    size_t n = pk1.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
-    for(int i = 0; i < n; ++i) {
-      sock.recv(&rep_msg);
-      auto tmp = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
-      for(auto & kv : tmp) {
-        auto k = kv.first, v = kv.second;
-	if(filter(k, v)) {
-          val[k] = pk3.unpack(v);
-	}
-      }
-    }
-  }
-*/
-
-  template <class V>
-  bool req_send_recv_lst(zmq::socket_t & sock, 
-  			const paracel::str_type & scrip, 
-			paracel::list_type<V> & val) {
+  void req_send_recv_lst(zmq::socket_t & sock, 
+                         const paracel::str_type & scrip, 
+                         paracel::list_type<V> & val) {
     zmq::message_t req_msg(scrip.size());
     std::memcpy((void *)req_msg.data(), &scrip[0], scrip.size());
     sock.send(req_msg);
@@ -482,17 +485,20 @@ private:
     paracel::packer<paracel::list_type<paracel::str_type> > pk;
     paracel::packer<V> pk2;
     if(!rep_msg.size()) {
-      return false;
+      ERROR_ABORT("paracel internal error!");
     } else {
-      auto tmp = pk.unpack(paracel::str_type(static_cast<char *>(rep_msg.data()), rep_msg.size()));
+      auto tmp = pk.unpack(paracel::str_type(
+                          static_cast<char *>(rep_msg.data()), 
+                          rep_msg.size()
+                          ));
       for(auto & item : tmp) {
         val.push_back(pk2.unpack(item));
       }
-      return true;
     }
   }
 
-  void push_send(zmq::socket_t & sock, const paracel::str_type & scrip) {
+  void push_send(zmq::socket_t & sock,
+                 const paracel::str_type & scrip) {
     zmq::message_t push_msg(scrip.size());
     std::memcpy((void *)push_msg.data(), &scrip[0], scrip.size());
     sock.send(push_msg);
@@ -514,7 +520,8 @@ private:
   std::unique_ptr<zmq::socket_t> p_remove_sock;
   std::unique_ptr<zmq::socket_t> p_clear_sock;
   std::unique_ptr<zmq::socket_t> p_ssp_sock;
-}; 
+
+}; // struct kvclt 
 
 } // namespace paracel
 

@@ -7,16 +7,13 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: 
  * Hong Wu <xunzhangthu@gmail.com>
  *
- */
-
-/**
- * a simple/ugly version, just for paracel usage
- * complete version is implemented at Douban by Changsheng Jiang
+ * simple/ugly impl of c++ MPI interface wrapper, just for paracel usage
+ * a complete version is implemented internally at Douban.Inc by Changsheng Jiang
  *
  */
      
@@ -48,6 +45,7 @@ public:
 class vrequest {
   
 typedef paracel::list_type<MPI_Request> vreq_t; 
+
 public:
   vrequest() {}
 
@@ -219,7 +217,7 @@ public:
   }
   
   // impl of list of string send
-  // TODO: abstract 
+  // TODO: abstract
   void send(const paracel::list_type<paracel::str_type> & strlst, int dest, int tag) {
     int sz = strlst.size(); // send container size
     send(sz, dest, tag);
@@ -658,7 +656,7 @@ public:
   }
 
   /* 
-   * warning: SPMD function, to be called by all workers, memory problem 
+   * warning: SPMD interface, to be invoked by all workers(memory problem!)
    * tree reduce to specified rank
    *
    * void func(const vector<double> & recvbuf, 
