@@ -49,7 +49,7 @@ public:
 	    std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	  }
 	};
-    //paracel_loadall_handle(input, lambda);
+    //paracel_sequential_loadall(input, lambda);
     paracel_loadall(input);
     std::unordered_map<std::string, double> map;
     std::string tt = "a";
@@ -88,7 +88,7 @@ public:
     auto handler_wrapper = [&] (const std::vector<std::string> & linelst) {
       handler(linelst, target);
     };
-    paracel_loadall_handle(fn, handler_wrapper);
+    paracel_sequential_loadall(fn, handler_wrapper);
   }
 
   virtual void opt() {

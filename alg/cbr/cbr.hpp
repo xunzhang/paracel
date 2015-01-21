@@ -122,7 +122,7 @@ class content_base_recommendation: public paracel::paralg {
           paracel_write(v[0] + "_ifactor", tmp); // key: "iid_ifactor"
         }
       };
-      paracel_loadall_handle(input_ifac, handler_lambda);
+      paracel_sequential_loadall(input_ifac, handler_lambda);
     }
     sync();
     ifactor.clear();
@@ -166,7 +166,7 @@ class content_base_recommendation: public paracel::paralg {
       }
     }; // select_lambda
     // load started user factor
-    paracel_loadall_handle(input_ufac, select_lambda);
+    paracel_sequential_loadall(input_ufac, select_lambda);
     std::cout << "load ufactor done" << ufactor.size() << "|" << std::endl;
 
     // init ubias with specified ubias
@@ -179,7 +179,7 @@ class content_base_recommendation: public paracel::paralg {
       }
     };
     // load started user bias
-    paracel_loadall_handle(input_ubias, filter_lambda);
+    paracel_sequential_loadall(input_ubias, filter_lambda);
     std::cout << "load ubias done" << ubias.size() << std::endl;
     
     // resize ufactor/ubias here, with no ufac specified
