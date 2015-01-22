@@ -359,7 +359,7 @@ void thrd_exec(zmq::socket_t & sock) {
       paracel::packer<paracel::list_type<paracel::str_type> > pk_l;
       auto key_lst = pk_l.unpack(msg[1]);
       auto v_or_delta_lst = pk_l.unpack(msg[2]);
-      assert(key_lst.size() == val_lst.size());
+      assert(key_lst.size() == v_or_delta_lst.size());
       kvs_update(key_lst, v_or_delta_lst, update_f);
       bool result = true;
       rep_pack_send(sock, result);
