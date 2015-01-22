@@ -99,6 +99,14 @@ void kv_update(const paracel::str_type & key,
   paracel::tbl_store.set(key, new_val);
 }
 
+void kvs_update(const paracel::list_type<paracel::str_type> & key_lst,
+                const paracel::list_type<paracel::str_type> & v_or_delta_lst,
+                update_result update_func) {
+  for(size_t i = 0; i < key_lst.size(); ++i) {
+    kv_update(key_lst[i], v_or_delta_lst[i], update_func);
+  }
+}
+
 // thread entry for ssp 
 void thrd_exec_ssp(zmq::socket_t & sock) {
   
@@ -332,6 +340,29 @@ void thrd_exec(zmq::socket_t & sock) {
         bool result = true;
         rep_pack_send(sock, result);
       }
+    }
+    if(indicator == "bupdate_multi") {
+      if(msg.size() > 3) {
+        if(msg.size() != 5) {
+          ERROR_ABORT("invalid invoke in server end");
+        }
+        // open request func
+        auto file_name = pk.unpack(msg[3]);
+        auto func_name = pk.unpack(msg[4]);
+        dlopen_update_lambda(file_name, func_name);
+      } else {
+        if(!update_f) {
+          dlopen_update_lambda("../local/build/lib/default.so",
+                               "default_incr_i");
+        }
+      }
+      paracel::packer<paracel::list_type<paracel::str_type> > pk_l;
+      auto key_lst = pk_l.unpack(msg[1]);
+      auto v_or_delta_lst = pk_l.unpack(msg[2]);
+      assert(key_lst.size() == val_lst.size());
+      kvs_update(key_lst, v_or_delta_lst, update_f);
+      bool result = true;
+      rep_pack_send(sock, result);
     }
     if(indicator == "remove") {
       auto key = pk.unpack(msg[1]);

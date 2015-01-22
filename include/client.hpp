@@ -47,8 +47,8 @@ public:
     }
     auto scrip = paste(paracel::str_type("contains"), key);
     bool val = false;
-    bool r = req_send_recv(*p_contains_sock, scrip, val);
-    assert(r);
+    req_send_recv(*p_contains_sock, scrip, val);
+    //bool r = req_send_recv(*p_contains_sock, scrip, val); assert(r);
     return val;
   }
  
@@ -298,6 +298,85 @@ public:
     return r && val;
   }
 
+  template <class K, class V>
+  bool bupdate_multi(const paracel::list_type<K> & key_lst,
+                     const paracel::list_type<V> & val_lst) {
+    if(p_bupdate_multi_sock == nullptr) {
+      p_bupdate_multi_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    paracel::list_type<paracel::str_type> pack_val_lst;
+    for(auto & val : val_lst) {
+      paracel::packer<V> pk(val);
+      paracel::str_type s;
+      pk.pack(s);
+      pack_val_lst.push_back(s);
+    }
+    auto scrip = paste(paracel::str_type("bupdate_multi"),
+                       key_lst,
+                       pack_val_lst);
+    bool stat;
+    auto r = req_send_recv(*p_bupdate_multi_sock, scrip, stat);
+    return r && stat;
+  }
+
+  template <class K, class V>
+  bool bupdate_multi(const paracel::list_type<K> & key_lst,
+                     const paracel::list_type<V> & val_lst,
+                     const paracel::str_type & file_name,
+                     const paracel::str_type & func_name) {
+    if(p_bupdate_multi_sock == nullptr) {
+      p_bupdate_multi_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    paracel::list_type<paracel::str_type> pack_val_lst;
+    for(auto & val : val_lst) {
+      paracel::packer<V> pk(val);
+      paracel::str_type s;
+      pk.pack(s);
+      pack_val_lst.push_back(s);
+    }
+    auto scrip = paste(paracel::str_type("bupdate_multi"),
+                       key_lst,
+                       pack_val_lst,
+                       file_name,
+                       func_name);
+    bool stat;
+    auto r = req_send_recv(*p_bupdate_multi_sock, scrip, stat);
+    return r && stat;
+  }
+
+  template <class K, class V>
+  bool bupdate_multi(const paracel::dict_type<K, V> & dct) {
+    if(p_bupdate_multi_sock == nullptr) {
+      p_bupdate_multi_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    paracel::list_type<K> key_lst;
+    paracel::list_type<V> val_lst;
+    for(auto & kv : dct) {
+      key_lst.push_back(kv.first);
+      val_lst.push_back(kv.second);
+    }
+    return bupdate_multi(key_lst, val_lst);
+  }
+  
+  template <class K, class V>
+  bool bupdate_multi(const paracel::dict_type<K, V> & dct,
+                     const paracel::str_type & file_name,
+                     const paracel::str_type & func_name) {
+    if(p_bupdate_multi_sock == nullptr) {
+      p_bupdate_multi_sock.reset(create_req_sock(ports_lst[3]));
+    }
+    paracel::list_type<K> key_lst;
+    paracel::list_type<V> val_lst;
+    for(auto & kv : dct) {
+      key_lst.push_back(kv.first);
+      val_lst.push_back(kv.second);
+    }
+    return bupdate_multi(key_lst,
+                         val_lst,
+                         file_name,
+                         func_name);
+  }
+
   template <class K>
   bool remove(const K & key) {
     if(p_remove_sock == nullptr) {
@@ -517,6 +596,7 @@ private:
   std::unique_ptr<zmq::socket_t> p_push_multi_sock;
   std::unique_ptr<zmq::socket_t> p_update_sock;
   std::unique_ptr<zmq::socket_t> p_bupdate_sock;
+  std::unique_ptr<zmq::socket_t> p_bupdate_multi_sock;
   std::unique_ptr<zmq::socket_t> p_remove_sock;
   std::unique_ptr<zmq::socket_t> p_clear_sock;
   std::unique_ptr<zmq::socket_t> p_ssp_sock;

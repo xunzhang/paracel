@@ -713,10 +713,58 @@ class paralg {
 
   // TODO
   template <class V>
-  void paracel_bupdate_multi(const paracel::list_type<paracel::str_type> & key,
-                             const paracel::list_type<V> & delta,
+  bool paracel_bupdate_multi(const paracel::list_type<paracel::str_type> & keys,
+                             const paracel::list_type<V> & deltas,
                              const paracel::str_type & file_name,
-                             const paracel::str_type & func_name) {}
+                             const paracel::str_type & func_name) {
+    if(ssp_switch) {
+      // TODO
+    }
+    paracel::list_type<std::pair<paracel::list_type<paracel::str_type>,
+                                paracel::list_type<V> > > kd_lst(ps_obj->srv_sz);
+    bool r = true;
+    for(size_t i = 0; i < keys.size(); ++i) {
+      auto indx = ps_obj->p_ring->get_server(keys[i]);
+      kd_lst[indx].first.push_back(keys[i]);
+      kd_lst[indx].second.push_back(deltas[i]);
+    }
+    for(size_t k = 0; k < kd_lst.size(); ++k) {
+      auto key_lst = kd_lst[k].first;
+      auto delta_lst = kd_lst[k].second;
+      if(ps_obj->kvm[k].bupdate_multi(key_lst,
+                                      delta_lst,
+                                      file_name,
+                                      func_name) == false) {
+        r = false;
+      }
+    }
+    return r;
+  }
+
+  template <class V>
+  bool paracel_bupdate_multi(const paracel::dict_type<paracel::str_type, V> & dct,
+                             const paracel::str_type & file_name,
+                             const paracel::str_type & func_name) {
+    if(ssp_switch) {
+      // TODO
+    }
+    bool r = true;
+    paracel::list_type<paracel::dict_type<paracel::str_type, V> > dct_lst(ps_obj->srv_sz);
+    for(auto & kv : dct) {
+      dct_lst[ps_obj->p_ring->get_server(kv.first)][kv.first] = kv.second;
+    }
+    for(size_t k = 0; k < dct_lst.size(); ++k) {
+      if(dct_lst[k].size() != 0) {
+        if(ps_obj->kvm[k]
+            .bupdate_multi(dct_lst[k],
+                           file_name,
+                           func_name) == false) {
+          r = false;
+        }
+      }
+    }
+    return r;
+  }
 
   // set invoke cnts
   void set_total_iters(int n) {
