@@ -95,14 +95,15 @@ class loader {
     return linelst;
   }
 
-  void fixload_handle() {
+  template <class F>
+  void fixload_handle(F & func) {
     paracel::scheduler scheduler(m_comm, pattern, mix);
     auto fname_lst = paracel::expand(filenames);
     paracel::partition partition_obj(fname_lst,
                                      m_comm.get_size(),
                                      pattern);
     partition_obj.files_partition();
-    scheduler.structure_load_handle(partition_obj, parserfunc);
+    scheduler.structure_load_handle(partition_obj, func);
     if(m_comm.get_rank() == 0) std::cout << "lines parsed" << std::endl;
   }
 

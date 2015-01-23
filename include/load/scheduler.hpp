@@ -63,7 +63,21 @@ public:
   void schedule_load_handle(paracel::partition &, F &);
 
   template <class F>
-  void structure_load_handle(paracel::partition &, F &);
+  void structure_load_handle(paracel::partition & partition_obj,
+                                        F & func) {
+    int blk_sz = paracel::BLK_SZ;
+    if(pattern == "fvec" || pattern == "linesplit") {
+      blk_sz = 1;
+    }
+    int st = m_comm.get_rank() * blk_sz;
+    int en = (m_comm.get_rank() + 1) * blk_sz;
+    auto slst = partition_obj.get_start_list();
+    auto elst = partition_obj.get_end_list();
+    for(int i = st; i < en; ++i) {
+      partition_obj.files_load_lines_impl(slst[i], elst[i], func);
+    }
+  }
+
 
   template <class A, class B>
   inline size_t h(A & i, B & j, int & nx, int & ny) { 

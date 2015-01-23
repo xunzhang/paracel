@@ -196,13 +196,13 @@ class paralg {
     return paralg::paracel_load(fn, parser, pattern, mix_flag);	
   }
 
-  template <class T>
+  template <class T, class F>
   void paracel_load_handle(const T & fn,
-                           parser_type & parser,
+                           F func,
                            const paracel::str_type & pattern = "linesplit",
                            bool mix_flag = false) {
-    paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
-    ld.fixload_handle();
+    paracel::loader<T> ld(fn, worker_comm, pattern);
+    ld.fixload_handle(func);
     set_decomp_info(pattern);
   }
 
