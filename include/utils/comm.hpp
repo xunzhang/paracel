@@ -22,6 +22,7 @@
 
 #include <tuple>
 #include <mpi.h>
+#include <iostream>
 
 #include "paracel_types.hpp"
 #include "ext_utility.hpp"
@@ -716,7 +717,7 @@ private:
   paracel::list_type<size_t *> key_pt_lst;
   paracel::list_type<paracel::str_type *> str_pt_lst;
   paracel::list_type<paracel::list_type<double> *> lld_pt_lst;
-};
+}; // class Comm
 
 } // namespace paracel
 

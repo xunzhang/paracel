@@ -49,6 +49,7 @@ class paralg {
 
  private:
   void init_output(const paracel::str_type & folder) {
+    if(folder.size() == 0) return;
     // create output folder in advance
     if(worker_comm.get_rank() == 0) {
       boost::filesystem::path path(folder);
@@ -97,7 +98,7 @@ class paralg {
 
   paralg(paracel::str_type hosts_dct_str, 
          paracel::Comm comm,
-         paracel::str_type _output,
+         paracel::str_type _output = "",
          int _rounds = 1,
          int _limit_s = 0,
          bool _ssp_switch = false) : worker_comm(comm),
