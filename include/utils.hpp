@@ -177,11 +177,10 @@ std::vector<double> mat2vec(const Eigen::MatrixXd & m) {
 
 // return row seq
 Eigen::MatrixXd vec2mat(const std::vector<double> & v,
-                        size_t rows) {
-  size_t cols = v.size() / rows;
-  Eigen::MatrixXd m(cols, rows);
-  m = Eigen::MatrixXd::Map(&v[0], cols, rows);
-  return m.transpose();
+                        size_t cols) {
+  size_t rows = v.size() / cols;
+  Eigen::MatrixXd m(rows, cols);
+  return Eigen::MatrixXd::Map(&v[0], rows, cols);
 }
 
 template <class F>

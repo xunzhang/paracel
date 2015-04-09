@@ -109,7 +109,7 @@ public:
 	auto lines = paracel_load(input);
 	local_parser(item_vects, lines);
 	std::cout << "local parser done" << std::endl;
-    auto handler = [&](const std::vector<std::string> & linelst) {
+    auto handler = [&] (const std::vector<std::string> & linelst) {
 	  std::unordered_map<std::string, std::vector<double> > other_item_vects;
 	  local_parser(other_item_vects, linelst);
 	  local_learning(other_item_vects);
