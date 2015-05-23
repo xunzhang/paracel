@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2014, Douban Inc. 
+ *   All rights reserved. 
+ *
+ * Distributed under the BSD License. Check out the LICENSE file for full text.
+ *
+ * Paracel - A distributed optimization framework with parameter server.
+ *
+ * Downloading
+ *   git clone https://github.com/douban/paracel.git 
+ *
+ * Authors: Hong Wu <xunzhangthu@gmail.com>
+ *
+ */
+
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE F_TRAITS_TEST 
+
+#include <boost/test/unit_test.hpp>
 #include <assert.h>
 #include <iostream>
 #include <functional>
@@ -26,8 +45,7 @@ public:
   func_type f_obj2;
 };
 
-int main(int argc, char *argv[]) 
-{
+BOOST_AUTO_TEST_CASE (f_traints_test) {
   { // test for normal function
     using traits = paracel::f_traits<int(long, double*, const char &&, std::nullptr_t)>;
     assert(traits::arity == 4);
@@ -81,7 +99,7 @@ int main(int argc, char *argv[])
   { // test for member func
     class AA {
     public:  
-      typedef double (*func_type)(double, int);
+      //typedef double (*func_type)(double, int);
       static double foo(double a, int b) { return a + (double)b; }
       double too(double a, int b) { return a + (double)b; }
       double goo(double a, int b) const { return a + (double)b; }
@@ -116,7 +134,7 @@ int main(int argc, char *argv[])
   }
   {
     // test for static member func 
-    A obj_A;
+    //A obj_A;
     static_assert(std::is_same<double, paracel::f_traits<decltype(A::foo)>::result_type>::value, "err");
     static_assert(std::is_same<double, paracel::f_traits<decltype(A::foo)>::args<0>::type>::value, "err");
     static_assert(std::is_same<int, paracel::f_traits<decltype(A::foo)>::args<1>::type>::value, "err");
@@ -136,8 +154,8 @@ int main(int argc, char *argv[])
     static_assert(std::is_same<double, traits::args<1>::type>::value, "err");
     static_assert(std::is_same<int, traits::args<2>::type>::value, "err");
   
-    typedef double(*func_type)(double, int);
-    func_type A::*f_pt = &A::f_obj2;
+    //typedef double(*func_type)(double, int);
+    //func_type A::*f_pt = &A::f_obj2;
     std::function<double(double, int)> f_obj1 = foo;
   }
   { // test for functor
@@ -177,5 +195,4 @@ int main(int argc, char *argv[])
     static_assert(std::is_same<double, traits::args<0>::type>::value, "err");
     static_assert(std::is_same<int, traits::args<1>::type>::value, "err");
   }
-  return 0;
 }

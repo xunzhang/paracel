@@ -1,118 +1,76 @@
-#include <iostream>
+/**
+ * Copyright (c) 2014, Douban Inc. 
+ *   All rights reserved. 
+ *
+ * Distributed under the BSD License. Check out the LICENSE file for full text.
+ *
+ * Paracel - A distributed optimization framework with parameter server.
+ *
+ * Downloading
+ *   git clone https://github.com/douban/paracel.git 
+ *
+ * Authors: Hong Wu <xunzhangthu@gmail.com>
+ *
+ */
+
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE PARTITION_TEST 
+
 #include <vector>
-#include <deque>
-#include <list>
-#include <functional>
-
-#include "paracel_types.hpp"
+#include <string>
+#include <fstream>
+#include <iostream>
+#include <boost/test/unit_test.hpp>
 #include "load/partition.hpp"
+#include "utils.hpp"
+#include "test.hpp"
+#include "paracel_types.hpp"
 
-template <class T = int>
-void xrange_impl(paracel::coroutine<int>::caller_type & yield, int limit) {
-  for(int i = 0; i < limit; ++i) {
-    yield(i);
+const std::string fname = "test_partition.dat";
+
+void create_testfile(int line_sz) {
+  std::ofstream os;
+  os.open(fname);
+  for(int i = 0; i < line_sz; ++i) {
+    os << "1234567 " << std::to_string(i % 10) << '\n';
   }
+  os.close();
 }
 
-int main(int argc, char *argv[]) {
-
+BOOST_AUTO_TEST_CASE (files_partition_test) {
+  int lines = 10000;
+  create_testfile(lines);
+  std::vector<std::string> flst = {fname};
   {
-    paracel::coroutine<int> xrange(std::bind(xrange_impl, std::placeholders::_1, 10000));
-    int sum = 0;
-    while(xrange) {
-      auto tmp = xrange.get();
-      std::cout << tmp << std::endl;
-      sum += tmp;
-      xrange();
-    }
-    //std::vector<decltype(xrange)> cc;
-    //cc.emplace_back(std::move(xrange));
-    std::deque<decltype(xrange)> bb;
-    bb.emplace_back(std::move(xrange));
-    //bb.push_back(std::move(xrange));
-    //auto ss = bb[0];
-  }
+    for(int np = 1; np < 100; ++np) {
+      
+      paracel::partition obj(flst, np, "fmap");
+      std::vector<long> ss, ee;
+      obj.file_partition(fname, ss, ee);
 
-  { // test file_load_lines_impl
-    paracel::coroutine<paracel::str_type> file_load_lines(std::bind(paracel::file_load_lines_impl, std::placeholders::_1, "../demo/a.txt", 0, 67));
-    while(file_load_lines) {
-      auto tmp = file_load_lines.get();
-      std::cout << tmp << std::endl;
-      file_load_lines();
-    }
-  }
-
-  { // test file_partition
-    auto loads = paracel::file_partition("../demo/a.txt", 2);
-    for(auto & line_iterable : loads) {
-      while(line_iterable) {
-        auto line = line_iterable.get();
-	std::cout << line << std::endl;
-	line_iterable();
+      obj.files_partition(1);
+      std::vector<long> ss_check = obj.get_start_list();
+      std::vector<long> ee_check = obj.get_end_list();
+      
+      BOOST_CHECK_EQUAL_V(ss, ss_check);
+      BOOST_CHECK_EQUAL_V(ee, ee_check);
+      BOOST_CHECK_EQUAL(ss.size(), ee.size());
+      BOOST_CHECK_EQUAL(ss_check.size(), ee_check.size());
+      
+      for(size_t i = 0; i < ss.size(); ++i) {
+        auto lines = obj.file_load_lines_impl(fname, ss[i], ee[i]);
+        auto lines_check = obj.files_load_lines_impl(ss_check[i], ee_check[i]);
+        for(size_t j = 0; j < lines.size() - 1; ++j) {
+          int k1 = lines[j+1].back() - '0', k2 = lines[j].back() - '0';
+          if(k1 == 0 && k2 == 9) {
+            continue;
+          } else {
+            BOOST_CHECK_EQUAL(k1 - k2, 1);
+          }
+        }
+        BOOST_CHECK_EQUAL_V(lines, lines_check);
       }
-      std::cout << "=======================" << std::endl;
-    } // end of for
-  } // end of block
 
-  { // test files_load_lines_impl
-    std::cout << std::endl;
-    std::cout << std::endl;
-    paracel::list_type<paracel::str_type> name_lst{"../demo/a.txt"};
-    paracel::list_type<int> dis{0};
-    paracel::coroutine<paracel::str_type> files_load_lines(std::bind(paracel::files_load_lines_impl, std::placeholders::_1, name_lst, dis, 0, 67));
-    while(files_load_lines) {
-      auto tmp = files_load_lines.get();
-      std::cout << tmp << std::endl;
-      files_load_lines();
-    }
+    } // np
   }
-
-  { // test files_partition
-    std::cout << "----------------" << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-    paracel::list_type<paracel::str_type> name_lst{"../demo/a.txt"};
-    auto loads = paracel::files_partition(name_lst, 2);
-    for(auto & line_iterable : loads) {
-      while(line_iterable) {
-        auto line = line_iterable.get();
-	std::cout << line << std::endl;
-	line_iterable();
-      }
-      std::cout << "----------------" << std::endl;
-    }
-  }
-
-  { // test files_partition another
-    std::cout << "----------------" << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-    paracel::list_type<paracel::str_type> name_lst{"../demo/a.txt", "../demo/b.txt"};
-    auto loads = paracel::files_partition(name_lst, 2);
-    for(auto & line_iterable : loads) {
-      while(line_iterable) {
-        auto line = line_iterable.get();
-	std::cout << line << std::endl;
-	line_iterable();
-      }
-      std::cout << "----------------" << std::endl;
-    }
-  }
-
-  { // test files_partition another
-    std::cout << "XXXXXXXXXX" << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-    paracel::list_type<paracel::str_type> name_lst{"../demo/a.txt", "../demo/b.txt"};
-    auto loads = paracel::files_partition(name_lst, 1);
-    //auto line_iterable = loads[0];
-    while(loads[1]) {
-      auto line = loads[1].get();
-      std::cout << line << std::endl;
-      loads[1]();
-    }
-    std::cout << "XXXXXXXXXXXX" << std::endl;
-  }
-
-  return 0;
 }

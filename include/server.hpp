@@ -24,8 +24,7 @@
 #include <mutex>
 #include <functional>
 
-#include <zmq.hpp>
-
+#include "zmq.hpp"
 #include "utils.hpp"
 #include "packer.hpp"
 #include "kv_def.hpp"
@@ -86,25 +85,29 @@ void kv_filter4remove(const paracel::dict_type<paracel::str_type, paracel::str_t
   }
 }
 
-void kv_update(const paracel::str_type & key, 
-               const paracel::str_type & v_or_delta, 
-               update_result update_func) {
+std::string kv_update(const paracel::str_type & key,
+                      const paracel::str_type & v_or_delta,
+                      update_result update_func) {
   paracel::str_type val;
   auto exist = paracel::tbl_store.get(key, val);
   if(!exist) {
     paracel::tbl_store.set(key, v_or_delta);
-    return;
+    return v_or_delta;
   }
-  auto new_val = update_func(val, v_or_delta);
+  std::string new_val = update_func(val, v_or_delta);
   paracel::tbl_store.set(key, new_val);
+  return new_val;
 }
 
-void kvs_update(const paracel::list_type<paracel::str_type> & key_lst,
-                const paracel::list_type<paracel::str_type> & v_or_delta_lst,
-                update_result update_func) {
+std::vector<std::string>
+kvs_update(const paracel::list_type<paracel::str_type> & key_lst,
+           const paracel::list_type<paracel::str_type> & v_or_delta_lst,
+           update_result update_func) {
+  std::vector<std::string> new_vals;
   for(size_t i = 0; i < key_lst.size(); ++i) {
-    kv_update(key_lst[i], v_or_delta_lst[i], update_func);
+    new_vals.push_back(kv_update(key_lst[i], v_or_delta_lst[i], update_func));
   }
+  return new_vals;
 }
 
 // thread entry for ssp 
@@ -225,9 +228,7 @@ void thrd_exec(zmq::socket_t & sock) {
     auto scrip = paracel::str_type(static_cast<const char *>(s.data()), s.size());
     auto msg = paracel::str_split_by_word(scrip, paracel::seperator);
     auto indicator = pk.unpack(msg[0]);
-    //std::cout << indicator << std::endl;
     
-    mutex.lock();
     if(indicator == "contains") {
       auto key = pk.unpack(msg[1]);
       auto result = paracel::tbl_store.contains(key);
@@ -300,6 +301,7 @@ void thrd_exec(zmq::socket_t & sock) {
       bool result = true; 
       rep_pack_send(sock, result);
     }
+    mutex.lock();
     if(indicator == "push") {
       auto key = pk.unpack(msg[1]);
       paracel::tbl_store.set(key, msg[2]);
@@ -335,10 +337,9 @@ void thrd_exec(zmq::socket_t & sock) {
         }
       }
       auto key = pk.unpack(msg[1]);
-      kv_update(key, msg[2], update_f);
+      std::string result = kv_update(key, msg[2], update_f);
       if(indicator == "bupdate") {
-        bool result = true;
-        rep_pack_send(sock, result);
+        rep_send(sock, result);
       }
     }
     if(indicator == "bupdate_multi") {
@@ -360,8 +361,7 @@ void thrd_exec(zmq::socket_t & sock) {
       auto key_lst = pk_l.unpack(msg[1]);
       auto v_or_delta_lst = pk_l.unpack(msg[2]);
       assert(key_lst.size() == v_or_delta_lst.size());
-      kvs_update(key_lst, v_or_delta_lst, update_f);
-      bool result = true;
+      auto result = kvs_update(key_lst, v_or_delta_lst, update_f);
       rep_pack_send(sock, result);
     }
     if(indicator == "remove") {
@@ -433,7 +433,7 @@ void init_thrds(const paracel::str_type & init_host,
     }
   }
 
-  zmq::message_t request(ports.size()); 
+  zmq::message_t request(ports.size());
   std::memcpy((void *)request.data(), &ports[0], ports.size());
   sock.send(request);
 

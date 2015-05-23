@@ -7,7 +7,7 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
@@ -27,6 +27,9 @@
 #include "load.hpp"
 
 namespace paracel {
+namespace alg {
+
+using node_t = paracel::default_id_type;
 
 class kmeans : public paracel::paralg {
 
@@ -36,14 +39,17 @@ class kmeans : public paracel::paralg {
          std::string _input,
          std::string _output, 
          std::string type,
-         int k, 
-         int _rounds = 1,
-         int limit_s = 0) : 
-      paracel::paralg(hosts_dct_str, comm, _output, _rounds, limit_s, true),
+         int k,
+         std::string update_fn,
+         std::vector<std::string> update_fcn,
+         int _rounds = 1) : 
+      paracel::paralg(hosts_dct_str, comm, _output, _rounds, 0, false),
       input(_input),
       rounds(_rounds),
       dtype(type),
-      kclusters(k) {}
+      kclusters(k),
+      update_file(update_fn),
+      update_funcs(update_fcn) {}
  
   virtual ~kmeans() {}
 
@@ -67,7 +73,7 @@ class kmeans : public paracel::paralg {
       };
       auto f_parser = paracel::gen_parser(local_parser);
       //paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser);
-      paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser, "fvec", true);
+      paracel_load_as_matrix(blk_dmtx, row_map, input, f_parser);
 
       // init clusters
       if(get_worker_id() == 0) {
@@ -87,17 +93,18 @@ class kmeans : public paracel::paralg {
     } else if(dtype == "sim") {
       // TODO: sparsity case 
     }
-    sync(); // !
+    paracel_sync(); // !
   }
 
   // TODO: convergence condition
   void learning() {
     std::unordered_map<size_t, int> pnt_owner; // matrix_indx -> cluster_indx 
-    paracel_register_bupdate("/mfs/user/wuhong/paracel/local/lib/libclustering_update.so",
-                              "local_update_kmeans_clusters");
+    paracel_register_bupdate(update_file,
+                             update_funcs[0]);
 
     // main loop
     for(int rd = 0; rd < rounds; ++rd) {
+      if(get_worker_id() == 0) std::cout << "round: " << rd << std::endl;
       pnt_owner.clear();
       
       // pull clusters
@@ -134,7 +141,7 @@ class kmeans : public paracel::paralg {
 
       // update clusters
       paracel_bupdate("clusters_" + std::to_string(rd), clusters);
-      sync();
+      paracel_sync();
       //paracel_update_default("clusters_" + std::to_string(rd), clusters);
     } // rounds
 
@@ -149,16 +156,16 @@ class kmeans : public paracel::paralg {
     // allreduce
     paracel_bupdate("kmeans_result", 
                    groups, 
-                   "/mfs/user/wuhong/paracel/local/lib/libclustering_update.so", 
-                   "local_update_kmeans_groups");
-    sync();
+                   update_file, 
+                   update_funcs[1]);
+    paracel_sync();
     groups = paracel_read<std::unordered_map<int, std::vector<std::string> > >("kmeans_result");
   }
 
  public:
   void solve() {
     init();
-    sync();
+    paracel_sync();
     learning();
   }
 
@@ -178,14 +185,17 @@ class kmeans : public paracel::paralg {
   int rounds;
   std::string dtype;
   int kclusters;
+  std::string update_file;
+  std::vector<std::string> update_funcs;
 
   //Eigen::SparseMatrix<double, Eigen::RowMajor> blk_smtx;
   Eigen::MatrixXd blk_dmtx;
-  std::unordered_map<size_t, std::string> row_map; // matrix_indx -> id
+  std::unordered_map<paracel::default_id_type, std::string> row_map; // matrix_indx -> id
   std::vector<std::vector<double> > clusters;
   std::unordered_map<int, std::vector<std::string> > groups; // cluster_indx -> [ids]
 }; // class kmeans
 
+} // namespace alg
 } // namespace paracel
 
 #endif

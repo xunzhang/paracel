@@ -84,10 +84,10 @@ class paralg {
  public:
   // constructor for direct usage
   paralg(paracel::Comm comm,
-         paracel::str_type _output,
-         int _rounds) : worker_comm(comm), 
-                        output(_output), 
-                        rounds(_rounds) {
+         paracel::str_type _output = "",
+         int _rounds = 1) : worker_comm(comm), 
+	                    output(_output),
+			    rounds(_rounds) {
     init_output(_output);
     clock = 0;
     stale_cache = 0;
@@ -118,7 +118,7 @@ class paralg {
       (ps_obj->kvm[clock_server]).
           push_int(key, worker_comm.get_size());
     }
-    worker_comm.sync();
+    paracel_sync();
   }
 
   virtual ~paralg() {
@@ -175,26 +175,22 @@ class paralg {
   template <class T>
   paracel::list_type<paracel::str_type> 
   paracel_load(const T & fn,
-               parser_type & parser,
-               const paracel::str_type & pattern = "linesplit",
-               bool mix_flag = false) {
+               parser_type & parser) {
     paracel::loader<T> ld(fn, worker_comm,
                           parser,
-                          pattern,
-                          mix_flag);
+                          "linesplit",
+                          false);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
-    set_decomp_info(pattern);
+    set_decomp_info("linesplit");
     //assert(lines.size() != 0);
     return lines;
   }
 
   template <class T>
   paracel::list_type<paracel::str_type> 
-  paracel_load(const T & fn,
-               const paracel::str_type & pattern = "linesplit",
-               bool mix_flag = false) {
+  paracel_load(const T & fn) {
     parser_type parser;
-    return paralg::paracel_load(fn, parser, pattern, mix_flag);	
+    return paralg::paracel_load(fn, parser);	
   }
 
   template <class T, class F>
@@ -218,7 +214,7 @@ class paralg {
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
-    sync();
+    paracel_sync();
     // create graph 
     ld.create_graph(lines, grp);
     set_decomp_info(pattern);
@@ -236,7 +232,7 @@ class paralg {
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
-    sync();
+    paracel_sync();
     // create graph 
     ld.create_graph(lines, grp);
     set_decomp_info(pattern);
@@ -255,7 +251,7 @@ class paralg {
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
-    sync();
+    paracel_sync();
     // create graph 
     ld.create_graph(lines, grp, row_map, col_map);
     set_decomp_info(pattern);
@@ -274,7 +270,7 @@ class paralg {
     // load lines
     paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
-    sync();
+    paracel_sync();
     // create sparse matrix
     ld.create_matrix(lines, blk_mtx, row_map, col_map);
     set_decomp_info(pattern);
@@ -309,18 +305,15 @@ class paralg {
   void paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
                               paracel::dict_type<paracel::default_id_type, G> & row_map,
                               const T & fn, 
-                              parser_type & parser,
-                              const paracel::str_type & pattern = "fsmap",
-                              bool mix_flag = false) {
+                              parser_type & parser) {
 
-    // TODO: check pattern
     // load lines
-    paracel::loader<T> ld(fn, worker_comm, parser, pattern, mix_flag);
+    paracel::loader<T> ld(fn, worker_comm, parser, "fvec", true);
     paracel::list_type<paracel::str_type> lines = ld.fixload();
-    sync();
+    paracel_sync();
     // create sparse matrix
     ld.create_matrix(lines, blk_dense_mtx, row_map);
-    set_decomp_info(pattern);
+    set_decomp_info("fvec");
     lines.resize(0); lines.shrink_to_fit(); paracel::cheat_to_os();
   }
 
@@ -328,14 +321,10 @@ class paralg {
   template <class T>
   void paracel_load_as_matrix(Eigen::MatrixXd & blk_dense_mtx,
                               const T & fn, 
-                              parser_type & parser,
-                              const paracel::str_type & pattern = "fsmap",
-                              bool mix_flag = false) {
+                              parser_type & parser) {
     paralg::paracel_load_as_matrix(blk_dense_mtx,
                                    rm, fn,
-                                   parser,
-                                   pattern,
-                                   mix_flag);	
+                                   parser);	
   }
 
   // put where you want to control iter with ssp
@@ -464,10 +453,6 @@ class paralg {
   paracel::list_type<V> 
   paracel_read_multi(const paracel::list_type<paracel::str_type> & keys) {
     paracel::list_type<V> vals;
-    if(ssp_switch) {
-      // TODO
-      return vals;
-    }
     paracel::dict_type<paracel::str_type, size_t> indx_map;
     paracel::list_type<paracel::list_type<paracel::str_type> > lst_lst(ps_obj->srv_sz);
     vals.resize(keys.size());
@@ -475,6 +460,40 @@ class paralg {
       lst_lst[ps_obj->p_ring->get_server(keys[k])].push_back(keys[k]);
       indx_map[keys[k]] = k;
     }
+    
+    if(ssp_switch) {
+      if(clock == 0 || clock == total_iters) {
+        for(size_t k = 0; k < lst_lst.size(); ++k) {
+          auto lst = ps_obj->kvm[k].pull_multi<V>(lst_lst[k]);
+          for(size_t i = 0; i < lst.size(); ++i) {
+            vals[indx_map[lst_lst[k][i]]] = lst[i];
+          }
+        }
+        for(size_t i = 0; i < vals.size(); ++i) {
+          cached_para[keys[i]] = boost::any_cast<V>(vals[i]);
+        }
+      } else if(stale_cache + limit_s > clock) {
+        for(size_t i = 0; i < vals.size(); ++i) {
+          vals[i] = boost::any_cast<V>(cached_para[keys[i]]);
+        }
+      } else {
+        while(stale_cache + limit_s < clock) {
+          stale_cache = ps_obj->
+              kvm[clock_server].pull_int(paracel::str_type("server_clock"));
+        }
+        for(size_t k = 0; k < lst_lst.size(); ++k) {
+          auto lst = ps_obj->kvm[k].pull_multi<V>(lst_lst[k]);
+          for(size_t i = 0; i < lst.size(); ++i) {
+            vals[indx_map[lst_lst[k][i]]] = lst[i];
+          }
+        }
+        for(size_t i = 0; i < vals.size(); ++i) {
+          cached_para[keys[i]] = boost::any_cast<V>(vals[i]);
+        }
+      }
+      return vals;
+    } // ssp_switch
+    
     for(size_t k = 0; k < lst_lst.size(); ++k) {
       auto lst = ps_obj->kvm[k].pull_multi<V>(lst_lst[k]);
       for(size_t i = 0; i < lst.size(); ++i) {
@@ -548,7 +567,7 @@ class paralg {
                                         std::vector<std::pair<paracel::str_type, T> >, 
                                         min_heap_cmp<T> >;
     min_heap tmplst;
-    auto handler = [&] (const paracel::dict_type<paracel::str_type, T> & d) {
+    auto handler = [&tmplst, k] (const paracel::dict_type<paracel::str_type, T> & d) {
       for(auto & kv : d) {
         auto node = paracel::heap_node<paracel::str_type, T>(kv.first, kv.second);
         tmplst.push(node.val);
@@ -577,7 +596,7 @@ class paralg {
                                         std::vector<std::pair<paracel::str_type, T> >,
                                         min_heap_cmp<T> >;
     min_heap tmplst;
-    auto handler = [&] (const paracel::dict_type<paracel::str_type, T> & d) {
+    auto handler = [&tmplst, k] (const paracel::dict_type<paracel::str_type, T> & d) {
       for(auto & kv : d) {
         auto node = paracel::heap_node<paracel::str_type, T>(kv.first, kv.second);
         tmplst.push(node.val);
@@ -636,7 +655,7 @@ class paralg {
     }
     return r;
   }
-
+  
   template <class V>
   void paracel_update(const paracel::str_type & key,
                       const V & delta,
@@ -665,18 +684,52 @@ class paralg {
     paracel::str_type d = delta;
     paralg::paracel_update(key, d);
   }
+  
+  template <class V>
+  void paracel_update(const paracel::str_type & key,
+                      const V & delta,
+                      const paracel::str_type & file_name,
+                      const paracel::str_type & func_name) {
+    if(ssp_switch) {
+      V val = boost::any_cast<V>(cached_para[key]);
+      // pack<V> val to v & delta to d
+      paracel::packer<V> pk1(val), pk2(delta);
+      paracel::str_type v, d; pk1.pack(v); pk2.pack(d);
+      auto nv = update_f(v, d);
+      // unpack<V> nv
+      V nval = pk1.unpack(nv);
+      cached_para[key] = boost::any_cast<V>(nval);
+    }
+    ps_obj->kvm[ps_obj->p_ring->get_server(key)].update(key,
+                                                        delta,
+                                                        file_name,
+                                                        func_name);
+  }
+
+  void paracel_update(const paracel::str_type & key,
+                      const char* delta,
+                      const paracel::str_type & file_name,
+                      const paracel::str_type & func_name) {
+    paracel::str_type d = delta;
+    paralg::paracel_update(key, d, file_name, func_name);
+  }
+
 
   template <class V>
   bool paracel_bupdate(const paracel::str_type & key,
                        const V & delta,
                        bool replica_flag = false) {
     int indx = ps_obj->p_ring->get_server(key);
-    auto r = ps_obj->kvm[indx].bupdate(key, delta);
+    bool r = false;
+    auto new_val = ps_obj->kvm[indx].bupdate(key, delta, r);
     if(ssp_switch) {
       // update local cache
+      cached_para[key] = boost::any_cast<V>(new_val);
+      /*
       cached_para[key] = boost::any_cast<V>(ps_obj->
                                             kvm[indx].
                                             pull<V>(key));
+      */
     }
     return r;
   }
@@ -695,10 +748,16 @@ class paralg {
                        const paracel::str_type & func_name,
                        bool replica_flag = false) {
     int indx = ps_obj->p_ring->get_server(key);
-    auto r = ps_obj->kvm[indx].bupdate(key, delta, file_name, func_name);
+    bool r = false;
+    auto new_val = ps_obj->kvm[indx].bupdate(key,
+                                             delta,
+                                             file_name,
+                                             func_name,
+                                             r);
     if(ssp_switch) {
       // update local cache
-      cached_para[key] = boost::any_cast<V>(ps_obj->kvm[indx].pull<V>(key));
+      cached_para[key] = boost::any_cast<V>(new_val);
+      //cached_para[key] = boost::any_cast<V>(ps_obj->kvm[indx].pull<V>(key));
     }
     return r;
   }
@@ -718,9 +777,6 @@ class paralg {
                              const paracel::list_type<V> & deltas,
                              const paracel::str_type & file_name,
                              const paracel::str_type & func_name) {
-    if(ssp_switch) {
-      // TODO
-    }
     paracel::list_type<std::pair<paracel::list_type<paracel::str_type>,
                                 paracel::list_type<V> > > kd_lst(ps_obj->srv_sz);
     bool r = true;
@@ -732,11 +788,17 @@ class paralg {
     for(size_t k = 0; k < kd_lst.size(); ++k) {
       auto key_lst = kd_lst[k].first;
       auto delta_lst = kd_lst[k].second;
-      if(ps_obj->kvm[k].bupdate_multi(key_lst,
-                                      delta_lst,
-                                      file_name,
-                                      func_name) == false) {
-        r = false;
+      bool rr = false;
+      auto tmp = ps_obj->kvm[k].bupdate_multi(key_lst,
+                                              delta_lst,
+                                              file_name,
+                                              func_name,
+                                              rr);
+      if(rr == false) r = false;
+      if(ssp_switch) {
+        for(size_t j = 0; j < key_lst.size(); ++j) {
+          cached_para[key_lst[j]] = boost::any_cast<V>(tmp[j]);
+        }
       }
     }
     return r;
@@ -746,9 +808,6 @@ class paralg {
   bool paracel_bupdate_multi(const paracel::dict_type<paracel::str_type, V> & dct,
                              const paracel::str_type & file_name,
                              const paracel::str_type & func_name) {
-    if(ssp_switch) {
-      // TODO
-    }
     bool r = true;
     paracel::list_type<paracel::dict_type<paracel::str_type, V> > dct_lst(ps_obj->srv_sz);
     for(auto & kv : dct) {
@@ -756,12 +815,21 @@ class paralg {
     }
     for(size_t k = 0; k < dct_lst.size(); ++k) {
       if(dct_lst[k].size() != 0) {
-        if(ps_obj->kvm[k]
-            .bupdate_multi(dct_lst[k],
-                           file_name,
-                           func_name) == false) {
-          r = false;
-        }
+        bool rr = false;
+        auto tmp = ps_obj->kvm[k].bupdate_multi(dct_lst[k],
+                                                file_name,
+                                                func_name,
+                                                rr);
+        if(rr == false) r = false;
+        if(ssp_switch) {
+          paracel::list_type<paracel::str_type> tmp_lst;
+          for(auto & kv : dct_lst[k]) {
+            tmp_lst.push_back(kv.first);
+          }
+          for(size_t j = 0; j < tmp_lst.size(); ++j) {
+            cached_para[tmp_lst[j]] = boost::any_cast<V>(tmp[j]);
+          }
+        } // ssp_switch
       }
     }
     return r;
@@ -772,20 +840,20 @@ class paralg {
     total_iters = n;
   }
 
-  inline size_t get_worker_id() {
+  size_t get_worker_id() {
     return worker_comm.get_rank();
   }
 
-  inline size_t get_worker_size() {
+  size_t get_worker_size() {
     return worker_comm.get_size();
   }
 
-  inline size_t get_server_size() {
+  size_t get_server_size() {
     return ps_obj->srv_sz;
   }
 
-  void sync() {
-    worker_comm.sync();
+  void paracel_sync() {
+    worker_comm.synchronize();
   }
 
   /**
@@ -888,7 +956,7 @@ class paralg {
     }
     os.close();
     if(merge && get_worker_id() == 0) {
-      sync();
+      paracel_sync();
       paracel::str_type output_regx = output + filename + "*";
       files_merge(output_regx, filename);
     }
@@ -914,7 +982,7 @@ class paralg {
     }
     os.close();
     if(merge && get_worker_id() == 0) {
-      sync();
+      paracel_sync();
       paracel::str_type output_regx = output + filename + "*";
       files_merge(output_regx, filename);
     }
@@ -940,7 +1008,7 @@ class paralg {
     }
     os.close();
     if(merge && get_worker_id() == 0) {
-      sync();
+      paracel_sync();
       paracel::str_type output_regx = output + filename + "*";
       files_merge(output_regx, filename);
     }
@@ -966,13 +1034,13 @@ class paralg {
     for(auto & kv : data) {
       os << kv.first << '\t';
       for(size_t i = 0; i < kv.second.size() - 1; ++i) {
-        os << kv.second[i] << "|";
+        os << cvt(kv.second[i]) << "|";
       }
-      os << kv.second.back() << '\n';
+      os << cvt(kv.second.back()) << '\n';
     }
     os.close();
     if(merge && get_worker_id() == 0) {
-      sync();
+      paracel_sync();
       paracel::str_type output_regx = output + filename + "*";
       files_merge(output_regx, filename);
     }
@@ -1002,11 +1070,45 @@ class paralg {
             << std::to_string(kv.second[i].second) << '|';
       }
       os << kv.second.back().first << ":" 
-          << kv.second.back().second  << '\n';
+          << std::to_string(kv.second.back().second) << '\n';
     }
     os.close();
     if(merge && get_worker_id() == 0) {
-      sync();
+      paracel_sync();
+      paracel::str_type output_regx = output + filename + "*";
+      files_merge(output_regx, filename);
+    }
+  }
+
+  void paracel_dump_dict(const paracel::dict_type<paracel::default_id_type, 
+                         paracel::list_type<
+                         std::pair<paracel::default_id_type, double> > > & data, 
+                         const paracel::str_type & filename = "result_",
+                         bool append_flag = false,
+                         bool merge = false) {
+    std::ofstream os;
+    if(append_flag) {
+      os.open(paracel::todir(output)
+              + filename
+              + std::to_string(worker_comm.get_rank()),
+              std::ofstream::app);
+    } else {
+      os.open(paracel::todir(output)
+              + filename
+              + std::to_string(worker_comm.get_rank()));
+    }
+    for(auto & kv : data) {
+      os << std::to_string(kv.first) + '\t';
+      for(size_t i = 0; i < kv.second.size() - 1; ++i) {
+        os << std::to_string(kv.second[i].first) << ':'
+            << std::to_string(kv.second[i].second) << '|';
+      }
+      os << std::to_string(kv.second.back().first) << ":" 
+          << std::to_string(kv.second.back().second) << '\n';
+    }
+    os.close();
+    if(merge && get_worker_id() == 0) {
+      paracel_sync();
       paracel::str_type output_regx = output + filename + "*";
       files_merge(output_regx, filename);
     }
@@ -1114,6 +1216,10 @@ class paralg {
     return std::to_string(std::get<0>(tpl)) + ","
         + std::to_string(std::get<1>(tpl)) + ","
         + std::to_string(std::get<2>(tpl));
+  }
+
+  std::string cvt(const std::pair<paracel::default_id_type, double> & pr) {
+    return std::to_string(pr.first) + ":" + std::to_string(pr.second);
   }
 
 }; // class paralg

@@ -1,0 +1,5 @@
+{
+  "input" : "/mfs/user/wuhong/github/paracel/data/svd/demo2.txt",
+  "output" : "/mfs/user/wuhong/github/paracel/output/svd_result/",
+  "k" : 2
+}

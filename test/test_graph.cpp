@@ -1,91 +1,156 @@
-#include <iostream>
-#include <utility>
-#include <tuple>
-#include "paracel_types.hpp"
-#include "graph.hpp"
+/**
+ * Copyright (c) 2014, Douban Inc. 
+ *   All rights reserved. 
+ *
+ * Distributed under the BSD License. Check out the LICENSE file for full text.
+ *
+ * Paracel - A distributed optimization framework with parameter server.
+ *
+ * Downloading
+ *   git clone https://github.com/douban/paracel.git 
+ *
+ * Authors: Hong Wu <xunzhangthu@gmail.com>
+ *
+ */
 
-int main(int argc, char *argv[])
-{
-  { // test for digraph
-    paracel::list_type<std::tuple<size_t, size_t, double> > tpls;
-    tpls.emplace_back(std::make_tuple(0, 0, 3.));
-    tpls.emplace_back(std::make_tuple(0, 2, 5.));
-    tpls.emplace_back(std::make_tuple(1, 0, 4.));
-    tpls.emplace_back(std::make_tuple(1, 1, 3.));
-    tpls.emplace_back(std::make_tuple(1, 2, 1.));
-    tpls.emplace_back(std::make_tuple(2, 0, 2.));
-    tpls.emplace_back(std::make_tuple(2, 3, 1.));
-    tpls.emplace_back(std::make_tuple(3, 1, 3.));
-    tpls.emplace_back(std::make_tuple(3, 3, 1.));
-    paracel::digraph<size_t> grp(tpls);
-    paracel::digraph<size_t> grp2;
-    std::cout << "duck" << grp2.v() << std::endl;
-    grp2.construct_from_triples(tpls);
-    // traverse
-    for(int i = 0; i < grp.v(); ++i) {
-      std::cout << i << " : ";
-      for(auto & ed : grp.adjacent(i)) {
-        std::cout << ed.first;
-      }
-      std::cout << std::endl;
-    }
-    for(auto & w : grp.adjacent(0)) {
-      std::cout << w.first << std::endl;
-    }
-    auto f = [] (size_t a, size_t b, double c) {
-      std::cout << a << " | " << b << " | " << c << std::endl;
-    };
-    grp.traverse(f);
-    std::cout << "!!!" << std::endl;
-    grp.traverse(1, f);
-    std::cout << "!!!" << std::endl;
-    grp2.traverse(f);
-    std::cout << "!!!" << std::endl;
-    grp2.traverse(1, f);
-    std::cout << "!!!" << std::endl;
-    paracel::list_type<std::tuple<size_t, size_t, double> > local_tpls;
-    grp.dump2triples(local_tpls);
-    std::cout << "test" << std::get<0>(local_tpls[0]) << " | " << std::get<1>(local_tpls[0]) << " | " << std::get<2>(local_tpls[0]) << std::endl;
-  }
-  { // test for undirected graph
-    paracel::undirected_graph<size_t> grp;
-    grp.add_edge(0, 1);
-    grp.add_edge(0, 2);
-    grp.add_edge(0, 5);
-    grp.add_edge(0, 6);
-    grp.add_edge(3, 4);
-    grp.add_edge(3, 5);
-    grp.add_edge(4, 5);
-    grp.add_edge(4, 6);
-    //grp.add_edge(7, 8);
-    grp.add_edge(9, 10);
-    grp.add_edge(9, 11);
-    grp.add_edge(9, 12);
-    grp.add_edge(11, 12);
-    std::cout << grp.v() << std::endl;
-    std::cout << "----------------------" << std::endl;
-    std::cout << grp.e() << std::endl;
-    std::cout << "----------------------" << std::endl;
-    for(auto & w : grp.adjacent(5)) {
-      std::cout << w.first << std::endl;
-    }
-    // traverse
-    for(int i = 0; i < grp.v(); ++i) {
-      std::cout << i << " : ";
-      for(auto & ed : grp.adjacent(i)) {
-        std::cout << ed.first;
-      }
-      std::cout << std::endl;
-    }
-    std::cout << "----------------------" << std::endl;
-    std::cout << grp.avg_degree() << std::endl;
-    std::cout << "----------------------" << std::endl;
-    std::cout << grp.max_degree() << std::endl;
-    std::cout << "----------------------" << std::endl;
-    std::cout << grp.selfloops() << std::endl;
-    std::cout << "======================" << std::endl;
-  }
-  { // test for undirected graph
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE GRAPH_TEST 
+
+#include <vector>
+#include <string>
+#include <iostream>
+#include <tuple>
+#include <boost/test/unit_test.hpp>
+#include "graph.hpp"
+#include "paracel_types.hpp"
+
+BOOST_AUTO_TEST_CASE (bigraph_test) {
+  
+  paracel::list_type<std::tuple<std::string, std::string, double> > tpls;
+  tpls.emplace_back(std::make_tuple("a", "A", 3.));
+  tpls.emplace_back(std::make_tuple("a", "B", 4.));
+  tpls.emplace_back(std::make_tuple("a", "D", 2.));
+  tpls.emplace_back(std::make_tuple("b", "C", 5.));
+  tpls.emplace_back(std::make_tuple("b", "D", 4.));
+  tpls.emplace_back(std::make_tuple("c", "D", 3.));
+  tpls.emplace_back(std::make_tuple("b", "E", 5.));
+  tpls.emplace_back(std::make_tuple("c", "E", 1.));
+  tpls.emplace_back(std::make_tuple("c", "F", 2.));
+  tpls.emplace_back(std::make_tuple("d", "C", 3.));
+  
+  paracel::bigraph<std::string> grp(tpls);
+  
+  auto data = grp.get_data();
+  
+  auto print_lambda = [] (std::string u, std::string v, double wgt) {
+    std::cout << u << "|" << v << "|" << wgt << std::endl;
+  };
+  grp.traverse(print_lambda);
+  
+  grp.add_edge("c", "G", 3.6);
+  grp.traverse("c", print_lambda);
+
+  auto ubag = grp.left_vertex_bag();
+  auto uset = grp.left_vertex_set();
+
+  paracel::list_type<std::tuple<std::string, std::string, double> > dump_tpls;
+  grp.dump2triples(dump_tpls);
+
+  paracel::dict_type<std::string, paracel::dict_type<std::string, double> > dump_dict;
+  grp.dump2dict(dump_dict);
+
+  BOOST_CHECK_EQUAL(grp.v(), 4);
+  BOOST_CHECK_EQUAL(grp.e(), 11);
+  BOOST_CHECK_EQUAL(grp.outdegree("a"), 3);
+  BOOST_CHECK_EQUAL(grp.indegree("E"), 2);
+
+  auto adj_info = grp.adjacent("c");
+}
+
+BOOST_AUTO_TEST_CASE (bigraph_continuous_test) {
+  
+  paracel::bigraph_continuous G;
+  G.add_edge(0, 1, 3.);
+  G.add_edge(0, 2, 4.);
+  G.add_edge(0, 4, 2.);
+  G.add_edge(1, 3, 5.);
+  G.add_edge(1, 4, 4.);
+  G.add_edge(1, 5, 5.);
+  G.add_edge(2, 4, 3.);
+  G.add_edge(2, 5, 1.);
+  G.add_edge(2, 6, 2.);
+  G.add_edge(3, 3, 3.);
+  
+  auto print_lambda = [] (paracel::default_id_type u, paracel::default_id_type v, double wgt) {
+    std::cout << u << "|" << v << "|" << wgt << std::endl;
+  };
+  G.traverse(print_lambda);
+  G.traverse(0, print_lambda);
+
+  BOOST_CHECK_EQUAL(G.v(), 4);
+  BOOST_CHECK_EQUAL(G.e(), 10);
+  BOOST_CHECK_EQUAL(G.outdegree(0), 3);
+  BOOST_CHECK_EQUAL(G.indegree(5), 2);
+
+  auto adj_info = G.adjacent(2);
+
+}
+
+BOOST_AUTO_TEST_CASE (digraph_test) {
+  paracel::list_type<std::tuple<size_t, size_t, double> > tpls;
+  tpls.emplace_back(std::make_tuple(0, 0, 3.));
+  tpls.emplace_back(std::make_tuple(0, 2, 5.));
+  tpls.emplace_back(std::make_tuple(1, 0, 4.));
+  tpls.emplace_back(std::make_tuple(1, 1, 3.));
+  tpls.emplace_back(std::make_tuple(1, 2, 1.));
+  tpls.emplace_back(std::make_tuple(2, 0, 2.));
+  tpls.emplace_back(std::make_tuple(2, 3, 1.));
+  tpls.emplace_back(std::make_tuple(3, 1, 3.));
+  tpls.emplace_back(std::make_tuple(3, 3, 1.));
+  paracel::digraph<size_t> grp(tpls);
+  paracel::digraph<size_t> grp2;
+  BOOST_CHECK_EQUAL(grp2.v(), 0);
+  grp2.construct_from_triples(tpls);
+  BOOST_CHECK_EQUAL(grp2.v(), 4);
+
+  grp.add_edge(3, 4, 5.);
+
+  auto data = grp.get_data();
+  auto vbag = grp.vertex_bag();
+  auto vset = grp.vertex_set();
+  auto adj = grp.adjacent(0);
+
+  auto f = [] (size_t a, size_t b, double c) {
+    std::cout << a << " | " << b << " | " << c << std::endl;
+  };
+  grp.traverse(f);
+  grp.traverse(1, f);
+  
+  grp2.traverse(f);
+  grp2.traverse(1, f);
+  
+  paracel::list_type<std::tuple<size_t, size_t, double> > dump_tpls;
+  grp.dump2triples(dump_tpls);
+  paracel::dict_type<size_t, paracel::dict_type<size_t, double> > dump_dict;
+  grp.dump2dict(dump_dict);
+
+  BOOST_CHECK_EQUAL(grp.v(), 5);
+  BOOST_CHECK_EQUAL(grp.e(), 10);
+  BOOST_CHECK_EQUAL(grp.outdegree(0), 2);
+  BOOST_CHECK_EQUAL(grp.indegree(0), 3);
+  BOOST_CHECK_EQUAL(grp.avg_degree(), 2.);
+  BOOST_CHECK_EQUAL(grp.selfloops(), 3);
+
+  grp.reverse();
+  BOOST_CHECK_EQUAL(grp.v(), 5);
+  BOOST_CHECK_EQUAL(grp.e(), 10);
+  BOOST_CHECK_EQUAL(grp.outdegree(0), 3);
+  BOOST_CHECK_EQUAL(grp.indegree(0), 2);
+  BOOST_CHECK_EQUAL(grp.avg_degree(), 2.);
+  BOOST_CHECK_EQUAL(grp.selfloops(), 3);
+}
+
+BOOST_AUTO_TEST_CASE (undirected_graph_test) {
     paracel::list_type<std::tuple<size_t, size_t> > edges;
     edges.emplace_back(std::make_tuple(0, 1));
     edges.emplace_back(std::make_tuple(0, 2));
@@ -95,173 +160,15 @@ int main(int argc, char *argv[])
     edges.emplace_back(std::make_tuple(3, 5));
     edges.emplace_back(std::make_tuple(4, 5));
     edges.emplace_back(std::make_tuple(4, 6));
-    //edges.emplace_back(std::make_tuple(7, 8));
     edges.emplace_back(std::make_tuple(9, 10));
     edges.emplace_back(std::make_tuple(9, 11));
     edges.emplace_back(std::make_tuple(9, 12));
     edges.emplace_back(std::make_tuple(11, 12));
     paracel::undirected_graph<size_t> grp(edges);
-    std::cout << grp.v() << std::endl;
-    std::cout << "----------------------" << std::endl;
-    std::cout << grp.e() << std::endl;
-    std::cout << "----------------------" << std::endl;
-    for(auto & w : grp.adjacent(5)) {
-      std::cout << w.first << std::endl;
-    }
-    for(int i = 0; i < grp.v(); ++i) {
-      std::cout << i << " : ";
-      for(auto & ed : grp.adjacent(i)) {
-        std::cout << ed.first;
-      }
-      std::cout << std::endl;
-    }
-    std::cout << "----------------------" << std::endl;
-    std::cout << grp.avg_degree() << std::endl;
-    std::cout << "----------------------" << std::endl;
-    std::cout << grp.max_degree() << std::endl;
-    std::cout << "----------------------" << std::endl;
-    std::cout << grp.selfloops() << std::endl;
-    std::cout << "----------------------" << std::endl;
-  }
-  {
-    paracel::list_type<std::tuple<size_t, size_t, double> > tpls;
-    tpls.emplace_back(std::make_tuple(4, 2, 1.));
-    tpls.emplace_back(std::make_tuple(2, 3, 1.));
-    tpls.emplace_back(std::make_tuple(3, 2, 1.));
-    tpls.emplace_back(std::make_tuple(6, 0, 1.));
-    tpls.emplace_back(std::make_tuple(0, 1, 1.));
-    tpls.emplace_back(std::make_tuple(2, 0, 1.));
-    tpls.emplace_back(std::make_tuple(11, 12, 1.));
-    tpls.emplace_back(std::make_tuple(12, 9, 1.));
-    tpls.emplace_back(std::make_tuple(9, 10, 1.));
-    tpls.emplace_back(std::make_tuple(9, 11, 1.));
-    tpls.emplace_back(std::make_tuple(8, 9, 1.));
-    tpls.emplace_back(std::make_tuple(10, 12, 1.));
-    tpls.emplace_back(std::make_tuple(11, 4, 1.));
-    tpls.emplace_back(std::make_tuple(4, 3, 1.));
-    tpls.emplace_back(std::make_tuple(3, 5, 1.));
-    tpls.emplace_back(std::make_tuple(6, 8, 1.));
-    tpls.emplace_back(std::make_tuple(8, 6, 1.));
-    tpls.emplace_back(std::make_tuple(5, 4, 1.));
-    tpls.emplace_back(std::make_tuple(0, 5, 1.));
-    tpls.emplace_back(std::make_tuple(6, 4, 1.));
-    tpls.emplace_back(std::make_tuple(6, 9, 1.));
-    tpls.emplace_back(std::make_tuple(7, 6, 1.));
-    paracel::digraph<size_t> grp(tpls);
-    auto lambda = [] (size_t a) {
-      std::cout << a << std::endl;
-    };
-    std::cout << "~" << std::endl;
-    paracel::DFS<paracel::digraph<size_t>, size_t, decltype(lambda)> dfs_o1(grp, 0, lambda);
-    std::cout << "~" << std::endl;
-    paracel::DFS<paracel::digraph<size_t>, size_t, decltype(lambda)> dfs_o2(grp, 1, lambda);
-    std::cout << "~" << std::endl;
-    paracel::DFS<paracel::digraph<size_t>, size_t, decltype(lambda)> dfs_o3(grp, 6, lambda);
-    std::cout << "~" << std::endl;
-    paracel::list_type<std::tuple<size_t, size_t> > edges;
-    edges.emplace_back(std::make_tuple(0, 5));
-    edges.emplace_back(std::make_tuple(4, 3));
-    edges.emplace_back(std::make_tuple(0, 1));
-    edges.emplace_back(std::make_tuple(9, 12));
-    edges.emplace_back(std::make_tuple(6, 4));
-    edges.emplace_back(std::make_tuple(5, 4));
-    edges.emplace_back(std::make_tuple(0, 2));
-    edges.emplace_back(std::make_tuple(11, 12));
-    edges.emplace_back(std::make_tuple(9, 10));
-    edges.emplace_back(std::make_tuple(0, 6));
-    edges.emplace_back(std::make_tuple(7, 8));
-    edges.emplace_back(std::make_tuple(9, 11));
-    edges.emplace_back(std::make_tuple(5, 3));
-    paracel::undirected_graph<size_t> grp2(edges);
-    std::cout << "~" << std::endl;
-    paracel::DFS<paracel::undirected_graph<size_t>, size_t, decltype(lambda)> dfs_o4(grp2, 0, lambda);
-    std::cout << "~" << std::endl;
-  }
-  {
-    paracel::list_type<std::tuple<size_t, size_t, double> > tpls;
-    tpls.emplace_back(std::make_tuple(5, 0, 1.));
-    tpls.emplace_back(std::make_tuple(2, 4, 1.));
-    tpls.emplace_back(std::make_tuple(3, 2, 1.));
-    tpls.emplace_back(std::make_tuple(1, 2, 1.));
-    tpls.emplace_back(std::make_tuple(0, 1, 1.));
-    tpls.emplace_back(std::make_tuple(4, 3, 1.));
-    tpls.emplace_back(std::make_tuple(3, 5, 1.));
-    tpls.emplace_back(std::make_tuple(0, 2, 1.));
-    paracel::digraph<size_t> grp(tpls);
-    auto lambda = [] (size_t a) {
-      std::cout << a << std::endl;
-    };
-    std::cout << "~" << std::endl;
-    paracel::BFS<paracel::digraph<size_t>, size_t, decltype(lambda)> bfs_o1(grp, 0, lambda);
-    std::cout << "~" << std::endl;
-    std::cout << "edgeTo 0 " << bfs_o1.edgeTo(0) << std::endl;
-    std::cout << "edgeTo 1 " << bfs_o1.edgeTo(1) << std::endl;
-    std::cout << "edgeTo 2 " << bfs_o1.edgeTo(2) << std::endl;
-    std::cout << "edgeTo 3 " << bfs_o1.edgeTo(3) << std::endl;
-    std::cout << "edgeTo 4 " << bfs_o1.edgeTo(4) << std::endl;
-    std::cout << "edgeTo 5 " << bfs_o1.edgeTo(5) << std::endl;
-    std::cout << "dist_to 0 " << bfs_o1.dist(0) << std::endl;
-    std::cout << "dist_to 1 " << bfs_o1.dist(1) << std::endl;
-    std::cout << "dist_to 2 " << bfs_o1.dist(2) << std::endl;
-    std::cout << "dist_to 3 " << bfs_o1.dist(3) << std::endl;
-    std::cout << "dist_to 4 " << bfs_o1.dist(4) << std::endl;
-    std::cout << "dist_to 5 " << bfs_o1.dist(5) << std::endl;
-
-    paracel::list_type<std::tuple<size_t, size_t> > edges;
-    edges.emplace_back(std::make_tuple(0, 5));
-    edges.emplace_back(std::make_tuple(2, 4));
-    edges.emplace_back(std::make_tuple(2, 3));
-    edges.emplace_back(std::make_tuple(1, 2));
-    edges.emplace_back(std::make_tuple(0, 1));
-    edges.emplace_back(std::make_tuple(3, 4));
-    edges.emplace_back(std::make_tuple(3, 5));
-    edges.emplace_back(std::make_tuple(0, 2));
-    paracel::undirected_graph<size_t> grp2(edges);
-    paracel::BFS<paracel::undirected_graph<size_t>, size_t, decltype(lambda)> bfs_o2(grp2, 0, lambda);
-    std::cout << "edgeTo 0 " << bfs_o2.edgeTo(0) << std::endl;
-    std::cout << "edgeTo 1 " << bfs_o2.edgeTo(1) << std::endl;
-    std::cout << "edgeTo 2 " << bfs_o2.edgeTo(2) << std::endl;
-    std::cout << "edgeTo 3 " << bfs_o2.edgeTo(3) << std::endl;
-    std::cout << "edgeTo 4 " << bfs_o2.edgeTo(4) << std::endl;
-    std::cout << "edgeTo 5 " << bfs_o2.edgeTo(5) << std::endl;
-    std::cout << "dist_to 0 " << bfs_o2.dist(0) << std::endl;
-    std::cout << "dist_to 1 " << bfs_o2.dist(1) << std::endl;
-    std::cout << "dist_to 2 " << bfs_o2.dist(2) << std::endl;
-    std::cout << "dist_to 3 " << bfs_o2.dist(3) << std::endl;
-    std::cout << "dist_to 4 " << bfs_o2.dist(4) << std::endl;
-    std::cout << "dist_to 5 " << bfs_o2.dist(5) << std::endl;
-  }
-  {
-    paracel::list_type<std::tuple<size_t, size_t> > edges;
-    edges.emplace_back(std::make_tuple(0, 5));
-    edges.emplace_back(std::make_tuple(4, 3));
-    edges.emplace_back(std::make_tuple(0, 1));
-    edges.emplace_back(std::make_tuple(9, 12));
-    edges.emplace_back(std::make_tuple(6, 4));
-    edges.emplace_back(std::make_tuple(5, 4));
-    edges.emplace_back(std::make_tuple(0, 2));
-    edges.emplace_back(std::make_tuple(11, 12));
-    edges.emplace_back(std::make_tuple(9, 10));
-    edges.emplace_back(std::make_tuple(0, 6));
-    edges.emplace_back(std::make_tuple(7, 8));
-    edges.emplace_back(std::make_tuple(9, 11));
-    edges.emplace_back(std::make_tuple(5, 3));
-    paracel::undirected_graph<size_t> grp(edges);
-    paracel::connected_components<paracel::undirected_graph<size_t>, size_t> cc_o(grp);
-    std::cout << "cnt of cc: " << cc_o.cnt() << std::endl;
-    std::cout << "identifier of 0: " << cc_o.id(0) << std::endl;
-    std::cout << "identifier of 1: " << cc_o.id(1) << std::endl;
-    std::cout << "identifier of 2: " << cc_o.id(2) << std::endl;
-    std::cout << "identifier of 3: " << cc_o.id(3) << std::endl;
-    std::cout << "identifier of 4: " << cc_o.id(4) << std::endl;
-    std::cout << "identifier of 5: " << cc_o.id(5) << std::endl;
-    std::cout << "identifier of 6: " << cc_o.id(6) << std::endl;
-    std::cout << "identifier of 7: " << cc_o.id(7) << std::endl;
-    std::cout << "identifier of 8: " << cc_o.id(8) << std::endl;
-    std::cout << "identifier of 9: " << cc_o.id(9) << std::endl;
-    std::cout << "identifier of 10: " << cc_o.id(10) << std::endl;
-    std::cout << "identifier of 11: " << cc_o.id(11) << std::endl;
-    std::cout << "identifier of 12: " << cc_o.id(12) << std::endl;
-  }
-  return 0;
+    BOOST_CHECK_EQUAL(grp.v(), 11);
+    BOOST_CHECK_EQUAL(grp.e(), 12);
+    auto adj = grp.adjacent(5); // {0: 1.0, 4: 1.0}
+    BOOST_CHECK_EQUAL(grp.avg_degree(), 24. / 11.);
+    BOOST_CHECK_EQUAL(grp.max_degree(), 4);
+    BOOST_CHECK_EQUAL(grp.selfloops(), 0);
 }

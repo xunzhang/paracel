@@ -1,0 +1,6 @@
+{
+  "input" : "/mfs/user/wuhong/github/paracel/data/binary_classification/large_feature_small",
+  "output" : "/mfs/user/wuhong/github/paracel/output/lr_l1_result/",
+  "lambda" : 0.0001,
+  "rounds" : 20000
+}

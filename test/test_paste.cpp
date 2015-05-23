@@ -1,10 +1,29 @@
+/**
+ * Copyright (c) 2014, Douban Inc. 
+ *   All rights reserved. 
+ *
+ * Distributed under the BSD License. Check out the LICENSE file for full text.
+ *
+ * Paracel - A distributed optimization framework with parameter server.
+ *
+ * Downloading
+ *   git clone https://github.com/douban/paracel.git 
+ *
+ * Authors: Hong Wu <xunzhangthu@gmail.com>
+ *
+ */
+
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE PASTE_TEST 
+
+#include <boost/test/unit_test.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <tr1/unordered_map>
+#include <unordered_map>
+#include "utils/ext_utility.hpp"
 #include "paracel_types.hpp"
 #include "packer.hpp"
-#include "utils/ext_utility.hpp"
 
 // terminate function for recursive variadic template
 template<class T>
@@ -35,8 +54,7 @@ void check_result(const paracel::str_type & s) {
   std::cout << "--------------------------------" << std::endl;
 }
 
-int main(int argc, char *argv[])
-{
+BOOST_AUTO_TEST_CASE (paste_test) {
   {
     std::string key = "p[0,:]";
     std::string op_str = "pull";
@@ -89,7 +107,7 @@ int main(int argc, char *argv[])
       std::cout << "#" << v << "#" << std::endl;
     std::cout << "--------------------------------" << std::endl;
 
-    std::tr1::unordered_map<paracel::str_type, paracel::list_type<double> > d;
+    std::unordered_map<paracel::str_type, paracel::list_type<double> > d;
     paracel::list_type<double> t1 = {1., 2., 3., 4., 5.};
     paracel::list_type<double> t2 = {5., 4., 3., 2., 1.};
     d["p[0,:]_0"] = t1;
@@ -98,7 +116,7 @@ int main(int argc, char *argv[])
     auto result3 = paracel::str_split_by_word(s4, paracel::seperator);
 
     std::cout << "--------------------------------" << std::endl;
-    paracel::packer<std::tr1::unordered_map<paracel::str_type, paracel::list_type<double> > > pk4;
+    paracel::packer<std::unordered_map<paracel::str_type, paracel::list_type<double> > > pk4;
     std::cout << "#" << pk1.unpack(result3[0]) << "#" << std::endl;
     auto tmp2 = pk4.unpack(result3[1]);
     for(auto & v : tmp2) {
@@ -154,5 +172,4 @@ int main(int argc, char *argv[])
       std::cout << v << std::endl;
     }
   }
-  return 0;
 }

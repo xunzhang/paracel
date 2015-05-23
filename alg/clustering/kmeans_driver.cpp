@@ -7,13 +7,14 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
 
 #include <string>
+#include <vector>
 #include <iostream>
 #include <google/gflags.h>
 
@@ -22,6 +23,7 @@
 #include "utils.hpp"
 
 using std::string;
+using std::vector;
 using std::cout;
 using std::endl;
 
@@ -41,9 +43,18 @@ int main(int argc, char *argv[])
   string output = jp.parse<string>("output");
   string type = jp.parse<string>("type");
   int k = jp.parse<int>("kclusters");
+  string update_fn = jp.parse<string>("update_file");
+  vector<string> update_funcs = jp.parse_v<string>("update_functions");
   int rounds = jp.parse<int>("rounds");
-  int limit_s = jp.parse<int>("limit_s");
-  paracel::kmeans solver(comm, FLAGS_server_info, input, output, type, k, rounds, limit_s);
+  paracel::alg::kmeans solver(comm,
+                              FLAGS_server_info,
+                              input,
+                              output,
+                              type,
+                              k,
+                              update_fn,
+                              update_funcs,
+                              rounds);
   solver.solve();
   solver.dump_result();
   return 0;

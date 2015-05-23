@@ -30,6 +30,7 @@ using std::endl;
 int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
   
+  /*
   auto ports_tmp = paracel::get_hostnames_string(1, "6378");
   char hostname[1024];
   gethostname(hostname, sizeof(hostname));
@@ -38,12 +39,17 @@ int main(int argc, char *argv[]) {
   std::string ports(ports_tmp.begin() + server_name.size() + 1,
                     ports_tmp.end());
   std::cout << ports << std::endl;
+  */
+
+  std::string server_name = "beater7";
+  std::string ports = "48121,53146,58489,12740,27132";
 
   paracel::kvclt kvc(server_name, ports);
 
   {
     std::string prefix = "test_key_";
     kvc.push(prefix, 7.);
+    MPI_Barrier(MPI_COMM_WORLD);
     kvc.pull<double>(prefix);
   }
   MPI_Finalize();

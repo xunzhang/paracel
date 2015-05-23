@@ -1,6 +1,7 @@
 #include <functional>
 #include <vector>
 #include <string>
+
 #include "paracel_types.hpp"
 #include "proxy.hpp"
 #include "utils.hpp"
@@ -20,7 +21,7 @@ double foo(double a, double b) {
 }
 
 bool goo0(std::string k, double v) {
-  if(v >= 12.) { return true; }
+  if(v >= 12.) return true;
   return false;
 }
 
@@ -33,7 +34,7 @@ bool goo1(std::string k, double v) {
 }
 
 bool too0(std::string k, double v) {
-  if(v >= 14.) { return true; }
+  if(v >= 14.) return true;
   return false;
 }
 

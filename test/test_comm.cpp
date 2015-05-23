@@ -1,7 +1,20 @@
 /**
- * unit test for comm.hpp(sz = 2)
+ * Copyright (c) 2014, Douban Inc. 
+ *   All rights reserved. 
+ *
+ * Distributed under the BSD License. Check out the LICENSE file for full text.
+ *
+ * Paracel - A distributed optimization framework with parameter server.
+ *
+ * Downloading
+ *   git clone https://github.com/douban/paracel.git 
+ *
+ * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
  */
+
+// unit test for comm.hpp(worker number = 2)
+
 #include <iostream>
 #include <vector>
 #include <tuple>
@@ -18,7 +31,6 @@ int main(int argc, char *argv[])
   paracel::Comm comm(MPI_COMM_WORLD); 
   int rk = comm.get_rank();
   int sz = comm.get_size();
-  auto f = [](){ int b = 1; };
   comm.get_rank();
 
   { // builtin send + recv
@@ -35,7 +47,7 @@ int main(int argc, char *argv[])
   { // isend + recv
     if(rk == 0) {
       int a = 7; 
-      MPI_Request req;
+      paracel::vrequest req;
       req = comm.isend(a, 1, 2014);
     } else if(rk == 1){
       int b = 0;
@@ -59,7 +71,7 @@ int main(int argc, char *argv[])
   { // container isend + recv
     if(rk == 0) {
       std::vector<int> aa {77, 88};
-      MPI_Request req;
+      paracel::vrequest req;
       req = comm.isend(aa, 1, 2014);
     } else if(rk == 1) {
       std::vector<int> bb;
@@ -75,7 +87,7 @@ int main(int argc, char *argv[])
       std::get<0>(aa) = "abc";
       std::get<1>(aa) = "def";
       std::get<2>(aa) = 3.14;
-      MPI_Request req;
+      paracel::vrequest req;
       req = comm.isend(aa, 1, 2014);
     } else if(rk == 1) {
       std::tuple<std::string, std::string, double> bb;
@@ -97,7 +109,7 @@ int main(int argc, char *argv[])
       std::get<1>(tmp2) = "fed";
       std::get<2>(tmp2) = 5.16;
       aa.push_back(tmp2);
-      MPI_Request req;
+      paracel::vrequest req;
       req = comm.isend(aa, 1, 2014);
     } else if(rk == 1) {
       std::vector<std::tuple<std::string, std::string, double> > bb;
@@ -118,7 +130,7 @@ int main(int argc, char *argv[])
       aa.push_back(tmp1);
       std::tuple<std::string, std::string, double> tmp2;
       aa.push_back(tmp2);
-      MPI_Request req;
+      paracel::vrequest req;
       req = comm.isend(aa, 1, 2014);
     } else if(rk == 1) {
       std::vector<std::tuple<std::string, std::string, double> > bb;
@@ -212,7 +224,7 @@ int main(int argc, char *argv[])
   { // debug for list of triple sendrecv
     std::vector<std::vector<std::tuple<std::string, std::string, double> > > aa(2);
     std::vector<std::tuple<std::string, std::string, double> > bb;
-    int t, f;
+    int t = -1, f = -1;
     if(rk == 0) {
       std::vector<std::tuple<std::string, std::string, double> > aaa;
       std::tuple<std::string, std::string, double> tmp1;
@@ -375,7 +387,7 @@ int main(int argc, char *argv[])
       std::unordered_map<size_t, int> aa;
       aa[0] = 1;
       aa[1] = 2;
-      MPI_Request req;
+      paracel::vrequest req;
       req = comm.isend(aa, 1, 2014);
     } else if(rk == 1) {
       std::unordered_map<size_t, int> bb;
@@ -386,7 +398,6 @@ int main(int argc, char *argv[])
   }
 
   { // alltoall
-  
   }
 
   return 0;

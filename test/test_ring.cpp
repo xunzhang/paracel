@@ -1,96 +1,78 @@
+/**
+ * Copyright (c) 2014, Douban Inc. 
+ *   All rights reserved. 
+ *
+ * Distributed under the BSD License. Check out the LICENSE file for full text.
+ *
+ * Paracel - A distributed optimization framework with parameter server.
+ *
+ * Downloading
+ *   git clone https://github.com/douban/paracel.git 
+ *
+ * Authors: Hong Wu <xunzhangthu@gmail.com>
+ *
+ */
+
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE RING_TEST 
+
+#include <boost/test/unit_test.hpp>
+
 #include <vector>
 #include <string>
 #include <fstream>
-#include <iostream>
 #include "ring.hpp"
 #include "utils.hpp"
-int main(int argc, char *argv[])
-{ 
-  /*
+
+BOOST_AUTO_TEST_CASE (ring_test) {
   {
     std::vector<int> server_names{1, 2, 3};
     paracel::ring<int> ring(server_names);
     std::string key("dw");
-    std::cout << ring.get_server(key) << std::endl;
+    BOOST_CHECK_EQUAL(2, ring.get_server(key));
     std::string key2("q[,:0]_0");
-    std::cout << ring.get_server(key2) << std::endl;
+    BOOST_CHECK_EQUAL(2, ring.get_server(key2));
     std::string key3("q[,:1]_0");
-    std::cout << ring.get_server(key3) << std::endl;
+    BOOST_CHECK_EQUAL(3, ring.get_server(key3));
     std::string key4("q[,:2]_0");
-    std::cout << ring.get_server(key4) << std::endl;
+    BOOST_CHECK_EQUAL(1, ring.get_server(key4));
     std::string key5("q[,:3]_0");
-    std::cout << ring.get_server(key5) << std::endl;
+    BOOST_CHECK_EQUAL(3, ring.get_server(key5));
     std::string key6("p[0:,]_2");
-    std::cout << ring.get_server(key6) << std::endl;
+    BOOST_CHECK_EQUAL(1, ring.get_server(key6));
     std::string key7("p[13:,]_2");
-    std::cout << ring.get_server(key7) << std::endl;
+    BOOST_CHECK_EQUAL(ring.get_server(key7), 2);
     std::string key8("p[42:,]_2");
-    std::cout << ring.get_server(key8) << std::endl;
+    BOOST_CHECK_EQUAL(3, ring.get_server(key8));
     std::string key9("p[5:,]_2");
-    std::cout << ring.get_server(key9) << std::endl;
+    BOOST_CHECK_EQUAL(2, ring.get_server(key9));
     std::string key10("p[3:,]_1");
-    std::cout << ring.get_server(key10) << std::endl;
+    BOOST_CHECK_EQUAL(3, ring.get_server(key10));
     // char* is unhashable
     //std::cout << ring.get_server("world") << std::endl;
   }
-  */
   {
     std::vector<std::string> server_names{"balin1", "beater5", "beater7"};
     paracel::ring<std::string> ring(server_names);
     std::string key("dw");
-    std::cout << ring.get_server(key) << std::endl;
+    BOOST_CHECK_EQUAL("beater7", ring.get_server(key));
     std::string key2("q[,:0]_0");
-    std::cout << ring.get_server(key2) << std::endl;
+    BOOST_CHECK_EQUAL("beater5", ring.get_server(key2));
     std::string key3("q[,:1]_0");
-    std::cout << ring.get_server(key3) << std::endl;
+    BOOST_CHECK_EQUAL("balin1", ring.get_server(key3));
     std::string key4("q[,:2]_0");
-    std::cout << ring.get_server(key4) << std::endl;
+    BOOST_CHECK_EQUAL("beater7", ring.get_server(key4));
     std::string key5("q[,:3]_0");
-    std::cout << ring.get_server(key5) << std::endl;
+    BOOST_CHECK_EQUAL("beater7", ring.get_server(key5));
     std::string key6("p[0:,]_2");
-    std::cout << ring.get_server(key6) << std::endl;
+    BOOST_CHECK_EQUAL("balin1", ring.get_server(key6));
     std::string key7("p[13:,]_2");
-    std::cout << ring.get_server(key7) << std::endl;
+    BOOST_CHECK_EQUAL("beater7", ring.get_server(key7));
     std::string key8("p[42:,]_2");
-    std::cout << ring.get_server(key8) << std::endl;
+    BOOST_CHECK_EQUAL("balin1", ring.get_server(key8));
     std::string key9("p[5:,]_2");
-    std::cout << ring.get_server(key9) << std::endl;
+    BOOST_CHECK_EQUAL("beater5", ring.get_server(key9));
     std::string key10("p[3:,]_1");
-    std::cout << ring.get_server(key10) << std::endl;
+    BOOST_CHECK_EQUAL("beater5", ring.get_server(key10));
   }
-  /*
-  {
-    std::vector<int> server_names;
-    for(size_t i = 0; i < 100; ++i) {
-      server_names.push_back(i);
-    }
-    paracel::ring<int> ring(server_names);
-    std::ifstream f("/home2/jasonzhao/tmp/track_factors");
-    std::string line_buf;
-    std::unordered_set<std::string> keys;
-    while(std::getline(f, line_buf)) {
-      auto tmp = paracel::str_split(line_buf, '\t');
-      keys.insert(tmp[0]);
-
-    }
-    f.close();
-    std::unordered_map<int, int> debug;
-    for(int i = 0; i < 100; ++i) {
-      debug[i] = 0;
-    }
-    std::cout << keys.size() << std::endl;
-    for(auto & tid : keys) {
-      //for(auto & ttid : keys) {
-        for(int k = 0; k < 4; ++k) {
-          std::string key = tid + "_" + std::to_string(k);
-          debug[ring.get_server(key)] += 1;
-        }
-      //}
-    }
-    for(int i = 0; i < 100; ++i) {
-      std::cout << "server " << i << " get " << debug[i] << " keys" << std::endl;
-    }
-  }
-  */
-  return 0;
 }

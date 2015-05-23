@@ -1,0 +1,5 @@
+{
+  "input" : "/mfs/user/wuhong/paracel/data/netflix/train/svd",
+  "output" : "/mfs/user/wuhong/github/paracel/output/svd_result/",
+  "k" : 100
+}

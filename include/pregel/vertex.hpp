@@ -7,24 +7,26 @@
  * Paracel - A distributed optimization framework with parameter server.
  *
  * Downloading
- *   git clone http://code.dapps.douban.com/paracel.git
+ *   git clone https://github.com/douban/paracel.git
  *
  * Authors: Hong Wu <xunzhangthu@gmail.com>
  *
 */
+
 #ifndef FILE_ace68a02_0c2c_1d7c_0dd7_3f42027dec00_HPP
 #define FILE_ace68a02_0c2c_1d7c_0dd7_3f42027dec00_HPP
 
 #include <string>
 #include <unordered_map>
 #include <functional>
+
 #include "ps.hpp"
 #include "graph.hpp"
 
 namespace paracel {
 namespace pregel {
 
-template <class VertexVal, class MsgVal> // EdgeVal(type of edge) can only be double in paracel
+template <class VertexVal, class MsgVal> // EdgeVal(type of edge) can only be 'double' in paracel
 class vertex {
  
  public:
@@ -112,19 +114,22 @@ class vertex {
         if(kv.second) {
           halt_flag = 0;
           for(auto & edge_info : vertex_adj_edge_val_map[vtx]) {
-            compute(edge_info.first, edge_info.second, vertex_val_map[vtx]); // iter neighbors
-          }
-        }
+            // iter neighbors
+            compute(edge_info.first, 
+                    edge_info.second, 
+                    vertex_val_map[vtx]);
+          } // for
+        } // if
       }
-      sync();
+      pt->paracel_sync();
       vote_to_halt();
       pt->get_comm().allreduce(halt_flag);
       if(halt_flag == pt->get_worker_size()) {
         break;
       }
-      sync();
+      pt->paracel_sync();
     }
-    sync();
+    pt->paracel_sync();
   }
 
   void dump_result(const std::string & prefix) {

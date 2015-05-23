@@ -25,12 +25,13 @@
 #include <functional>
 #include <stdexcept>
 #include <deque>
+#include <queue>
 #include <tuple>
 #include <set>
 
 #include <mpi.h>
 #include <msgpack.hpp>
-#include <msgpack/type/tr1/unordered_map.hpp>
+//#include <msgpack/type/tr1/unordered_map.hpp>
 
 #include "utils/hash.hpp"
 
@@ -263,8 +264,8 @@ class bag_type {
   const_iterator end() const {return c.end();}
   const_iterator cend() const {return c.cend();}
   void put(const T & item) { c.push_back(item); }
-  inline bool is_empty() { return c.size() == 0; }
-  inline size_t size() { return c.size(); }
+  bool is_empty() { return c.size() == 0; }
+  size_t size() { return c.size(); }
   bag_type get() {
     bag_type<T> bg(c);
     return bg;

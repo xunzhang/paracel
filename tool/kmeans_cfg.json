@@ -1,0 +1,6 @@
+{
+  "input" : "/mfs/user/wuhong/paracel/data/kmeans/sample.out",
+  "output" : "/mfs/user/wuhong/github/paracel/output/kmeans_serial_result/",
+  "kclusters" : 8,
+  "rounds" : 2
+}

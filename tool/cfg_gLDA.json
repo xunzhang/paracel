@@ -1,0 +1,9 @@
+{
+  "input" : "/mfs/user/wuhong/github/paracel/data/lda/dat",
+  "output" : "/mfs/user/wuhong/github/paracel/output/lda_result/serial",
+  "alpha" : 0.1,
+  "beta" : 0.1,
+  "k_topics": 10,
+  "iters": 100,
+  "top_words": 200
+}

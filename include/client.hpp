@@ -23,8 +23,8 @@
 #include <memory>
 #include <functional>
 
-#include <zmq.hpp>
-
+#include "zmq.hpp"
+#include "utils.hpp"
 #include "packer.hpp"
 #include "paracel_types.hpp"
 #include "utils/ext_utility.hpp"
@@ -269,22 +269,24 @@ public:
   }
   
   template <class K, class V>
-  bool bupdate(const K & key,
-               const V & delta) {
+  V bupdate(const K & key,
+            const V & delta,
+            bool & r) {
     if(p_bupdate_sock == nullptr) {
       p_bupdate_sock.reset(create_req_sock(ports_lst[3]));
     }
     auto scrip = paste(paracel::str_type("bupdate"), key, delta);
-    bool val;
-    auto r = req_send_recv(*p_bupdate_sock, scrip, val);
-    return r && val;
+    V val;
+    r = req_send_recv(*p_bupdate_sock, scrip, val);
+    return val;
   }
 
   template <class K, class V>
-  bool bupdate(const K & key,
-               const V & delta,
-               const paracel::str_type & file_name, 
-               const paracel::str_type & func_name) {
+  V bupdate(const K & key,
+            const V & delta,
+            const paracel::str_type & file_name,
+            const paracel::str_type & func_name,
+            bool & r) {
     if(p_bupdate_sock == nullptr) {
       p_bupdate_sock.reset(create_req_sock(ports_lst[3]));
     }
@@ -293,14 +295,15 @@ public:
                        delta,
                        file_name,
                        func_name);
-    bool val;
-    auto r = req_send_recv(*p_bupdate_sock, scrip, val);
-    return r && val;
+    V val;
+    r = req_send_recv(*p_bupdate_sock, scrip, val);
+    return val;
   }
 
   template <class K, class V>
-  bool bupdate_multi(const paracel::list_type<K> & key_lst,
-                     const paracel::list_type<V> & val_lst) {
+  paracel::list_type<V> bupdate_multi(const paracel::list_type<K> & key_lst,
+                                      const paracel::list_type<V> & val_lst,
+                                      bool & r) {
     if(p_bupdate_multi_sock == nullptr) {
       p_bupdate_multi_sock.reset(create_req_sock(ports_lst[3]));
     }
@@ -314,16 +317,18 @@ public:
     auto scrip = paste(paracel::str_type("bupdate_multi"),
                        key_lst,
                        pack_val_lst);
-    bool stat;
-    auto r = req_send_recv(*p_bupdate_multi_sock, scrip, stat);
-    return r && stat;
+    paracel::list_type<V> val;
+    req_send_recv_lst(*p_bupdate_multi_sock, scrip, val);
+    r = true;
+    return val;
   }
 
   template <class K, class V>
-  bool bupdate_multi(const paracel::list_type<K> & key_lst,
-                     const paracel::list_type<V> & val_lst,
-                     const paracel::str_type & file_name,
-                     const paracel::str_type & func_name) {
+  paracel::list_type<V> bupdate_multi(const paracel::list_type<K> & key_lst,
+                                      const paracel::list_type<V> & val_lst,
+                                      const paracel::str_type & file_name,
+                                      const paracel::str_type & func_name,
+                                      bool & r) {
     if(p_bupdate_multi_sock == nullptr) {
       p_bupdate_multi_sock.reset(create_req_sock(ports_lst[3]));
     }
@@ -339,13 +344,15 @@ public:
                        pack_val_lst,
                        file_name,
                        func_name);
-    bool stat;
-    auto r = req_send_recv(*p_bupdate_multi_sock, scrip, stat);
-    return r && stat;
+    paracel::list_type<V> val;
+    req_send_recv_lst(*p_bupdate_multi_sock, scrip, val);
+    r = true;
+    return val;
   }
 
   template <class K, class V>
-  bool bupdate_multi(const paracel::dict_type<K, V> & dct) {
+  paracel::list_type<V> bupdate_multi(const paracel::dict_type<K, V> & dct,
+                                      bool & r) {
     if(p_bupdate_multi_sock == nullptr) {
       p_bupdate_multi_sock.reset(create_req_sock(ports_lst[3]));
     }
@@ -355,13 +362,14 @@ public:
       key_lst.push_back(kv.first);
       val_lst.push_back(kv.second);
     }
-    return bupdate_multi(key_lst, val_lst);
+    return bupdate_multi(key_lst, val_lst, r);
   }
   
   template <class K, class V>
-  bool bupdate_multi(const paracel::dict_type<K, V> & dct,
-                     const paracel::str_type & file_name,
-                     const paracel::str_type & func_name) {
+  paracel::list_type<V> bupdate_multi(const paracel::dict_type<K, V> & dct,
+                                      const paracel::str_type & file_name,
+                                      const paracel::str_type & func_name,
+                                      bool & r) {
     if(p_bupdate_multi_sock == nullptr) {
       p_bupdate_multi_sock.reset(create_req_sock(ports_lst[3]));
     }
@@ -374,7 +382,8 @@ public:
     return bupdate_multi(key_lst,
                          val_lst,
                          file_name,
-                         func_name);
+                         func_name,
+                         r);
   }
 
   template <class K>
@@ -430,7 +439,7 @@ public:
     auto scrip = paste(paracel::str_type("push_int"),
                        key,
                        val); 
-    bool stat;
+    bool stat = true;
     auto r = req_send_recv(*p_ssp_sock, scrip, stat);
     return r && stat;
   }
@@ -588,18 +597,18 @@ private:
   paracel::list_type<paracel::str_type> ports_lst;
   paracel::str_type conn_prefix;
   zmq::context_t context;
-  std::unique_ptr<zmq::socket_t> p_contains_sock;
-  std::unique_ptr<zmq::socket_t> p_pull_sock;
-  std::unique_ptr<zmq::socket_t> p_pull_multi_sock;
-  std::unique_ptr<zmq::socket_t> p_pullall_sock;
-  std::unique_ptr<zmq::socket_t> p_push_sock;
-  std::unique_ptr<zmq::socket_t> p_push_multi_sock;
-  std::unique_ptr<zmq::socket_t> p_update_sock;
-  std::unique_ptr<zmq::socket_t> p_bupdate_sock;
-  std::unique_ptr<zmq::socket_t> p_bupdate_multi_sock;
-  std::unique_ptr<zmq::socket_t> p_remove_sock;
-  std::unique_ptr<zmq::socket_t> p_clear_sock;
-  std::unique_ptr<zmq::socket_t> p_ssp_sock;
+  std::unique_ptr<zmq::socket_t> p_contains_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_pull_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_pull_multi_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_pullall_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_push_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_push_multi_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_update_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_bupdate_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_bupdate_multi_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_remove_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_clear_sock = nullptr;
+  std::unique_ptr<zmq::socket_t> p_ssp_sock = nullptr;
 
 }; // struct kvclt 
 

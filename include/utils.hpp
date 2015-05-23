@@ -27,10 +27,10 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#include <zmq.hpp>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 
+#include "zmq.hpp"
 #include "utils/comm.hpp"
 #include "utils/hash.hpp"
 #include "utils/decomp.hpp"
@@ -110,7 +110,7 @@ paracel::list_type<size_t> get_ports() {
 }
 
 // return a uniform random double value in range(0, 1.)
-inline double random_double() {
+double random_double() {
   auto v = random() / static_cast<double>(RAND_MAX);
   while(v == 0 || v == 1.) {
     v = random() / static_cast<double>(RAND_MAX);
@@ -119,10 +119,10 @@ inline double random_double() {
 }
 
 paracel::list_type<double> 
-random_double_list(size_t len, double range = 1.) {
+random_double_list(size_t len, double upper_bnd = 1.) {
   paracel::list_type<double> r;
   for(size_t i = 0; i < len; ++i) {
-    r.push_back(range * random_double());
+    r.push_back(upper_bnd * random_double());
   }
   return r;
 }
@@ -168,7 +168,7 @@ std::vector<double> evec2vec(const Eigen::VectorXd & ev) {
   return v;
 }
 
-// Eigen::MatrixXd only support column-major and return col seq
+// Eigen::MatrixXd is column-major and return col seq
 std::vector<double> mat2vec(const Eigen::MatrixXd & m) {
   std::vector<double> v(m.size());
   Eigen::Map<Eigen::MatrixXd>(v.data(), m.rows(), m.cols()) = m;
@@ -248,6 +248,14 @@ std::vector<T> tail(const std::string & filename,
   for(int i = cur; i < k; ++i) result.push_back(buffer[i]);
   for(int i = 0; i < cur; ++i) result.push_back(buffer[i]);
   return result;
+}
+
+paracel::default_id_type cvt(std::string id) {
+  return std::stoull(id);
+}
+
+std::string cvt(paracel::default_id_type id) {
+  return std::to_string(id);
 }
 
 } // namespace paracel
